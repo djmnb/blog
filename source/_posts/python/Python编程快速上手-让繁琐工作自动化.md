@@ -48,7 +48,14 @@ date: 2023-3-4
 | in     | 判断前面这个对象是否存在后面的对象中 |
 | not in | 自然是in的相反                       |
 
+三元运算符
 
+```
+flag = False
+print( 1 if flag else 10)  # 如果flag 为 True则返回 1否则返回 10
+```
+
+只有0 空字符串 和 None 为False
 
 ### 常用函数
 
@@ -662,7 +669,7 @@ def deco():
 ```python
 try:
 	代码
-except Exception:
+except Exception as e:  # 建议这样做,才能得到异常对象,如果不加 as 的话就是异常类
 	处理
 else:
     没发生异常执行
@@ -1159,6 +1166,23 @@ gen.send(None)
 gen.send(None) # 这里会出一个异常,其实也是为了告诉别的使用者,生成器已经执行完了
 ```
 
+#### 生成器的函数返回值
+
+```python
+def func():
+    yield 10
+    return 10,20
+
+gen = func()
+next(gen)
+try:
+    next(gen)
+except StopIteration as s:
+    print(s.value)  # (10,20)
+```
+
+
+
 #### 生成器常用方法
 
 send(val) :  传递val作为 yield 语句的返回值
@@ -1206,7 +1230,61 @@ print(next(f))
 
 ```
 
-既然这样我们是不是可以搞一个嵌套迭代器
+我们来看一下yield from 的参考代码吧,看看它干了些什么
+
+```python
+"""
+_i：子生成器，同时也是一个迭代器
+_y：子生成器生产的值
+_r：yield from 表达式最终的值
+_s：调用方通过send()发送的值
+_e：异常对象
+"""
+
+_i = iter(EXPR)
+
+try:
+    _y = next(_i)
+except StopIteration as _e:
+    _r = _e.value
+
+else:
+    while 1:
+        try:
+            _s = yield _y
+        except GeneratorExit as _e:
+            try:
+                _m = _i.close
+            except AttributeError:
+                pass
+            else:
+                _m()
+            raise _e
+        except BaseException as _e:
+            _x = sys.exc_info()
+            try:
+                _m = _i.throw
+            except AttributeError:
+                raise _e
+            else:
+                try:
+                    _y = _m(*_x)
+                except StopIteration as _e:
+                    _r = _e.value
+                    break
+        else:
+            try:
+                if _s is None:
+                    _y = next(_i)
+                else:
+                    _y = _i.send(_s)
+            except StopIteration as _e:
+                _r = _e.value
+                break
+RESULT = _r
+```
+
+可以发现,它帮我们做了很多的异常处理
 
 ### 上下文管理器
 
@@ -1725,6 +1803,96 @@ with ThreadPoolExecutor(5) as pool:
         dicts[r] = dicts.get(r,0) + 1
     for k,v in dicts.items():
         print(f"{k} 执行了 {v}的函数")
+
+```
+
+#### 异步io asyncio框架
+
+##### 协程
+
+怎么去理解协程呢, 拿线程去对比一下吧, 如果我们有一个网络请求,需要1s钟才能得到响应, 如果是线程的话,它会一直在那等着,如果是协程,我们可以让CPU去干别的事情
+
+协程的实现就是依靠生成器
+
+##### 创建一个协程
+
+只要在函数声明的前面用async声明就行了
+
+```python
+import asyncio
+import time
+
+async def request():
+    await asyncio.sleep(1)
+print(request())  # <coroutine object request at 0x000001F8FAE163C0>
+```
+
+##### 概念
+
+在了解`asyncio`的使用方法前，首先有必要先介绍一下，这几个贯穿始终的概念。
+
+- `event_loop 事件循环`：程序开启一个无限的循环，程序员会把一些函数（协程）注册到事件循环上。当满足事件发生的时候，调用相应的协程函数。
+- `coroutine 协程`：协程对象，指一个使用async关键字定义的函数，它的调用不会立即执行函数，而是会返回一个协程对象。协程对象需要注册到事件循环，由事件循环调用。
+- `future 对象`： 代表将来执行或没有执行的任务的结果。它和task上没有本质的区别
+- `task 任务`：一个协程对象就是一个原生可以挂起的函数，任务则是对协程进一步封装，其中包含任务的各种状态。Task 对象是 Future 的子类，它将 coroutine 和 Future 联系在一起，将 coroutine 封装成一个 Future 对象。
+- `async/await 关键字`：python3.5 用于定义协程的关键字，async定义一个协程，await用于挂起阻塞的异步调用接口。其作用在一定程度上类似于yield。
+
+> async里面不能使用 yield ,await 也必须在async里面使用
+
+##### 协程的并发
+
+协程的并发其实是需要异步函数的支持,如果不是异步函数的话,协程是不能并发的,我们来对比一下
+
+不支持异步的函数
+
+```python
+import asyncio
+import time
+
+async def request():
+    time.sleep(1) # 不支持异步
+    
+
+async def main():
+    task1 = request()
+    task2 = request()
+
+    task1 = asyncio.create_task(task1)
+    task2 = asyncio.create_task(task2)
+
+    await task1
+    await task2
+
+start = time.time()
+asyncio.run(main())
+end = time.time()
+print(f"一共运行{end-start:.2f}s") # 2s
+```
+
+支持异步的函数
+
+```python
+import asyncio
+import time
+
+async def request():
+    await asyncio.sleep(1)  # 这个是支持异步的
+    
+
+async def main():
+    task1 = request()
+    task2 = request()
+
+    task1 = asyncio.create_task(task1)
+    task2 = asyncio.create_task(task2)
+
+    await task1
+    await task2
+
+start = time.time()
+asyncio.run(main())
+end = time.time()
+print(f"一共运行{end-start:.2f}s")  # 1s
 
 ```
 
