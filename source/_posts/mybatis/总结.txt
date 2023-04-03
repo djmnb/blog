@@ -1,0 +1,68 @@
+1 创建user表
+
+drop table if exists user;
+create table user(
+	id int primary key,
+	name varchar(10) not null,
+	age int not null,
+	email varchar(40) not null
+);
+
+insert into user values(20194099,'戴晶明',18,'1@com');
+insert into user values(20194101,'邓伟豪',18,'1@com');
+insert into user values(20194102,'啊啊啊',18,'1@com');
+insert into user values(20194103,'袁磊',18,'1@com');
+
+
+mybatis 总结:
+	
+	开发流程(简单maven工程中):
+		1.导入坐标mybatis的jar包,数据库的驱动,数据源 如果是spring中还要导入spring-mybatis的jar包
+		2.编写实体类以及操作数据库接口
+		3.编写数据库接口对应的sql语句(mapper代理)
+		4.编写mybatis配置文件(设置别名啊,设置属性,配置环境(数据源,事务管理器),mapper映射文件的位置)
+
+	可以使用typeAliases 对类型起别名,在sql子标签resulttype属性中就可以使用,但是我感觉没有啥用
+
+	#{} 与 ${} 的区别在于 前者会设置参数防止SQL注入,后者是直接拼接
+
+	如果数据库的表名与实体类的属性名不同可以使用下面两种方法:
+		1.给数据库中取出的字段取别名
+		2.使用resultmap给出一组对应关系(主键字段需要用<id>标签取别名)
+
+
+	xml中默认不允许使用<字符,如果需要使用,需要转义或者使用cd命名空间
+
+	传递参数的三种方式:
+		多参数
+			1.
+				直接通过函数参数 当有多个参数的时候需要使用(@param("")注解,
+				如果还是使用原来的那个参数名字会报错(因为有多个参数的时候,mybatis会把参数封装成一个map,然后键名就是arg0,arg1这些,建议全部使用@param注解)
+		单参数:
+			2.
+				对象形式
+			3.
+				map形式
+				在配置文件中只需要使用 #{参数名|属性名|key值} 就可以拿到参数值
+	
+
+	
+	
+	动态sql
+		当用户输入的参数个数不确定时,我们也可以只写一个sql语句让mybatis帮忙生成对应的sql语句
+		1. 动态查询
+			
+			<where> <if test=""> <where> 形式 test里面需要像sql
+	
+	
+	当查询时出现一个实体类里面还出现了另外一些实体类时(一对一,一对多)
+		1.自定义resultmap 将对应的列封装到属性中,如果是属性是对象,resultmap中的属性名就写对象变量名字.属性名
+		(上面这种方法的缺点是需要重复太多的对象的变量名字)
+		
+		2.
+			对象:
+				<association property="" javatype=""(如果没有取别名,这里得写成包名路径+类名)> 
+				这样就不用写很多次对象变量名字(里面就跟平常写resultmap一样了)
+			集合:
+				<collection>
+		sfdsfdsfds	
