@@ -26,7 +26,7 @@ vue采用一种简洁的模板语法来绑定数据到 DOM。在 Vue 中，你�
    使用双大括号 将数据绑定到文本节点：
 
    ```
-   <span>{{ message }\}</span>
+   <span>{{ message }}</span>
    ```
 
 2. 属性绑定 (Attribute Binding)
@@ -1313,6 +1313,278 @@ new Vue({
 
 props的数据是优先被代理到vc上面去的,  在beforecreate之前就有了,因此我们可以在data属性中使用
 
+### 混入
+
+在 Vue 中，混入（mixin）是一种代码重用机制，允许在多个组件间共享相同的功能、数据、生命周期钩子等。通过混入，你可以将组件的共同特性抽象成一个独立的对象，然后在需要的组件中引入该对象。这样可以避免重复代码，提高代码的可维护性和可读性。
+
+混入的用途主要有以下几点：
+
+1. **共享数据**：可以在混入对象中定义数据（data），然后在引入混入的组件中共享这些数据。
+2. **共享方法**：可以在混入对象中定义方法，这些方法可以在引入混入的组件中使用。这对于多个组件中都需要的通用功能尤为有用。
+3. **共享生命周期钩子**：混入对象中的生命周期钩子将在引入混入的组件的对应生命周期钩子之前调用。这可以用于在多个组件中执行相同的操作，例如获取数据、添加事件监听器等。
+4. **共享计算属性和侦听器**：混入对象也可以包含计算属性和侦听器。这使得可以在多个组件中重用相同的逻辑。
+
+需要注意的是，在使用混入时，**如果混入对象和组件本身具有相同的选项（例如同名的方法或数据），组件本身的选项将优先级更高**。**对于生命周期钩子，它们将首先调用混入对象中的钩子，然后调用组件本身的钩子**。
+
+总之，混入是 Vue 中一种强大的代码重用机制，可以帮助你在多个组件间共享相同的功能、数据和逻辑，提高代码的可维护性和可读性。
+
+#### 局部混合
+
+在mixin.js中写入
+
+```
+onst myMixin = {
+  data() {
+    return {
+      mixinData: "I'm from mixin",
+    };
+  },
+  methods: {
+    mixinMethod() {
+      console.log("Mixin method called!");
+    },
+  },
+  created() {
+    console.log("Mixin created hook!");
+  },
+};
+```
+
+在组件中引入
+
+```
+import myMixin from './mixin.js';
+
+export default {
+  mixins: [myMixin],
+  created() {
+    console.log("Component created hook!");
+  },
+  mounted() {
+    this.mixinMethod();
+    console.log(this.mixinData);
+  },
+};
+
+```
+
+#### 全局混入
+
+全局混入需要谨慎使用，因为它会影响到每个组件。在大型项目中，过度使用全局混入可能导致代码难以维护和理解。通常，只有在需要向所有组件添加某些功能或钩子时才应使用全局混入。
+
+```
+import Vue from 'vue';
+
+const globalMixin = {
+  created() {
+    console.log('Global mixin created hook!');
+  },
+  methods: {
+    globalMethod() {
+      console.log('Global mixin method called!');
+    },
+  },
+};
+
+Vue.mixin(globalMixin);
+
+```
+
+### 插件
+
+在 Vue 中，插件是一种可重用的代码块，可以为 Vue 应用程序添加全局功能、自定义指令、过滤器等。插件的主要目的是扩展 Vue 的核心功能，使其能够满足特定场景和需求。插件通常封装在模块中，可以在多个 Vue 项目中使用。
+
+插件的工作原理：插件应该暴露一个 `install` 方法，当 Vue 使用该插件时，将自动调用此方法。`install` 方法接收两个参数：第一个是 Vue 构造函数本身，第二个是一个可选的选项对象，可以用于配置插件的行为。
+
+以下是一个简单的 Vue 插件示例：
+
+```
+const MyPlugin = {
+  install(Vue, options) {
+    // 添加全局方法或属性
+    Vue.myGlobalMethod = function () {
+      console.log('MyPlugin global method called');
+    };
+
+    // 添加全局自定义指令
+    Vue.directive('my-directive', {
+      bind(el, binding, vnode, oldVnode) {
+        // 逻辑...
+      },
+    });
+
+    // 添加全局过滤器
+    Vue.filter('myFilter', function (value) {
+      // 返回处理后的值
+      return value.toUpperCase();
+    });
+
+    // 注入组件选项
+    Vue.mixin({
+      created() {
+        // 逻辑...
+      },
+    });
+
+    // 添加实例方法
+    Vue.prototype.$myMethod = function () {
+      console.log('MyPlugin instance method called');
+    };
+  },
+};
+
+// 使用插件
+Vue.use(MyPlugin);
+```
+
+在这个示例中，我们创建了一个名为 `MyPlugin` 的插件。该插件添加了一个全局方法、一个全局自定义指令、一个全局过滤器、一个混入以及一个实例方法。要在 Vue 应用程序中使用此插件，需要调用 `Vue.use()` 方法并将插件作为参数传递。
+
+插件是 Vue 的一种强大扩展机制，可以帮助你为 Vue 添加全局功能、自定义指令、过滤器等，提高代码的可维护性和可读性。
+
+> 我们只需要从别人那下载一个插件,我们只需要use一下就行,能够添加很多功能
+
+### scoped
+
+在 Vue 中，`scoped` 是一个特殊的属性，可以应用于单文件组件（SFC）的 `<style>` 标签。当你在 `<style>` 标签中添加 `scoped` 属性时，样式将只作用于当前组件。这意味着这些样式不会影响到其他组件，避免了全局 CSS 样式的污染和样式冲突。(css的层叠性是由我们引入的顺序来决定的)
+
+`scoped` 的工作原理：当 Vue 编译组件时，**它会为每个组件的 DOM 元素添加一个唯一的属性（例如：`data-v-123456`）。然后，Vue 会根据这个属性调整样式规则，使它们只作用于具有相同属性值的元素。**,通过属性选择器和我们定义的选择器一起选择
+
+### 组件自定义事件
+
+在 Vue 中，组件可以通过自定义事件与其他组件进行通信。自定义事件允许子组件向父组件发送消息，实现组件之间的解耦和数据流的单向传递。自定义事件的使用主要包括以下两个步骤：
+
+1. 子组件触发自定义事件： 子组件可以使用 `$emit` 方法触发自定义事件。`$emit` 方法接受两个参数：第一个参数是事件名（字符串），第二个参数是可选的，表示传递给事件监听器的数据。
+
+   例如，在子组件中，可以触发一个名为 `my-event` 的自定义事件，并传递一个数据对象：
+
+   ```
+   this.$emit('my-event', { message: 'Hello from the child component!' });
+   ```
+
+2. 父组件监听自定义事件： 父组件可以在子组件的标签上使用 `v-on` 指令（或简写为 `@`）或者**使用子组件实例的 `$on` 方法为自定义事件添加监听器** 来监听自定义事件。当子组件触发事件时，父组件的事件监听器将被调用，传递给它的数据可以在监听器函数中使用。
+
+   例如，在父组件模板中，可以监听子组件的 `my-event` 事件，并将其与一个处理函数绑定：
+
+   ```
+   <template>
+     <div>
+       <child-component @my-event="handleMyEvent" ref="childComponentRef"></child-component>  #使用标签方式
+     </div>
+   </template>
+   
+   <script>
+   import ChildComponent from './ChildComponent.vue';
+   
+   export default {
+     components: {
+       ChildComponent,
+     },
+     methods: {
+       handleMyEvent(payload) {
+         console.log('Received message from child component:', payload.message);
+       },
+     },
+     mounted() {
+       // 使用 $refs 访问子组件实例，并为自定义事件添加监听器
+       this.$refs.childComponentRef.$on('my-event', this.handleMyEvent);
+     },
+   };
+   </script>
+   ```
+
+   当子组件触发 `my-event` 事件时，父组件的 `handleMyEvent` 方法将被调用，并接收到子组件传递的数据对象。
+
+**需要注意的是，在这使用$on这种方法的情况下**，你需要确保在组件销毁时移除事件监听器，以避免内存泄漏。可以在父组件的 `beforeDestroy` 生命周期钩子中使用子组件实例的 `$off` 方法移除事件监听器：
+
+```
+beforeDestroy() {
+  // 移除自定义事件监听器
+  this.$off('my-event');
+},
+```
+
+**当使用模板语法（`v-on` 或 `@`）绑定事件监听器时，你不需要担心手动解绑。**
+
+**通过使用自定义事件，可以实现子组件向父组件发送消息的需求，从而实现组件之间的解耦和数据流的单向传递**。这是 Vue 组件通信的一种常用方法。
+
+**如果要使用原生事件的话得使用native修饰符**,不然vue把这个事件当成的是自定义事件
+
+### $nexttick
+
+`nextTick` 是 Vue 中的一个方法，它的作用是将一个回调函数延迟到DOM 更新循环之后执行。在 Vue 应用中，数据改变后，Vue 会异步更新 DOM。`nextTick` 可以帮助你在 DOM 更新完成之后立即执行特定的操作。
+
+`nextTick` 的常见用途包括：
+
+1. 在 DOM 更新完成后执行某些操作。当你更改数据并希望在 DOM 更新后立即执行一些操作时，可以使用 `nextTick`。例如，你可能需要在更改数据后计算新的元素高度或宽度。
+2. 解决因数据更改导致的竞争条件。有时，你可能会遇到因数据更改和 DOM 更新的异步性导致的竞争条件。在这种情况下，`nextTick` 可以确保在更新 DOM 之后执行某些操作，从而避免潜在的问题。
+
+以下是一个 `nextTick` 的简单示例：
+
+```
+jsCopy codenew Vue({
+  el: '#app',
+  data: {
+    message: 'Hello, Vue!'
+  },
+  methods: {
+    updateMessage() {
+      this.message = 'Message updated';
+      this.$nextTick(() => {
+        console.log('DOM updated:', this.$el.textContent);
+      });
+    }
+  }
+});
+```
+
+在这个示例中，我们更改了 `message` 属性的值，并在 `nextTick` 的回调函数中打印了更新后的 DOM 内容。这样，我们可以确保在 DOM 更新完成后执行 `console.log` 语句。
+
+### 代理服务器
+
+Vue 项目通常需要设置代理服务器，主要是为了解决开发环境中的跨域问题。由于浏览器的同源策略限制，直接向不同域的服务器发送请求会被阻止。使用代理服务器可以将请求转发到目标服务器，从而绕过同源策略。
+
+Vue CLI 提供了内置的代理服务器功能，以便在开发过程中解决跨域问题。以下是如何在 Vue CLI 项目中使用代理服务器，
+
+1. **配置代理服务器**：在 Vue CLI 项目的根目录中，找到或创建 `vue.config.js` 文件。在该文件中，配置 `devServer.proxy` 选项以设置代理规则。
+
+   示例：
+
+   ```
+   module.exports = {
+     devServer: {
+       proxy: {
+         '/api': {
+           target: 'https://api.example.com',
+           changeOrigin: true,
+           pathRewrite: {
+             '^/api': ''  // 如果不写这个,会带着原来的请求路径一起带过去
+           }
+         }
+       }
+     }
+   };
+   ```
+
+   上述配置示例将所有以 `/api` 开头的请求代理到 `https://api.example.com`。
+
+### 插槽slot
+
+Vue 中的插槽（slots）是一种在组件模板中预留位置，允许父组件向子组件传递自定义内容。插槽的概念类似于 HTML 中的占位符，它们提供了一种灵活的方式来组合和重用组件。
+
+Vue中有两种主要的插槽类型：普通插槽（匿名插槽）和具名插槽（命名插槽）。在 Vue 3.x 版本中，还引入了新的插槽类型：作用域插槽（Scoped Slots）。
+
+1. 普通插槽（匿名插槽）： 普通插槽是默认的插槽类型，**当子组件中没有明确的插槽名称时，内容会默认分发到这些插槽**。在子组件中使用`<slot></slot>`标签定义，父组件可以在子组件标签内部放置内容，这些内容会替换子组件中的`<slot></slot>`标签。
+2. 具名插槽（命名插槽）： 具名插槽允许你在组件中定义多个插槽，并使用不同的名字来区分。在子组件中，使用`<slot name="slotName"></slot>`来定义一个具名插槽。在父组件中，你可以使用`<template v-slot:slotName>` 或者 `<template #slotName>` 或者标签属性里面知名插槽比如(\<a  slot="name"\>的语法来指定要插入到具体插槽的内容。
+3. 作用域插槽（Scoped Slots）： 作用域插槽是Vue 3.x引入的新概念，允许父组件接收子组件传递过来的数据，并在父组件中使用这些数据来渲染插槽内容。子组件中使用\<slot name="**scopedSlotName**" :propName="propValue"\>\</slot\>来定义作用域插槽并传递数据。在父组件中，使用\<template v-slot:**scopedSlotName**="slotProps"\>(里面能够使用slotProps,它代表propValue)`或者`<template #scopedSlotName="slotProps">`的语法来获取子组件传递的数据，并在插槽内部使用这些数据。
+
+使用 Vue 插槽时，需要注意以下几点：
+
+1. 默认内容： 对于普通插槽和具名插槽，在定义插槽时可以在`<slot>`标签内部放置默认内容。如果父组件没有提供插槽内容，子组件会显示默认内容。这在某些情况下非常有用，比如可选的标题或说明性文本。
+2. 动态插槽名： 有时，你可能需要根据一些条件来选择使用哪个插槽。在这种情况下，你可以使用动态插槽名。在父组件中，可以使用`<template v-slot:[dynamicSlotName]>`或`<template #[dynamicSlotName]>`的语法来定义动态插槽名。
+3. 插槽传递限制： 需要注意的是，插槽内容在父组件的作用域内进行编译，而非子组件。这意味着在插槽内容中，你不能直接访问子组件的数据或方法。在作用域插槽中，可以通过子组件传递的数据来实现父子组件之间的数据交互。
+4. 插槽命名规范： 为了避免命名冲突，建议使用具有一定意义的插槽名，这有助于提高代码的可读性。同时，遵循一定的命名规范（如驼峰式命名或短横线分隔式命名）可以确保插槽名在不同平台和环境下的一致性。
+5. 作用域插槽的解构： 在使用作用域插槽时，可以利用解构语法简化插槽属性的访问。例如，如果子组件传递了一个名为`item`的属性，你可以使用`<template v-slot:scopedSlotName="{ item }">`或`<template #scopedSlotName="{ item }">`的语法直接获取`item`属性。
+
 # 总结
 
 ## 计算属性与监视属性对比
@@ -1344,3 +1616,434 @@ props的数据是优先被代理到vc上面去的,  在beforecreate之前就有�
 2. 可读性：相较于计算属性，监视属性的逻辑可能分散在多个地方，导致代码可读性和可维护性较差。
 
 总结： 计算属性和监视属性各有优缺点，它们适用于不同的场景。在需要根据其他属性计算一个值的情况下，计算属性通常是更好的选择。而在处理异步操作或需要根据属性值变化执行特定操作的场景中，监视属性可能更适合。根据实际需求和场景选择适当的方法来实现功能。
+
+## name 配置项  文件名 引入组件名字
+
+在 Vue 中，`name` 配置项、文件名和引入组件时使用的名字有一定的关联，但它们之间也存在区别。下面详细解释一下它们之间的联系和区别：
+
+1. `name` 配置项：这是 Vue 组件的一个配置选项，用于指定组件的名字。组件的 `name` 主要用于调试（在 Vue Devtools 中显示）和递归组件（组件在其模板中调用自身）。`name` 对于组件的功能并不是必需的，但在实际开发中，为组件设置一个有意义的 `name` 是个好习惯，可以提高代码的可读性。
+2. 文件名：这是 Vue 单文件组件（SFC）的物理文件名。通常，我们为每个组件使用一个 `.vue` 文件，并将文件名设置为与组件名相同或相似的名称。这样可以提高项目的组织性和可维护性。虽然文件名与组件名可能相似，但它们没有强制关联。文件名主要用于在文件系统中组织和查找组件。
+3. 引入组件时使用的名字：当你在其他组件或模块中使用某个组件时，需要将其导入并为其分配一个名字。这个名字通常与组件的 `name` 配置项或文件名相同或相似，以保持一致性。然而，这并不是强制性的，你可以为导入的组件分配任何名字。在注册组件时，你可以使用这个名字作为局部组件的键。
+
+总之，`name` 配置项、文件名和引入组件时使用的名字之间存在一定的关联，它们通常相同或相似以保持一致性。然而，它们之间并没有强制关联，每个部分都有各自的用途。在实际项目中，建议为这三个部分使用相同或相似的名称，以提高代码的可读性和可维护性。
+
+对于 Vue 组件的 `name` 配置项、文件名和引入组件时使用的名字，有一些约束和建议需要遵循：
+
+1. `name` 配置项：
+   - 遵循 HTML 的命名规范，即只包含字母、数字、短横线（-）和下划线（_）。
+   - 通常使用**驼峰命名（CamelCase）或短横线分隔命名（kebab-case）**。
+   - 不能是保留字（如 `switch`、`if` 等），以避免与 HTML 标签冲突。
+   - 建议使用有意义的名称，以便于理解组件的功能。
+2. 文件名：
+   - 遵循操作系统和文件系统的命名规范。
+   - 通常使用**驼峰命名（CamelCase）或短横线分隔命名（kebab-case）**。
+   - 文件扩展名应为 `.vue`，表示这是一个 Vue 单文件组件。
+   - 建议使用与组件 `name` 相同或相似的文件名，以保持一致性。
+3. 引入组件时使用的名字：
+   - 遵循 JavaScript 变量命名规范，即只包含字母、数字、美元符号（$）和下划线（_），并且不能以数字开头。
+   - 通常使用驼峰命名（CamelCase）。
+   - 建议使用与组件 `name` 和文件名相同或相似的名字，以保持一致性。
+
+遵循这些约束和建议，可以确保你的 Vue 项目具有良好的组织结构和可维护性。同时，使用一致的命名规范有助于提高代码的可读性。
+
+## 组件通信
+
+### 父子组件通信
+
+在 Vue 中，父组件和子组件之间通信的主要方法是通过 props 和自定义事件。这种通信方式实现了单向数据流，有助于保持代码的可维护性。以下是父子组件通信的方法及其注意事项：
+
+1. 父组件向子组件传递数据（通过 props）：
+   - 父组件在子组件标签上绑定属性，子组件通过 props 接收这些属性。
+   - 子组件不应该直接修改接收到的 props 数据。如果需要修改，应该将其复制到子组件的局部状态（如 data 或 computed 属性）中。
+   - 子组件应在 `props` 选项中声明接收的属性，以便 Vue 可以对其进行验证和响应式处理。
+   - 可以为 props 提供类型、默认值和验证函数，以确保传递给子组件的数据是正确的。
+   - 优先使用**驼峰式命名法（camelCase）为 props 命名**，**并在父组件中使用短横线分隔（kebab-case）的属性名**。
+2. 子组件向父组件发送消息（通过自定义事件）：
+   - 子组件使用 `$emit` 方法触发自定义事件，父组件通过 `v-on` 或 `@` 监听这些事件。
+   - 避免在子组件中直接访问或修改父组件的状态。相反，应该使用自定义事件将数据发送给父组件，让父组件负责更新其状态。
+   - **使用具有描述性的事件名，遵循 HTML 命名规范（字母、数字、短横线和下划线）**。
+   - **如果使用非模板语法（如 `$on`）添加事件监听器，需要在父组件销毁时手动解绑，以避免内存泄漏**。
+
+### 任意组件通信
+
+#### 全局事件总线
+
+全局事件总线是一种用于跨组件通信的方法，它允许不同组件之间发送和接收事件，而无需通过父子关系。全局事件总线通常是一个 Vue 实例，它用作中心事件分发器。这种方法对于兄弟组件、跨层级组件和不直接关联的组件之间的通信非常有用。
+
+要实现全局事件总线，你可以按照以下步骤操作：
+
+1. 创建全局事件总线实例：
+
+   ```
+   // eventBus.js
+   import Vue from 'vue';
+   export const EventBus = new Vue();
+   ```
+
+2. 在需要发送事件的组件中，使用全局事件总线的 `$emit` 方法触发事件：
+
+   ```
+   // ComponentA.vue
+   import { EventBus } from './eventBus.js';
+   
+   // ...
+   methods: {
+     sendMessage() {
+       EventBus.$emit('my-event', { message: 'Hello from Component A!' });
+     },
+   },
+   // ...
+   ```
+
+3. 在需要接收事件的组件中，使用全局事件总线的 `$on` 方法监听事件：
+
+   ```
+   // ComponentB.vue
+   import { EventBus } from './eventBus.js';
+   
+   // ...
+   created() {
+     EventBus.$on('my-event', this.handleMyEvent);
+   },
+   methods: {
+     handleMyEvent(payload) {
+       console.log('Received message from Component A:', payload.message);
+     },
+   },
+   // ...
+   ```
+
+   同时，记得在组件销毁时移除事件监听器，以避免内存泄漏：
+
+   ```
+   // ComponentB.vue
+   // ...
+   beforeDestroy() {
+     EventBus.$off('my-event', this.handleMyEvent);
+   },
+   // ...
+   ```
+
+使用全局事件总线，你可以在不同组件之间发送和接收事件，实现跨组件通信。但是，请注意，**全局事件总线可能导致组件之间的紧耦合和难以维护的代码**。因此，在使用全局事件总线时，请确保遵循良好的设计原则，尽量将组件之间的依赖关系保持在最低限度。对于大型应用程序，你可能需要考虑使用 Vuex 或其他状态管理解决方案以实现更好的组件通信和状态管理。
+
+一个事件只能对应一个组件到另外一个组件的单向数据流动,这个使用起来可不是很方便
+
+全局事件总线虽然可以实现跨组件通信，但也存在一些缺点：
+
+1. 紧耦合：全局事件总线可能导致组件之间的紧耦合。当组件依赖于全局事件总线来进行通信时，它们可能会变得难以理解和维护。当应用程序变得更大时，跟踪和管理这些事件可能会变得复杂。
+2. 不透明性：全局事件总线的使用使得数据流和组件之间的通信变得不太明显。与使用 props 和自定义事件的父子组件通信相比，全局事件总线可能导致组件之间的通信变得难以追踪和理解。
+3. 内存泄漏：如果不正确地使用全局事件总线（例如，忘记在组件销毁时移除事件监听器），可能导致内存泄漏。这可能会影响应用程序性能，尤其是在长时间运行的单页应用程序中。
+4. 命名冲突：**由于全局事件总线是一个共享实例，因此可能会出现命名冲突。当多个组件使用相同的事件名称时，可能会导致意外的行为和难以调试的问题。**
+5. 缺乏规模化支持：对于大型应用程序，全局事件总线可能不是最佳选择。随着应用程序的扩展，管理全局事件和组件间通信可能变得困难。在这种情况下，**使用像 Vuex 这样的状态管理库可以提供更好的组织结构和可维护性**。
+
+总之，虽然全局事件总线提供了跨组件通信的便利，但它也带来了一些缺点。在使用全局事件总线时，请确保遵循良好的设计原则，以便更好地管理组件之间的通信。在大型项目中，考虑使用状态管理库（如 Vuex）来实现更好的数据流管理和组件通信。
+
+#### 发布与订阅模式
+
+发布-订阅模式（Pub/Sub）是一种通信模式，用于在不相关的对象之间传递消息。在这种模式中，组件之间不直接通信。相反，它们通过一个中间代理（通常称为“消息代理”或“事件总线”）进行通信。发布者（Publisher）发布消息，而订阅者（Subscriber）订阅感兴趣的消息类型，并在相关消息到达时接收通知。
+
+发布-订阅模式的主要优势之一是它可以解耦组件之间的依赖关系。发布者和订阅者之间没有直接的依赖关系，这使得它们更容易地独立地更改和重用。
+
+**在前面的全局事件总线示例中，我们实际上已经实现了发布-订阅模式**。这里的全局事件总线充当了消息代理，允许组件发布消息并订阅感兴趣的消息类型。组件使用 `$emit` 方法发布消息，使用 `$on` 方法订阅消息，然后使用 `$off` 方法取消订阅。
+
+当然，你也可以使用其他 JavaScript 库来实现发布-订阅模式，如 EventEmitter、EventTarget 或者第三方库（如 PubSubJS、postal.js 等）。这些库可以帮助你创建和管理事件总线，从而实现更易于维护和扩展的发布-订阅模式。
+
+### 共享数据(vuex)
+
+#### 基本概念
+
+Vuex 是 Vue.js 应用程序的状态管理库，它采用集中式存储管理应用的所有组件状态，并以相应的规则**保证状态以一种可预测的方式**(就是我们必须提前定义好有哪些数据)发生变化。Vuex 在大型应用中非常有用，特别是当多个组件需要访问和修改共享数据时。
+
+Vuex 可以帮助我们解决以下问题：
+
+1. 组件间状态共享：当多个组件需要访问或修改同一数据时，将状态放在全局的 Vuex 存储中可以避免通过 props 和事件进行多层传递的问题。
+2. 状态修改规范化：Vuex 提供了一种规范化的方法来修改状态，通过提交 mutations（同步操作）和 dispatching actions（异步操作），使得状态管理更加可预测和易于追踪。
+3. 状态历史追踪与调试：Vuex 配合 Vue 开发者工具，可以非常方便地追踪状态变化的历史，从而更容易找到问题所在，提高调试效率。
+4. 插件支持：Vuex 支持插件扩展，这使得开发者可以轻松地添加自定义功能，例如日志记录、持久化存储等。
+
+以下是 Vuex 的主要概念：
+
+1. State（状态）
+
+​	 State 是 Vuex store 的状态对象，用于存储应用的全局数据。你可以将需要共享的数据定义在 state 中。在组件中，你可以通过 `this.$store.state` 访问 state 对象中的数据。
+
+```
+const store = new Vuex.Store({
+  state: {
+    count: 0,
+    user: {
+      name: 'John Doe',
+      age: 30
+    }
+  }
+});
+
+```
+
+
+
+2. Getters（计算属性）
+
+Getters 是 Vuex store 的计算属性，用于根据 state 计算出衍生数据。它类似于 Vue 实例的计算属性，当依赖的 state 变化时，getters 会自动重新计算。你可以在组件中通过 `this.$store.getters` 访问 getters。
+
+```
+const store = new Vuex.Store({
+  state: {
+    count: 0
+  },
+  getters: {
+    doubleCount(state) {
+      return state.count * 2;
+    }
+  }
+});
+
+```
+
+
+
+3. Mutations（变更）
+
+Mutations 是用于修改 state 的唯一方法。它们是同步函数，接收 state 作为第一个参数，以及一个可选的 payload（载荷）作为第二个参数。你可以通过 `this.$store.commit('mutationName', payload)` 在组件中提交 mutation。
+
+```
+const store = new Vuex.Store({
+  state: {
+    count: 0
+  },
+  mutations: {
+    increment(state, payload) {
+      state.count += payload;
+    }
+  }
+});
+
+```
+
+
+
+4. Actions（动作）
+
+Actions 类似于 mutations，但它们负责处理异步操作。Actions 接收一个与 store 实例具有相同属性和方法的 context 对象作为第一个参数，以及一个可选的 payload 作为第二个参数。你可以通过 `this.$store.dispatch('actionName', payload)` 在组件中分发 action。
+
+```
+const store = new Vuex.Store({
+  state: {
+    count: 0
+  },
+  mutations: {
+    increment(state, payload) {
+      state.count += payload;
+    }
+  },
+  actions: {
+    asyncIncrement(context, payload) {
+      setTimeout(() => {
+        context.commit('increment', payload);
+      }, 1000);
+    }
+  }
+});
+
+```
+
+使用 Vuex 的基本步骤如下：
+
+1. 安装并引入 Vuex。 vue2要使用3版本,vue3要使用4版本  npm i vuex@版本
+2. 创建一个 Vuex store，配置 state、getters、mutations、actions 和 modules。
+3. 将 store 注册到 Vue 实例。它是一个插件,我们得使用use
+4. 在组件中使用 store 的 state、getters、mutations 和 actions。
+
+综上所述，Vuex 是一个非常有用的状态管理库，可以帮助我们在 Vue.js 应用程序中更好地管理和维护状态。
+
+#### 例子
+
+我们来写个简单的例子
+
+```
+// src/store/index.js
+import Vue from 'vue';
+import Vuex from 'vuex';
+
+Vue.use(Vuex);  // 创建store对象之间必须先引入vuex
+
+export default new Vuex.Store({
+  state: {
+    count: 0
+  },
+  getters: {
+    getCount: state => state.count
+  },
+  mutations: {
+    increment(state) {  // 这里第一个参数必须是状态, 后面如果需要参数的话我们自己定义,只不过在commit的时候记得传递参数
+      state.count++;
+    },
+    decrement(state) {
+      state.count--;
+    },
+    reset(state) {
+      state.count = 0;
+    }
+  },
+  actions: {
+    increment({ commit }) {  // 第一个参数必须是context,里面包含了commit函数,我们使用解构方法拿到commit, 后面如果需要参数的话我们自己定义,只不过在dispatch的时候记得传递参数
+      commit('increment');
+    },
+    decrement({ commit }) {
+      commit('decrement');
+    },
+    reset({ commit }) {
+      commit('reset');
+    }
+  }
+});
+
+```
+
+然后再main.js中配置好这个store,然后打印vc看看,多了$store
+
+![image-20230403194500853](../../img/vue学习assets/image-20230403194500853.png)
+
+#### 辅助函数
+
+Vuex 的四个辅助函数（`mapState`、`mapGetters`、`mapMutations` 和 `mapActions`）主要用于简化组件中访问 Vuex store 的方式。这些函数可以将 store 中的 state、getters、mutations 和 actions 映射到组件的计算属性或方法中，使得语法更加简洁
+
+这些辅助函数分别用于不同的场景，它们可以映射到计算属性（`mapState` 和 `mapGetters`）或组件方法（`mapMutations` 和 `mapActions`）
+
+##### mapState 和 mapGetters
+
+数据用法：直接使用字符串数组映射 state,getters的键。
+
+```
+import { mapState,mapGetters  } from 'vuex';
+
+export default {
+  computed: {
+    ...mapState(['count']), // 等同于 this.count === this.$store.state.count  这里必须使用数组
+    ...mapGetters(['getCount']) // 等同于 this.getCount === this.$store.getters.getCount
+  }
+}
+```
+
+对象用法：使用对象的键值对映射到组件计算属性的名称。
+
+```
+import { mapState } from 'vuex';
+
+export default {
+  computed: {
+    ...mapState({
+      myCount: 'count' // 等同于 this.myCount === this.$store.state.count
+    }),
+    ...mpaGetters({
+      myGetCount: 'getCount' // 等同于 this.myGetCount === this.$store.getters.getCount
+    }),
+    // 当然还有这种函数式
+    ...mapState({
+    	myCount: state=>state.count
+    })
+    
+  }
+}
+```
+
+##### mapMutations 和  mapActions
+
+数组用法：直接使用字符串数组映射 mutations 的键。
+
+```
+import { mapMutations } from 'vuex';
+
+export default {
+  methods: {
+    ...mapMutations(['increment']) // 等同于 this.increment(a) === this.$store.commit('increment',a)
+  }
+}
+```
+
+对象用法：使用对象的键值对映射到组件方法的名称。
+
+```
+import { mapMutations } from 'vuex';
+
+export default {
+  methods: {
+    ...mapMutations({
+      add: 'increment' // 等同于 this.add() === this.$store.commit('increment')
+    })
+  }
+}
+```
+
+#### 模块化
+
+Vuex 支持将 store 分割成模块（module）。每个模块拥有自己的 state、mutations、actions、getters，甚至是嵌套子模块。模块化使得 Vuex store 更易于组织和维护
+
+我们在配置文件里面就得这么写
+
+```
+
+import vuex from "vuex"
+import vue from "vue"
+
+const student = {
+    state: {
+        studentlist:["djm"]
+    },
+    namespaced:true
+}
+
+const teacher = {
+    state: {
+        teacherlist:["djm"]
+    },
+    namespaced:true
+}
+
+vue.use(vuex)
+export default new vuex.Store({
+    modules: {
+        student,teacher
+    }
+})
+
+```
+
+然后$store里面就不在是原先那样,state变了,不在是我们原先那个数据,而是分了模块
+
+![image-20230403220156122](../../img/vue学习assets/image-20230403220156122.png)
+
+这个namespaced是为了使用那四个辅助函数,现在的四个辅助函数的使用跟前面差不多,只是第一个参数必须是模块名字,第二个参数才是需要拿到的东西
+
+```
+export default {
+  computed: {
+    ...mapGetters('student', ['studentlist'])
+  },
+ }
+```
+
+如果不使用辅助函数的话,就会像下面这样访问了
+
+```
+computed: {
+  count() {
+    return this.$store.state.counter.count;
+  },
+  getCount() {
+    return this.$store.getters['counter/getCount'];
+  }
+},
+methods: {
+  increment() {
+    this.$store.commit('counter/increment');
+  },
+  decrement() {
+    this.$store.commit('counter/decrement');
+  },
+  incrementAsync() {
+    this.$store.dispatch('counter/incrementAsync');
+  }
+}
+
+```

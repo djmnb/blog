@@ -178,4 +178,4 @@ document.querySelectorAll("img").forEach((img)=>{
 
 ## 文件放置问题
 
-我的建议是source目录下只放文章和一些图片就行
+我的建议是source目录下只放文章和一些图片就行, 书籍和代码这些放在根目录下,这些东西本就没必要渲染成html,只需要提交到GitHub就行
