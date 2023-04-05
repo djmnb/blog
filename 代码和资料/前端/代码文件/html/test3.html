@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+
+        let data = {
+            b: 10
+        }
+
+        function isObject(value) {
+            return value !== null && typeof value === 'object';
+        }
+        proxy = new Proxy(data, {
+            get(target, prop, rev) {
+                let value = target
+            },
+            set(target, prop, value) {
+                console.log(prop)
+                console.log("proxyset")
+                data[prop] = value
+            }
+        })
+
+
+
+
+        let o = new observe(proxy)
+
+
+    </script>
+</body>
+
+</html>

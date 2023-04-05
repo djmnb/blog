@@ -1,9 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
-import { Button,Row,DatePicker } from 'element-ui';
-// import 'element-ui/lib/theme-chalk/index.css';
-
-
+import vuex from "vuex"
+import store from "./store/index"
 
 // 关闭生产提示
 Vue.config.productionTip = false
@@ -11,8 +9,11 @@ Vue.config.productionTip = false
 
 
 let vm = new Vue({
+
+  store,
   // 渲染页面
   render: h => h(App),
-  
-}).$mount('#app')   //挂在到id为root的容器中
-
+  mounted() {
+    console.log(this)
+  }
+}).$mount('#root')   //挂在到id为root的容器中

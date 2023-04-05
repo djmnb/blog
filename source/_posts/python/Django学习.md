@@ -173,7 +173,7 @@ URL设置:
 静态文件设置:
 
 - STATIC_URL: 静态文件的URL前缀。Django在查找静态文件时会使用这个前缀。
-- STATICFILES_DIRS: 包含额外静态文件目录的列表，Django会在这些目录中查找静态文件。
+- STATICFILES_DIRS: 包含额外静态文件目录的列表，Django会在这些目录中查找静态文件。默认情况下会在每个app目录下查找static文件夹里面的东西
 - STATIC_ROOT: 静态文件的集中存储路径。运行`collectstatic`命令时，Django会将所有静态文件收集到这个目录中。
 
 # 路由配置
@@ -779,7 +779,7 @@ schema_path：校验文本的 RelaxNG schema 的文件系统路径。
 
 - `to`: 必须指定，表示与之关联的模型。
 - `on_delete`: 必须指定，表示当关联的模型实例被删除时如何处理该实例。可以选择从模型中删除该实例，或将该字段设置为 `null` 或 `default` 值，或引发异常。
-- `related_name`: 指定反向关系的名称，用于从关联的模型中引用该模型。引用名字为 模型名字小写
+- `related_name`: 指定反向关系的名称，用于从关联的模型中引用该模型。默认引用名字为 模型名字小写
 
 这个related_name 有必要讲一下, 相当于建立了一个双向关系,我能得到你,你也能得到我,我们现在有一个个人信息表和个人简历表
 
@@ -837,7 +837,7 @@ print(profile.person)
 - SET_DEFAULT：设置外键为默认值
 - SET()：将外键设置为给定值或调用给定函数
 
-`related_name`: 指定反向关系的名称，用于从关联的模型中引用该模型,引用属性名字为  模型名字小写_set
+`related_name`: 指定反向关系的名称，用于从关联的模型中引用该模型,默认引用属性名字为  模型名字小写_set
 
 ### ManyToManyField
 
@@ -1062,11 +1062,11 @@ objects常用方法就是QuerySet 里面的常用方法,我们可以直接看Que
 
     
 
-**aggregate 与 annotate 的区别**
+### **aggregate 与 annotate 的区别**
 
 aggregate会对当前QuerySet的所有数据当成一个分组,执行聚合函数,而且返回值还是一个字典
 
-annotate 会根据values中的分组执行聚合函数,返回值是QuerySet  里面包含很多字典(如果使用values的话,每个数据自己是一个分组,而且返回值是一个queryset,里面包含的是对象)
+annotate 会根据values中的分组执行聚合函数,返回值是QuerySet  里面包含很多字典(如果不使用values的话,每个数据自己是一个分组,而且返回值是一个queryset,里面包含的是对象)
 
 在实际应用中，您可以根据需要选择使用`aggregate()`或`annotate()`。如果您需要对整个数据集执行聚合操作，可以使用`aggregate()`。如果您需要在分组的基础上执行聚合操作，可以使用`annotate()`
 
@@ -1084,7 +1084,7 @@ Q(question__startswith='Who') | ~Q(pub_date__year=2005)
 
 ### F对象
 
-F对象在Django中用于在查询或更新操作中引用字段的值。它允许在查询中使用模型字段的当前值，而不是传递一个固定值。F对象位于`django.db.models`模块中
+F对象在Django中用于在查询或更新操作中引用字段的值。它允许在查询中**使用模型字段的当前值，而不是传递一个固定值**。F对象位于`django.db.models`模块中
 
 1. 比较字段值：假设我们有一个博客模型，其中有两个字段：浏览次数（views）和点赞次数（likes）。我们想找出浏览次数大于点赞次数的文章：
 
