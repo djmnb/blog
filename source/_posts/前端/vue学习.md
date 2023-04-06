@@ -340,6 +340,20 @@ this.$set(this.someArray, index, newValue);
 
 `v-model` 在表单输入框中绑定的值对应于 Vue 实例中的数据属性。当你在输入框中输入内容时，`v-model` 会自动将输入的值与 Vue 实例中的相应数据属性保持同步。这样，你可以轻松地访问和处理用户输入的数据。
 
+手动连接值绑定和更改事件监听器可能会很麻烦：
+
+```
+<input
+  :value="text"
+  @input="event => text = event.target.value">
+```
+
+`v-model` 指令帮我们简化了这一步骤：
+
+```
+<input v-model="text">
+```
+
 以下是使用 `v-model` 在不同类型的表单元素中绑定的数据含义：
 
 1. **文本输入框（`<input type="text">`）**：`v-model` 会绑定输入框中的文本值。当用户输入内容时，**输入框的值**将实时同步到 Vue 实例的相应数据属性。
@@ -2496,8 +2510,6 @@ setup(){
 
 ### 5.provide 与 inject
 
-<img src="../../img/vue学习assets/components_provide.png" style="width:300px" />
-
 - 作用：实现<strong style="color:#DD5145">祖与后代组件间</strong>通信
 
 - 套路：父组件有一个 `provide` 选项来提供数据，后代组件有一个 `inject` 选项来开始使用这些数据
@@ -2595,10 +2607,10 @@ setup(){
 
 ### 2.Teleport
 
-- 什么是Teleport？—— `Teleport` 是一种能够将我们的<strong style="color:#DD5145">组件html结构</strong>移动到指定位置的技术。
+- 什么是Teleport？—— `Teleport` 是一种能够将我们的<strong style="color:#DD5145">组件html结构</strong>移动到**指定位置的技术**。
 
   ```vue
-  <teleport to="移动位置">
+  <teleport to="移动位置"> // 这里可以放一些选择器
   	<div v-if="isShow" class="mask">
   		<div class="dialog">
   			<h3>我是一个弹窗</h3>
@@ -2610,7 +2622,7 @@ setup(){
 
 ### 3.Suspense
 
-- 等待异步组件时渲染一些额外内容，让应用有更好的用户体验
+- **等待异步组件时渲染一些额外内容**，让应用有更好的用户体验
 
 - 使用步骤：
 
@@ -2803,7 +2815,7 @@ setup(){
 
 ### 父子组件通信
 
-在 Vue 中，父组件和子组件之间通信的主要方法是通过 props 和自定义事件。这种通信方式实现了单向数据流，有助于保持代码的可维护性。以下是父子组件通信的方法及其注意事项：
+在 Vue2 中，父组件和子组件之间通信的主要方法是通过 props 和自定义事件。这种通信方式实现了单向数据流，有助于保持代码的可维护性。以下是父子组件通信的方法及其注意事项：
 
 1. 父组件向子组件传递数据（通过 props）：
    - 父组件在子组件标签上绑定属性，子组件通过 props 接收这些属性。
@@ -3207,3 +3219,58 @@ methods: {
 
 **setup中方法如果被提交到返回值中,那么this就是被代理了的返回值对象,如果没有在返回值中,那么this就是window**,methods方法中的this是组件实例对象
 
+## vue3中给子组件添加v-model指令
+
+当我们给子组件添加一个v-mdel指令之后,它会像如下一样
+
+```
+<CustomInput v-model = "searchText"/>
+
+<CustomInput
+  :modelValue="searchText"
+  @update:modelValue="newValue => searchText = newValue"
+/>
+
+```
+
+相当于添加了一个props,一个自定义事件 事件名字是update:modelValue,我们需要在子组件中声明这两个东西
+
+```
+<!-- CustomInput.vue -->
+<script>
+export default {
+  props: ['modelValue'],
+  emits: ['update:modelValue']
+}
+</script>
+
+<template>
+  <input
+    :value="modelValue"
+    @input="$emit('update:modelValue', $event.target.value)"
+  />
+</template>
+
+```
+
+当然我们也可以定义这个props的名字,这样就相当于下面这样
+
+```
+<MyComponent v-model:title="bookTitle" />
+
+<CustomInput
+  :title="bookTitle"
+  @update:title="newValue => bookTitle = newValue"
+/>
+
+```
+
+
+
+## 命名规则
+
+### props 和 自定义事件
+
+我们在子组件上定义的时候可以使用 HTML标签属性的风格  比如 user-name 但是我们接受的时候得  userName 这样接收,  当然我们也可以定义的时候使用userName这样,这是推荐定义的时候使用短横线分割两个单词的方法
+
+绑定事件的时候可以  @some-event  子组件发起事件的时候可以  $emit("someEvent")
