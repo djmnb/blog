@@ -11,8 +11,12 @@
 <body>
     <script>
 
+        
+
         let data = {
-            b: 10
+            b: {
+                a:10
+            }
         }
 
         function isObject(value) {
@@ -20,11 +24,11 @@
         }
         proxy = new Proxy(data, {
             get(target, prop, rev) {
-                let value = target
+                console.log("proxyget  "+prop)
+                return data[prop]
             },
             set(target, prop, value) {
-                console.log(prop)
-                console.log("proxyset")
+                console.log("proxyset " + prop)
                 data[prop] = value
             }
         })
@@ -32,7 +36,7 @@
 
 
 
-        let o = new observe(proxy)
+ 
 
 
     </script>

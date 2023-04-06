@@ -1,37 +1,33 @@
 <template>
   <div>
     <div>
-     <div> a:{{ a }} &nbsp; b:{{ b }}</div>
-     <div> <button @click="a++">a++</button> <button @click="b++">b++</button></div>
-     <div>{{ c }}</div>
-     <div>{{ d }}</div>
+      <div>a:{{ a }} &nbsp; b:{{ b }}</div>
+      <div>
+        <button @click="a++">a++</button> <button @click="b++">b++</button>
+      </div>
+      <div>{{ c }}</div>
+      <div>{{ d }}</div>
+      <Test helloWorld="hhh"></Test>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
 import { reactive, toRefs, ref, shallowRef } from "vue";
+import Test from "./components/Test.vue"
 
-export default {
-  name: "App",
-  components: {},
-  setup() {
-    let t = {
-      b:1,
-      a: ref(1),
-      c: reactive({
-        mes:"hello"
-      }),
-      d: ref({
-        mes:"hello"
-      })
-    };
-    window.t = t
-    return t;
-  }
+
+const b = 1;
+const a = ref(1)
+const c = reactive({
+  mes: "hello"
+});
+const d = ref({
+  mes: "hello"
+});
+    
    
 
-};
 </script>
 
 <style>
