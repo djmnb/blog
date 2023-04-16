@@ -1265,3 +1265,41 @@ Django 模板语言是一种简单的、可扩展的标记语言，用于在 Dja
 
 我发现如果只是单纯的在定义字段的时候加入related_query_name, 在运行的时候,并不能反向拿到对象
 
+# 额外补充
+
+
+
+## 如何发送QQ邮件
+
+1. 首先，确保已经安装了 `django-smtp-ssl` 包。 pip install django-smtp-ssl
+2. 登录你的 QQ 邮箱，然后进入 [设置 -> 账户 -> POP3/IMAP/SMTP/Exchange/CardDAV/CalDAV服务](https://mail.qq.com/cgi-bin/frame_html) 页面，开启 SMTP 服务。注意，开启后会获得一个授权码，记下这个授权码，稍后在 Django 项目中使用。
+3. 在 `searchproject` 项目的 `settings.py` 文件中，配置邮件发送设置，使用 QQ 邮箱的 SMTP 服务器和刚刚获得的授权码：
+
+```
+EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'your-qq-email@example.com'  # 你的 QQ 邮箱地址
+EMAIL_HOST_PASSWORD = 'your-qq-email-authorization-code'  # 你的 QQ 邮箱授权码
+```
+
+写一个简单的例子吧
+
+```
+from django.core.mail import EmailMultiAlternatives
+from email.utils import formataddr
+def send_verification_code(to_email, verification_code):
+    subject = f'搜题系统验证码'
+    plain_text_message = f'您的验证码为: {verification_code},五分钟内有效'
+    html_message = f'<p>您的验证码为: <span style="color: blue; text-decoration: underline;">{verification_code}</span>,五分钟内有效</p>'
+    from_email = formataddr(('搜题系统',settings.EMAIL_HOST_USER))  # 设置发件人名字和邮箱
+
+    email = EmailMultiAlternatives(subject, plain_text_message, from_email, [to_email])
+    email.attach_alternative(html_message, "text/html")
+    email.send()
+
+```
+
+## 使用内置缓存框架
+
