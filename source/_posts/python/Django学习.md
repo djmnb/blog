@@ -128,13 +128,14 @@ django-admin startproject djangoproject   通过django-admin创建一个Django�
 
 
 
-python manage.py + 子命令
 
-* runserver port or ip:port  启动项目
-* startapp appname  给项目新增一个新应用
-* makemigrations  将模型的更改记录到app/migrations下面  相当于编写sql语句
-* migrate 将app/migrations下的修改更改到数据库,相当于执行sql语句
-* test appname 执行app的测试方法
+
+* python manage.py runserver port or ip:port  启动项目
+* python manage.py startapp appname  给项目新增一个新应用
+* python manage.py makemigrations  将模型的更改记录到app/migrations下面  相当于编写sql语句
+* python manage.py migrate 将app/migrations下的修改更改到数据库,相当于执行sql语句
+* python manage.py test appname 执行app的测试方法
+* python manage.py createsuperuser 创建超级用户
 
 
 
