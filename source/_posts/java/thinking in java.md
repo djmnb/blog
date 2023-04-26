@@ -90,7 +90,7 @@ Java 中有 8 种基本数据类型，它们的大小如下：
 
 在 Java 中，内存泄漏是指一些不再需要的对象占用的内存无法被**垃圾回收器回收，导致内存资源无法释放**。以下是一些可能导致内存泄漏的常见情况：
 
-1. 长生命周期对象持有短生命周期对象的引用：如果一个长生命周期的对象（例如静态变量、单例对象）持有一个短生命周期对象的引用，即使短生命周期对象不再使用，垃圾回收器也无法回收它，因为仍然存在对它的引用。
+1. **长生命周期对象持有短生命周期对象的引用**：如果一个长生命周期的对象（例如静态变量、单例对象）持有一个短生命周期对象的引用，即使短生命周期对象不再使用，垃圾回收器也无法回收它，因为仍然存在对它的引用。
 
 2. 集合类对象：集合类（如 ArrayList、HashMap 等）可能会导致内存泄漏，特别是在长生命周期对象中。如果不及时清理集合中不再使用的对象，它们会一直占用内存。
 
@@ -605,6 +605,207 @@ Java 中有四种访问修饰符，用于限制类、方法、变量和内部类
 
 # 第七章 多态性
 
+## 抽象类
+
+抽象类（Abstract Class）是 Java 中一个重要的面向对象编程概念。它是一种特殊的类，主要用于表示一组相关对象的共同特征。抽象类**不能直接实例化，需要通过继承来创建具体的子类实例**。以下是关于 Java 抽象类的一些关键知识点：
+
+1. 抽象类的定义：使用 `abstract` 关键字来定义抽象类。例如：
+
+   ```java
+   abstract class Animal {
+       // 类的内容
+   }
+   ```
+
+2. 抽象方法：抽象类中可以包含抽象方法，也可以包含具体的方法。抽象方法没有方法体，只有方法签名，使用 `abstract` 关键字定义。子类必须实现抽象方法，否则子类也需要被声明为抽象类。例如：
+
+   ```java
+   abstract class Animal {
+       abstract void makeSound(); // 抽象方法
+       
+       void breathe() {
+           // 具体方法实现
+       }
+   }
+   ```
+
+3. 继承抽象类：当一个类继承了抽象类，它需要实现抽象类中的所有抽象方法。例如：
+
+   ```java
+   class Dog extends Animal {
+       void makeSound() {
+           System.out.println("Dog barks");
+       }
+   }
+   ```
+
+4. 实例化子类：抽象类不能直接实例化，但可以通过实例化其子类来创建对象。例如：
+
+   ```java
+   Animal myDog = new Dog(); // 创建 Dog 类的实例
+   myDog.makeSound();        // 调用子类实现的抽象方法
+   myDog.breathe();          // 调用抽象类中的具体方法
+   ```
+
+5. 抽象类的目的：抽象类的主要目的是为了提供一个公共接口和基本实现，以便其他类可以从抽象类继承并**共享相同的方法和属性**。这有助于实现代码复用和多态。
+
+6. 抽象类与接口：抽象类和接口都是用于定义对象的共同特征和行为。但是，**抽象类可以包含具体方法和属性**，而**接口只能包含抽象方法和常量**。此外，一个类可以实现多个接口，但只能继承一个抽象类。
+
+这些是 Java 抽象类的主要知识点。在实际编程过程中，了解抽象类的概念和用法对于实现高质量、可维护的面向对象程序非常重要。
+
+
+
+## 接口
+
+接口（Interface）是 Java 中另一个重要的面向对象编程概念。接口定义了一组方法的签名，规定了实现接口的类必须具备哪些行为。接口不能直接实例化，需要通过实现接口的类来创建具体对象。以下是关于 Java 接口的一些关键知识点：
+
+1. 接口的定义：使用 `interface` 关键字来定义接口。例如：
+
+   ```java
+   interface Drawable {
+       // 接口的内容
+   }
+   ```
+
+2. 接口方法：在 Java 8 之前，接口中只能包含抽象方法（方法签名，没有方法体）。从 Java 8 开始，接口中**可以包含默认方法（具有默认实现的方法）和静态方法**。例如：
+
+   ```java
+   interface Drawable {
+       void draw(); // 抽象方法
+
+       default void setColor(String color) {
+           // 默认方法实现
+       }
+
+       static void printInfo() {
+           // 静态方法实现
+       }
+   }
+   ```
+
+3. 实现接口：一个类可以通过 `implements` 关键字来实现一个或多个接口。实现接口的类必须实现接口中的所有抽象方法（除非它是抽象类）。例如：
+
+   ```java
+   class Circle implements Drawable {
+       void draw() {
+           System.out.println("Drawing a circle");
+       }
+   }
+   ```
+
+4. 多接口实现：一个类可以实现多个接口。在这种情况下，类必须实现所有接口中的抽象方法。例如：
+
+   ```java
+   class Circle implements Drawable, Resizable {
+       // 实现 Drawable 接口的方法
+       void draw() {
+           System.out.println("Drawing a circle");
+       }
+       
+       // 实现 Resizable 接口的方法
+       void resize(double factor) {
+           // 方法实现
+       }
+   }
+   ```
+
+5. 接口继承：接口可以通过 `extends` 关键字继承其他接口。继承接口的接口将包含所有父接口的抽象方法。例如：
+
+   ```java
+   interface MovableDrawable extends Drawable {
+       void move(int x, int y);
+   }
+   ```
+
+6. 接口的目的：**接口的主要目的是为了提供一种约定，规定实现接口的类应该具备哪些行为。这有助于实现多态和提高代码的可维护性。**
+
+7. 接口与抽象类的区别：接口和抽象类都是用于定义对象的共同特征和行为。但是，抽象类可以包含具体方法和属性，而接口只能包含抽象方法和常量。此外，一个类可以实现多个接口，但只能继承一个抽象类。
+
+这些是 Java 接口的主要知识点。了解接口的概念和用法对于实现高质量、可维护的面向对象程序非常重要。
+
+## 多态
+
+Java 中的多态是面向对象编程的一个核心特性，它允许在运行时根据对象的实际类型来执行特定的实现，而非仅根据引用类型。多态实现了代码的灵活性和可扩展性，使得我们可以编写更加通用且易于维护的代码。
+
+多态的主要特点如下：
+
+1. 继承：多态的基础是继承。子类继承父类，从而可以拥有父类的属性和方法。这为多态提供了基本的条件。
+
+2. 方法重写（Override）：子类可以重写父类的方法，以提供自己的实现。**当我们使用子类对象调用该方法时，将执行子类的实现，而非父类的实现。**
+
+3. 向上转型（Upcasting）：**子类的对象可以隐式地转换为父类类型。这意味着我们可以使用父类类型的引用来指向子类的对象**。向上转型在运行时不会**丢失对象的类型信息**。
+
+4. 动态方法分派：**多态的核心在于在运行时根据对象的实际类型动态地决定调用哪个方法实现。也就是说，当我们使用父类类型的引用调用一个被子类重写的方法时，Java 虚拟机会在运行时确定执行的具体方法。**
+
+这里有一个多态的例子：
+
+```java
+// 父类
+class Animal {
+    void speak() {
+        System.out.println("The animal speaks.");
+    }
+}
+
+// 子类 1
+class Dog extends Animal {
+    @Override
+    void speak() {
+        System.out.println("The dog barks.");
+    }
+}
+
+// 子类 2
+class Cat extends Animal {
+    @Override
+    void speak() {
+        System.out.println("The cat meows.");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // 向上转型
+        Animal myAnimal = new Dog();
+        myAnimal.speak(); // 输出：The dog barks.
+
+        myAnimal = new Cat();
+        myAnimal.speak(); // 输出：The cat meows.
+
+        // 直接使用父类类型的引用
+        makeAnimalSpeak(new Dog()); // 输出：The dog barks.
+        makeAnimalSpeak(new Cat()); // 输出：The cat meows.
+    }
+
+    // 多态的方法
+    public static void makeAnimalSpeak(Animal animal) {
+        animal.speak();
+    }
+}
+```
+
+在这个例子中，`Dog` 和 `Cat` 类都继承自 `Animal` 类并重写了 `speak` 方法。我们可以看到，当我们使用 `Animal` 类型的引用调用 `speak` 方法时，实际执行的方法取决于对象的实际类型。这就是多态的体现。
+
+总之，Java 中的多态允许我们编写更加灵活且易于维护的代码。多态主要涉及到继承、方法重写、向上转型、动态方法分配.
+
+### 多态的优点
+
+多态在 Java 和其他面向对象编程语言中具有很多优势，以下是一些主要优势：
+
+1. 代码重用：多态允许子类继承父类的属性和方法，从而减少了代码的重复。同时，子类可以根据需求重写或扩展父类的方法，使得代码更加灵活。
+
+2. 解耦：多态可以降低代码之间的耦合度。当我们编写一个方法时，**只需要关注该方法所需的接口或父类，而不必关心具体的实现类**。这使得我们可以在不修改方法的情况下，替换或扩展实现类。
+
+3. 提高可扩展性：多态使得我们可以轻松地扩展程序的功能。例如，**我们可以添加新的子类来扩展程序的功能，而不需要修改已有的代码**。
+
+4. 提高代码的可维护性：由于多态降低了代码之间的耦合度，使得代码结构更加清晰，这有助于提高代码的可维护性。
+
+5. 接口抽象：**多态允许我们将接口与实现分离，使得我们可以专注于设计接口，而不必关心具体的实现**。这有助于提高代码的可读性和可维护性。
+
+6. 更灵活的代码组织：通过多态，我们可以使用父类或接口类型的引用来引用子类的对象。这使得我们可以在运行时动态地决定使用哪个对象，从而实现更加灵活的代码组织。
+
+总之，多态是面向对象编程的一个核心特性，它为我们提供了代码重用、解耦、可扩展性、可维护性等诸多优势。通过掌握多态，我们可以编写更加优雅、灵活且易于维护的代码。
+
 ## 内部类
 
 ### 定义
@@ -840,11 +1041,581 @@ class Outer {
 4. **实现多重继承**：Java 不支持多重继承，但可以通过内部类实现一种形式的多重继承。你可以创建一个内部类，使其继承自另一个类，这样外部类就可以间接地继承内部类的父类。
 5. **用于回调和事件处理**：内部类常用于回调和事件处理。例如，在图形用户界面（GUI）编程中，匿名内部类通常用于实现事件监听器。这样可以将事件处理逻辑与其他代码分离，提高代码的组织和可读性。
 
+我们来看一段代码吧
+
+```
+import java.util.ArrayList;
+import java.util.Iterator;
+
+public class MyList implements Iterable<Integer> {
+
+    private final int[] array = {1,2,3,4,5};
+
+    class MyIterator implements java.util.Iterator<Integer>{
+        private int index = 0;
+
+        @Override
+        public boolean hasNext() {
+            return index < array.length;
+        }
+
+        @Override
+        public Integer next() {
+            return array[index++];
+        }
+
+    }
+
+    public Iterator<Integer> iterator() {
+        return new MyIterator();
+    }
+
+    public static void main(String[] args) {
+        MyList myList = new MyList();
+        ArrayList<Integer> integers = new ArrayList<>();
+        for (Integer integer : myList) {
+            System.out.println(integer);
+        }
+    }
+
+}
+
+```
+
+这里我们自己定义了一个迭代器,这个迭代器就能很方便的访问数据,如果我们不使用内部类的的话,我们需要迭代器显示持有我们的对象,这样是比较麻烦的
+
 ## 总结
 
-内部类(静态内部类 成员内部类 局部内部类 匿名内部类), 内部类这里在不同版本有不同的表现,在jdk16开始就有了一些变化
+本章主要讲述了抽象类,接口,还有多态的相关概念,内部类(静态内部类 成员内部类 局部内部类 匿名内部类), 内部类这里在不同版本有不同的表现,在jdk16开始就有了一些变化
+
+
+
+# 第九章 异常
+
+## Error
+
+在 Java 中，`Error` 是一个继承自 `Throwable` 类的子类，表示程序运行过程中可能遇到的严重问题。**这些问题通常与 JVM（Java 虚拟机）或系统相关，如内存溢出、虚拟机错误、类加载错误等。`Error` 表示的问题通常是无法预期或无法恢复的，程序员通常无法处理这些错误。**
+
+`Error` 的作用是在程序运行时提供一种表示严重问题的机制，以便于开发者了解发生的问题并进行调试。当一个 `Error` 发生时，程序通常会终止执行，因为这些错误通常意味着程序无法继续运行。然而，在实际开发过程中，程序员通常不需要处理 `Error`，因为这些错误往往是无法恢复的。
+
+一些常见的 `Error` 子类包括：
+
+- `OutOfMemoryError`：表示 JVM 中没有足够的内存来分配对象。
+- `StackOverflowError`：表示线程的栈空间已满，无法继续执行。
+- `LinkageError`：表示类的加载或链接过程中发生错误，例如 `NoClassDefFoundError` 或 `ClassNotFoundException`。
+- `VirtualMachineError`：表示 JVM 发生内部错误，例如 `InternalError` 或 `UnknownError`。
+
+尽管 `Error` 及其子类表示程序中的严重问题，但请注意，这些类并不是用于表示程序逻辑错误或可预期的异常情况。对于这些情况，应使用 `Exception` 类及其子类。
+
+
+
+## Exception
+
+Java 异常是程序执行过程中发生的错误或异常情况。Java 提供了一套异常处理机制，帮助程序员在出现异常时捕获和处理它们，以保证程序的正常运行。以下是 Java 异常的一些关键知识点：
+
+1. 异常分类：Java 异常主要分为两类：**受检异常（Checked Exceptions）**和**非受检异常（Unchecked Exceptions）**。受检异常继承自 `java.lang.Exception` 类，需要显式处理（捕获或声明抛出）。**非受检异常继承自 `java.lang.RuntimeException` 类，不强制处理，可以选择性捕获。**
+
+2. 常见的异常类：
+   - 受检异常：`IOException`（输入输出异常）、`FileNotFoundException`（找不到文件异常）、`ClassNotFoundException`（找不到类异常）等。
+   - 非受检异常：`NullPointerException`（空指针异常）、`IndexOutOfBoundsException`（数组越界异常）、`ArithmeticException`（算术异常，如除以零）等。
+
+3. 异常处理：Java 使用 `try-catch` 语句块来捕获和处理异常。`try` 块包含可能抛出异常的代码，`catch` 块用于捕获特定类型的异常并处理。例如：
+
+```java
+try {
+    // 可能抛出异常的代码
+} catch (ExceptionType1 e) {
+    // 处理 ExceptionType1 的代码
+} catch (ExceptionType2 e) {
+    // 处理 ExceptionType2 的代码
+}
+```
+
+4. `finally` 块：`finally` 块是一个可选的代码块，它在 `try-catch` 语句块之后执行。无论 `try` 块中是否发生异常，`finally` 块的代码都会执行。通常用于关闭资源，如文件、数据库连接等。
+
+```java
+try {
+    // 可能抛出异常的代码
+} catch (ExceptionType e) {
+    // 处理异常的代码
+} finally {
+    // 总是执行的代码
+}
+```
+
+5. **异常传播**：当方法内部发生异常，且未在方法内部处理时，异常会传播到调用方法的地方。如果调用方法也没有处理异常，异常会继续传播，直到被捕获或导致程序终止。可以使用 `throws` 关键字声明方法可能抛出的异常类型，将异常传播给调用者处理。例如：
+
+```java
+public void readFile(String fileName) throws FileNotFoundException {
+    // 可能抛出 FileNotFoundException 的代码
+}
+```
+
+6. 自定义异常：可以通过继承 `Exception` 类或其子类来创建自定义异常。自定义异常可以为特定问题提供更具体的信息。例如：
+
+```java
+class CustomException extends Exception {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+```
+
+易错点：
+
+1. 不要捕获所有异常：尽量避免使用 `catch (Exception e)` 来捕获所有类型的异常，因为这样会使得代码难以维护和调试。应该尽量捕获和处理具体的异常类型，以便更好地了解和处理问题。
+2. 不要忽略异常：捕获异常后，应该对异常进行处理，例如记录日志、通知用户或尝试恢复。不要只是简单地捕获异常而不进行处理，这样可能会掩盖潜在的问题。
+3. 适当地处理异常：在捕获异常时，应尽量采取适当的措施来处理异常。例如，可以关闭资源、释放内存、进行回滚操作等。此外，需要确保资源在出现异常时能够正确关闭，可以在 `finally` 块中执行这些操作。
+4. **优先使用非受检异常**：在自定义异常时，如果异常是由编程错误导致的（例如空指针、数组越界等），优先使用非受检异常。如果异常是由外部因素导致的（例如 I/O 错误、网络问题等），则使用受检异常。
+5. 不要过度使用异常：异常处理会导致程序运行效率降低，因此应该谨慎使用。在可以避免使用异常的情况下，尽量使用其他方式来处理错误。
+6. 使用异常链：当捕获到一个异常，并需要抛出另一个异常时，可以使用异常链将原始异常作为新异常的一个属性，从而保留原始异常的信息。例如：
+
+```java
+try {
+    // 可能抛出 IOException 的代码
+} catch (IOException e) {
+    throw new CustomException("Failed to perform operation", e);
+}
+```
+
+7. 细化异常捕获顺序：`catch` 块是按照顺序执行的，所以应该从最具体的异常类型开始捕获，然后逐渐向上捕获更一般的异常类型。否则，具体的异常类型可能会被更一般的异常类型捕获，从而导致处理逻辑出错。
+
+```java
+try {
+    // 可能抛出异常的代码
+} catch (FileNotFoundException e) {
+    // 处理 FileNotFoundException 的代码
+} catch (IOException e) {
+    // 处理 IOException 的代码
+} catch (Exception e) {
+    // 处理更一般的异常
+}
+```
+
+了解 Java 异常的知识点、易错点以及如何正确地使用异常处理机制对于编写健壮、可维护的代码至关重要
+
+## Error和Exception的区别
+
+在 Java 中，`Error` 和 `Exception` 都是继承自 `Throwable` 类的子类，它们表示程序运行过程中可能遇到的问题。尽管它们都表示程序中的错误或异常情况，但它们之间存在一些关键区别：
+
+1. 用途：
+
+   - `Error`：表示程序运行过程中遇到的严重问题，**这些问题通常是 JVM（Java 虚拟机）或系统相关的，如内存溢出、虚拟机错误等。`Error` 表示的问题通常是无法预期或无法恢复的，程序员通常无法处理这些错误**。
+   
+   - `Exception`：表示程序运行过程中可能遇到的问题，这些问题通常是由程序逻辑错误或外部资源（如文件、网络连接等）引起的。`Exception` 表示的问题可以是预期的，程序员可以通过编写适当的代码来处理这些异常。
+
+2. 处理方式：
+
+   - `Error`：由于 `Error` 表示的问题通常是严重的且无法恢复的，因此程序员不需要（也通常无法）处理这些错误。当遇到 `Error` 时，程序通常会终止执行。
+   
+   - `Exception`：程序员可以使用 try-catch-finally 语句处理 `Exception`。Java 异常分为两种类型：受检异常（checked exceptions）和非受检异常（unchecked exceptions）。受检异常需要显式处理（使用 try-catch 语句或在方法声明中使用 `throws` 关键字），而非受检异常可以选择性处理。
+
+3. 类层次结构：
+
+   - `Error`：`Error` 类及其子类位于 Java 类层次结构中的 `java.lang` 包下。一些常见的 `Error` 子类包括 `OutOfMemoryError`、`StackOverflowError`、`LinkageError` 等。
+   
+   - `Exception`：`Exception` 类及其子类位于 Java 类层次结构中的 `java.lang` 包下。`Exception` 有很多子类，如 `IOException`、`SQLException`、`NullPointerException`、`IllegalArgumentException` 等。其中，`RuntimeException` 类是非受检异常的基类。
+
+总之，`Error` 和 `Exception` 在 Java 中都表示程序运行过程中可能遇到的问题，但它们的用途、处理方式和类层次结构存在一些关键区别。`Error` 表示严重的、无法恢复的问题，通常无法处理；而 `Exception` 表示可以预期和处理的问题。
+
+## 总结
+
+本章主要讲了java异常的一些知识点,包括异常的定义,如果使用异常,捕获异常,自定义异常
+
+# 第十章  IO 系统
+
+
+
+## IO流
+
+Java I/O（输入/输出）库提供了许多类来处理数据流。这些类可以分为字节流和字符流。以下是 Java I/O 流的用法、注意点和特点的总结。
+
+1. 字节流（Byte Streams）：
+   
+   字节流用于处理原始二进制数据。它们的主要类是 InputStream 和 OutputStream。字节流的主要子类有：
+
+   - **FileInputStream**：用于从文件中读取字节。
+   - FileOutputStream：用于将字节写入文件。
+   - ByteArrayInputStream：用于从字节数组中读取字节。
+   - ByteArrayOutputStream：用于将字节写入字节数组。
+   - BufferedInputStream：用于缓冲从其他输入流中读取的字节，以提高性能。
+   - BufferedOutputStream：用于缓冲要写入其他输出流的字节，以提高性能。
+
+   注意点和特点：
+   
+   - 字节流不处理字符编码，因此可能导致字符数据在读取或写入时出现乱码。
+   - 在处理文本数据时，推荐使用字符流，因为它们能够更好地处理字符编码问题。
+   - 为了避免资源泄漏，确保在使用完 I/O 流后正确地关闭它们。
+
+2. 字符流（Character Streams）：
+
+   字符流用于处理字符数据。它们的主要类是 Reader 和 Writer。字符流的主要子类有：
+
+   - FileReader：用于从文件中读取字符。
+   - FileWriter：用于将字符写入文件。
+   - InputStreamReader：用于将字节流转换为字符流，可以指定字符编码。
+   - OutputStreamWriter：用于将字符流转换为字节流，可以指定字符编码。
+   - BufferedReader：用于缓冲从其他 Reader 中读取的字符，以提高性能。
+   - BufferedWriter：用于缓冲要写入其他 Writer 的字符，以提高性能。
+   - StringReader：用于从字符串中读取字符。
+   - StringWriter：用于将字符写入字符串。
+
+   注意点和特点：
+   
+   - 字符流可以处理字符编码，因此更适合处理文本数据。
+   - InputStreamReader 和 OutputStreamWriter 类允许指定字符编码，以便在不同平台之间正确处理文本数据。
+   - 为了避免资源泄漏，确保在使用完 I/O 流后正确地关闭它们。
+
+除了上述基本的字节流和字符流类之外，Java I/O 还提供了许多实用的过滤器和适配器类，如 DataInputStream、DataOutputStream、PrintStream、PrintWriter 等，它们为特定类型的数据提供了更高级的功能。
+
+在使用 Java I/O 流时，注意选择合适的流类型，并确保在使用完流后正确地关闭它们以避免资源泄漏。
+
+## File类
+
+`File` 类是 Java I/O 库中用于表示文件和目录路径名的抽象表示。以下是 `File` 类的主要用法：
+
+1. 创建文件和目录：
+
+   - `createNewFile()`：创建一个新的空文件，如果文件不存在。
+   - `mkdir()`：创建一个新的目录，如果目录不存在。
+   - `mkdirs()`：创建一个新的目录及其所有必需的父目录。
+
+2. 文件和目录操作：
+
+   - `renameTo(File dest)`：重命名文件或目录。
+   - `delete()`：删除文件或目录。
+   - `deleteOnExit()`：请求在 JVM 退出时删除文件或目录。
+
+3. 获取文件和目录属性：
+
+   - `exists()`：判断文件或目录是否存在。
+   - `isFile()`：判断是否是文件。
+   - `isDirectory()`：判断是否是目录。
+   - `length()`：获取文件的长度（字节数）。
+   - `getName()`：获取文件或目录的名称。
+   - `getAbsolutePath()`：获取文件或目录的绝对路径。
+   - `getPath()`：获取文件或目录的相对路径。
+   - `getParent()`：获取文件或目录的父目录。
+   - `lastModified()`：获取文件或目录的最后修改时间。
+   - `list()`：获取目录中的文件和目录名列表。
+   - `listFiles()`：获取目录中的 `File` 对象列表。
+   - `list(FilenameFilter filter)`：使用指定的过滤器获取目录中的文件和目录名列表。
+   - `listFiles(FileFilter filter)`：使用指定的过滤器获取目录中的 `File` 对象列表。
+
+4. 设置文件和目录属性：
+
+   - `setLastModified(long time)`：设置文件或目录的最后修改时间。
+   - `setReadOnly()`：设置文件或目录为只读。
+   - `setWritable(boolean writable)`：设置文件或目录的可写属性。
+   - `setExecutable(boolean executable)`：设置文件或目录的可执行属性。
+
+5. 检查文件权限：
+
+   - `canRead()`：检查文件或目录是否可读。
+   - `canWrite()`：检查文件或目录是否可写。
+   - `canExecute()`：检查文件是否可执行。
+
+这是 `File` 类的主要用法。在使用 `File` 类时，请注意正确处理异常（如 `IOException`），并在操作完成后关闭文件和释放资源。注意，虽然 `File` 类提供了许多文件和目录操作的方法，但在 Java NIO 的 `Path` 和 `Files` 类中，也提供了更现代且推荐使用的 API 来处理文件和目录。
+
+# 第十一章 反射
+
+## Class对象
+
+在 Java 中，`Class` 对象是一个特殊的对象，用于表示加载到 Java 虚拟机 (JVM) 中的类的**元数据**。**`Class` 对象包含了与类相关的信息，如类名、类的父类、类实现的接口、类的字段、构造函数、方法等。每个加载到 JVM 中的类都有一个对应的 `Class` 对象。**
+
+当 JVM 加载一个类时，它会创建一个 `Class` 对象来表示这个类。之后，您可以使用这个 `Class` 对象来获取有关该类的信息，实例化该类的对象，以及执行其他与类相关的操作。
+
+要获取一个类的 `Class` 对象，可以使用以下方法之一：
+
+1. 对于已知的类，可以使用 `.class` 语法获取其对应的 `Class` 对象。例如：
+
+   ```java
+   Class<?> stringClass = String.class;
+   ```
+
+2. 如果您有一个对象实例，可以调用该对象的 `getClass()` 方法来获取其对应的 `Class` 对象。例如：
+
+   ```java
+   String str = "Hello, World!";
+   Class<?> objClass = str.getClass();
+   ```
+
+3. 如果您知道类的完全限定名（包括包名和类名），可以使用 `Class.forName()` 方法获取其 `Class` 对象。例如：
+
+   ```java
+   Class<?> clazz = Class.forName("java.lang.String");
+   ```
+
+获取到 `Class` 对象后，可以使用它的方法来获取类的信息，实例化对象，以及执行其他操作。一些常用的 `Class` 对象方法包括：
+
+- `getName()`：获取类的完全限定名。
+- `getSimpleName()`：获取类的简单名称。
+- `getSuperclass()`：获取类的父类。
+- `getInterfaces()`：获取类实现的接口。
+- `getFields()`、`getMethods()`、`getConstructors()` 等：获取类的字段、方法、构造函数等。
+- `newInstance()`：（已弃用）创建类的实例。建议使用 `getConstructor()` 方法获取构造函数，然后调用 `newInstance()` 方法创建对象。
+- `isAssignableFrom(Class<?> cls)`：检查当前 `Class` 对象是否可以从指定的类赋值。
+- `isInstance(Object obj)`：检查指定的对象是否是当前 `Class` 对象表示的类的实例。
+- `cast(Object obj)`：将指定对象强制转换为当前 `Class` 对象表示的类的类型。
+
+这些方法使您能够在运行时获取和操作类的信息。这种能力在编写通用代码、实现框架或执行动态操作时非常有用。
+
+## 反射
+
+Java 反射（Reflection）是一个强大的特性，允许在运行时检查和操作类、接口、字段和方法的信息。通过反射，您可以动态地创建对象、调用方法、获取和设置字段值等。这种能力在编写通用代码、实现框架或执行动态操作时非常有用。
+
+以下是 Java 反射的一些主要用途：
+
+1. 动态创建对象：通过反射，您可以在运行时动态地创建对象，而无需在编译时知道类的确切类型。例如：
+
+   ```java
+   Class<?> clazz = Class.forName("com.example.MyClass");
+   Object obj = clazz.getConstructor().newInstance();
+   ```
+
+2. 获取和调用方法：您可以使用反射来获取类的方法，并在运行时动态地调用它们。例如：
+
+   ```java
+   Class<?> clazz = Class.forName("com.example.MyClass");
+   Method method = clazz.getMethod("myMethod", String.class);
+   Object result = method.invoke(obj, "Hello, World!");
+   ```
+
+3. 获取和设置字段值：反射允许您获取类的字段，并在运行时获取和设置它们的值。例如：
+
+   ```java
+   Class<?> clazz = Class.forName("com.example.MyClass");
+   Field field = clazz.getField("myField");
+   Object fieldValue = field.get(obj);
+   field.set(obj, "New Value");
+   ```
+
+4. 获取注解:
+
+   在 Java 中，注解（Annotation）的值在编译时确定，并存储在类文件中。在运行时，您可以使用反射来访问注解的值，但不能修改它们。注解的值被视为不可变，因此在运行时尝试更改它们将不起作用。
+
+   要访问注解的值，您可以通过以下方法：
+
+   1. 获取类上的注解：
+
+      ```java
+      Class<?> clazz = Class.forName("com.example.MyClass");
+      MyAnnotation myAnnotation = clazz.getAnnotation(MyAnnotation.class);
+      if (myAnnotation != null) {
+          String value = myAnnotation.value();
+          System.out.println("Value: " + value);
+      }
+      ```
+
+   2. 获取方法上的注解：
+
+      ```java
+      Method method = clazz.getMethod("myMethod", String.class);
+      MyAnnotation myAnnotation = method.getAnnotation(MyAnnotation.class);
+      if (myAnnotation != null) {
+          String value = myAnnotation.value();
+          System.out.println("Value: " + value);
+      }
+      ```
+
+   3. 获取字段上的注解：
+
+      ```java
+      Field field = clazz.getField("myField");
+      MyAnnotation myAnnotation = field.getAnnotation(MyAnnotation.class);
+      if (myAnnotation != null) {
+          String value = myAnnotation.value();
+          System.out.println("Value: " + value);
+      }
+      ```
+
+   4. 获取构造函数上的注解：
+
+      ```java
+      Constructor<?> constructor = clazz.getConstructor();
+      MyAnnotation myAnnotation = constructor.getAnnotation(MyAnnotation.class);
+      if (myAnnotation != null) {
+          String value = myAnnotation.value();
+          System.out.println("Value: " + value);
+      }
+      ```
+
+   
+
+5. 动态代理：Java 反射还允许您在运行时动态地创建代理对象，以便在不修改原始类的情况下拦截和修改方法调用。例如，您可以使用 `java.lang.reflect.Proxy` 类来创建动态代理。
+
+以下是使用 Java 反射时需要注意的一些事项：
+
+1. 性能：反射操作通常比非反射操作慢，因为它们涉及到运行时类型检查和其他开销。因此，在关注性能的场景中，谨慎使用反射。
+
+2. 安全：反射可能会破坏封装，因为它允许您访问和修改私有字段和方法。在使用反射时，请确保您遵循最佳实践，以防止意外地暴露敏感信息或破坏对象状态。
+
+3. 兼容性：反射代码可能会更加脆弱，因为它依赖于在运行时确定的类型信息。如果类的结构发生变化（例如，字段或方法被重命名、移除或更改），反射代码可能会出现错误。在使用反射时，请确保您的代码能够适应这些变化，或者使用其他机制（如接口或依赖注入）来减小耦合度。
+
+尽管 Java 反射具有一定的复杂性和潜在风险，但在许多场景下，它为您提供了强大的动态编程能力
+
+总结
 
 # 补充
+
+## 注解
+
+Java 注解（Annotation）是一种为代码添加元数据的机制。它们可以用于提供额外的信息，**以便在编译时或运行时进行处理。注解可以应用于类、方法、字段、参数和其他代码元素**。以下是关于 Java 注解的一些关键概念和用法：
+
+1. 定义注解：
+
+   要定义注解，需要使用 `@interface` 关键字。注解可以具有属性（也称为元素），这些属性看起来像方法，但实际上是定义了注解的一部分。属性可以具有默认值。
+
+   ```java
+   import java.lang.annotation.*;
+   
+   @Retention(RetentionPolicy.RUNTIME)
+   @Target(ElementType.TYPE)
+   public @interface MyAnnotation {
+       String value() default "default_value";
+       String[] tags() default {};
+       int priority() default 0;
+   }
+   ```
+
+   以上代码定义了一个名为 `MyAnnotation` 的注解，具有 `value`、`tags` 和 `priority` 属性。
+
+2. 应用注解：
+
+   一旦定义了注解，就可以将其应用于代码元素（如类、方法、字段等）。例如：
+
+   ```java
+   @MyAnnotation(value = "example", tags = {"tag1", "tag2"}, priority = 1)
+   public class MyClass {
+       @MyAnnotation("field_annotation")  // 默认赋值给value
+       private String myField;
+   
+       @MyAnnotation
+       public void myMethod() {
+           // ...
+       }
+   }
+   ```
+
+3. 元注解
+
+   1. `@Retention`：指定注解的保留策略。可能的取值包括：
+
+      - `RetentionPolicy.SOURCE`：注解仅在源代码中可用，编译器会在编译时丢弃它。
+      - `RetentionPolicy.CLASS`：注解在编译后的类文件中可用，但 JVM 在运行时不保留它。这是默认保留策略。
+      - `RetentionPolicy.RUNTIME`：注解在运行时可用，因此可以通过反射访问。
+
+   2. `@Target`：限制注解可以应用的 Java 元素类型。可能的取值包括：
+
+      - `ElementType.TYPE`：类、接口、枚举或注解。
+      - `ElementType.FIELD`：字段。
+      - `ElementType.METHOD`：方法。
+      - `ElementType.PARAMETER`：方法参数。
+      - `ElementType.CONSTRUCTOR`：构造函数。
+      - `ElementType.LOCAL_VARIABLE`：局部变量。
+      - `ElementType.ANNOTATION_TYPE`：注解类型。
+      - `ElementType.PACKAGE`：包。
+      - `ElementType.TYPE_PARAMETER`：类型参数（Java 8 及更高版本）。
+      - `ElementType.TYPE_USE`：类型使用（Java 8 及更高版本）。
+
+   3. `@Documented`：将注解信息包含在 Javadoc 文档中。此元注解没有取值。
+
+   4. `@Inherited`：表示注解可从父类继承。此元注解没有取值。请注意，`@Inherited` 仅对类注解有效，对方法、字段和构造函数注解无效。
+
+   5. `@Repeatable`：表示注解可以在同一个元素上多次使用。它的取值是一个容器注解，该容器注解用于存储重复注解。
+
+## 泛型
+
+泛型（Generics）是 Java 5 引入的一项功能，**它允许在编译时进行类型检查。泛型的主要目标是提高代码的类型安全性和可重用性**。在这里，我们将全面了解泛型的概念、优点和使用方法。
+
+1. 什么是泛型？
+
+泛型允许开发人员在类、接口和方法中使用类型参数。类型参数是一个占位符，可以在实例化或调用泛型类型时指定具体类型。这样，可以编写一次代码，然后在不同情况下重用它，而无需修改源代码。
+
+2. 泛型类和泛型接口：
+
+泛型类和泛型接口是使用类型参数定义的类和接口。例如：
+
+```java
+public class GenericBox<T> {
+    private T item;
+
+    public void setItem(T item) {
+        this.item = item;
+    }
+
+    public T getItem() {
+        return item;
+    }
+}
+
+public interface GenericComparator<T> {
+    int compare(T a, T b);
+}
+```
+
+3. 泛型方法：
+
+泛型方法是在方法签名中使用类型参数定义的方法。泛型方法可以在泛型类、泛型接口或普通类中定义。例如：
+
+```java
+public class GenericUtils {
+    public static <T> T getFirst(List<T> list) {
+        return list.get(0);
+    }
+}
+```
+
+4. 类型擦除：
+
+为了确保与没有使用泛型的旧代码兼容，**Java 编译器在编译泛型代码时会执行类型擦除**。**类型擦除意味着编译器将泛型类型参数替换为其限定类型（通常是 Object）或限定类型的上界。因此，在运行时，泛型信息被擦除，不能在运行时查询泛型类型信息**。
+
+5. 有界类型参数：
+
+有时，我们希望限制泛型类型参数可以使用的类型。可以通过在类型参数后面添加 extends 关键字和相应的限定类型来实现这一目标。例如：
+
+```java
+public class GenericBox<T extends Comparable<T>> {
+    // ...
+}
+```
+
+> 这里表示T必须是Comparable的子类型 也就是说T得是Comparable的子类或者接口实现
+
+6. 通配符：
+
+通配符是一种特殊的类型参数，用于表示未知类型。通配符在泛型类型中表示为问号（?）。通配符分为三类：
+
+   - 无限制通配符：`<?>`，表示任何类型。
+   - 上界通配符：`<? extends T>`，表示 T 或其子类。
+   - 下界通配符：`<? super T>`，表示 T 或其超类。
+
+7. 泛型的优势：
+
+   - 类型安全：泛型在编译时进行类型检查，从而减少了在运行时由于类型不匹配引发的错误。
+   - 代码重用：可以使用泛型编写一段代码，然后在不同的类型场景中重用它。
+
+      - 提高代码可读性：泛型使代码更具可读性，因为它明确地指定了类型，有助于理解代码的预期行为和功能。
+
+8. 泛型限制：
+
+虽然泛型提供了许多优势，但它也有一些限制：
+
+   - 由于类型擦除，泛型类型参数在运行时不可用。这意味着不能在运行时查询泛型类型信息。
+   - 不能实例化泛型类型参数。例如，不能使用 `new T()`。
+   - 不能创建泛型数组。例如，不能创建 `T[]` 类型的数组。
+   - 不能将基本类型用作泛型类型参数。必须使用相应的包装类，如 `Integer`、`Double` 等。
+
+9. PECS（Producer Extends Consumer Super）原则：
+
+PECS 原则是一种关于如何使用通配符的经验法则。它表示：
+
+   - 当你需要从泛型类型中获取（生产）数据时，使用 `extends`（上界通配符）。
+   - 当你需要将数据放入（消费）泛型类型中时，使用 `super`（下界通配符）。
+
+这个原则有助于确保泛型类型在生产和消费数据时的类型安全性。
+
+总结一下，泛型是 Java 中非常重要的特性，它提高了代码的类型安全性、可重用性和可读性。通过掌握泛型类、泛型接口、泛型方法、类型擦除、有界类型参数、通配符、泛型的优势和限制，以及 PECS 原则，你将能够更有效地使用泛型来编写高质量的 Java 代码。
 
 ## 类的加载
 
@@ -969,6 +1740,14 @@ java -classpath library.jar -jar myprogram.jar
    ```
    这个命令将把 `arg1`、`arg2` 和 `arg3` 作为命令行参数传递给 `Main` 类的 `main` 方法。
 
+5. **更改当前工作目录**：**这样的话可以更改文件读写的位置,不会影响类路径**,这可以通过设置 JVM 参数 `user.dir` 来实现。例如，在启动 Java 程序时，可以使用以下命令：
+
+   ```
+   java -Duser.dir=/path/to/your/directory YourMainClass
+   ```
+
+   请注意，这种方法在程序运行时更改当前工作目录的能力有限，因为它取决于 JVM 的实现。
+
 这些是 `java` 和 `javac` 命令的一些常用选项。实际上，这两个命令还有许多其他选项和功能，您可以在官方文档中找到更详细的信息。
 
 
@@ -1061,3 +1840,148 @@ JDK（Java Development Kit）、JRE（Java Runtime Environment）和 JVM（Java 
 - JDK 是 Java 开发工具包，包括 JRE 和开发工具（编译器、调试器等），用于开发 Java 程序。
 
 JDK、JRE 和 JVM 之间的关系是：JDK 包含 JRE，JRE 包含 JVM。在 Java 开发和运行过程中，这三者共同协作，使得 Java 程序能够跨平台运行。
+
+## 路径问题
+
+### 相对路径
+
+当我们使用OutputSream 和 InputStream 的时候,如果是相对路径的话,默认是从**java执行命令下路径下读写文件**,在idea中它自己帮我们重新设置了user.dir,**因此就是相对项目路径**
+
+> 如果是以/开头比如 /a 是绝对路径 一般表示c盘的根目录
+
+### 类路径
+
+类路径（Classpath）：类路径是 JVM 用来**搜索类和资源文件**的路径。类路径可以包含目录、JAR 文件和其他资源。可以使用 `System.getProperty("java.class.path")` 获取当前的类路径。
+
+要从类路径加载资源文件，可以使用 `ClassLoader` 类的 `getResource()` 或 `getResourceAsStream()` 方法。这些方法将从类路径中查找资源，而不依赖于当前工作目录。例如，以下代码将尝试从类路径中加载一个名为 `config.properties` 的文件：
+
+```java
+InputStream is = getClass().getClassLoader().getResourceAsStream("config.properties");
+```
+
+当使用类路径加载资源时，请确保资源文件已被包含在类路径中。对于 Java 项目，通常将资源文件放在 `src/main/resources` 目录下，以便它们在构建过程中被正确地处理。
+
+## 自定义注解处理器
+
+在编译期间处理注解的一种方法是使用注解处理器（Annotation Processors）。注解处理器是一个工具，它在编译时扫描和处理源代码中的注解。它们通常用于生成额外的源代码、修改现有代码或验证代码约束等。Lombok 就是通过注解处理器实现的，它在编译期间生成 getter、setter 等方法。
+
+要创建一个注解处理器，你需要遵循以下步骤：
+
+1. 创建一个自定义注解：
+
+```java
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.SOURCE)
+public @interface CustomAnnotation {
+}
+```
+
+注意，我们将保留策略设置为 `RetentionPolicy.SOURCE`，因为我们只需要在编译期间处理此注解。
+
+2. 创建一个注解处理器：
+
+创建一个类，继承 `javax.annotation.processing.AbstractProcessor` 类，并覆盖 `process` 方法。此方法将在编译期间处理指定的注解。
+
+```java
+import javax.annotation.processing.*;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
+import java.util.Set;
+
+@SupportedAnnotationTypes("com.example.CustomAnnotation")
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
+public class CustomAnnotationProcessor extends AbstractProcessor {
+
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(CustomAnnotation.class)) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "Found @CustomAnnotation at " + element);
+            // 在这里处理注解，例如生成源代码、修改代码或验证代码约束等
+        }
+        return false;
+    }
+}
+```
+
+3. 注册注解处理器：
+
+**在项目的 `resources/META-INF/services` 目录下**，创建一个名为 `javax.annotation.processing.Processor` 的文件。在该文件中，写入注解处理器的完全限定类名：
+
+```
+com.example.CustomAnnotationProcessor
+```
+
+4. 将注解应用于代码：
+
+在项目的其他部分，使用自定义注解：
+
+```java
+@CustomAnnotation
+public class MyClass {
+}
+```
+
+现在，当你编译项目时，`CustomAnnotationProcessor` 将处理 `@CustomAnnotation` 注解。在 `process` 方法中，你可以实现任何操作，如生成源代码、修改代码或验证代码约束等。
+
+注意：要使用注解处理器，你需要将它们添加到编译器的类路径中。对于 Maven 项目，你需要将注解处理器作为依赖添加到 `pom.xml` 文件中，并在 `maven-compiler-plugin` 中启用注解处理。对于 Gradle 项目，需要将注解处理器添加到 `annotationProcessor` 配置中。不同的构建工具可能需要不同的配置方式。
+
+## 动态代理
+
+### jdk动态代理
+
+JDK 动态代理的原理是在运行时动态地生成一个代理类，该代理类实现了目标类的接口，并将方法调用转发到一个处理器（`InvocationHandler`）。处理器负责执行实际的代理逻辑，例如在目标方法执行前后添加日志、性能监控等功能。
+
+以下是 JDK 动态代理的主要步骤：
+
+1. 定义一个处理器（`InvocationHandler`）实现类。这个类需要实现 `java.lang.reflect.InvocationHandler` 接口，并重写 `invoke` 方法。`invoke` 方法负责处理代理类中的方法调用，并实现需要的代理逻辑。
+
+```java
+class MyInvocationHandler implements InvocationHandler {
+    private Object target;
+
+    public MyInvocationHandler(Object target) {
+        this.target = target;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        // 在目标方法执行前执行的逻辑
+        System.out.println("Before method");
+
+        // 调用目标对象的方法
+        Object result = method.invoke(target, args);
+
+        // 在目标方法执行后执行的逻辑
+        System.out.println("After method");
+
+        return result;
+    }
+}
+```
+
+2. 使用 `java.lang.reflect.Proxy` 类的 `newProxyInstance` 方法动态地创建一个代理类实例。这个方法需要三个参数：
+
+   - 类加载器（`ClassLoader`）：用于加载生成的代理类。
+   - 代理类需要实现的接口列表：代理类将实现这些接口。
+   - 处理器（`InvocationHandler`）实例：当代理类的方法被调用时，将调用处理器的 `invoke` 方法。
+
+```java
+MyInterface target = new MyInterfaceImpl();
+InvocationHandler handler = new MyInvocationHandler(target);
+MyInterface proxy = (MyInterface) Proxy.newProxyInstance(
+    target.getClass().getClassLoader(),
+    target.getClass().getInterfaces(),
+    handler
+);
+```
+
+在这个例子中，`proxy` 是一个动态生成的代理类实例，它实现了 `MyInterface` 接口。当 `proxy` 的方法被调用时，会转发到 `MyInvocationHandler` 的 `invoke` 方法。`invoke` 方法中可以实现需要的代理逻辑，例如在目标方法执行前后添加日志。
+
+总之，JDK 动态代理的原理是在运行时动态地生成代理类，并将方法调用转发到处理器（`InvocationHandler`）。处理器负责实现代理逻辑。
