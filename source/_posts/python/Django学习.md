@@ -130,7 +130,7 @@ django-admin startproject djangoproject   通过django-admin创建一个Django�
 
 
 
-* python manage.py runserver port or ip:port  启动项目
+* python manage.py runserver port or ip:port  启动项目, 这里启动项目的时候
 * python manage.py startapp appname  给项目新增一个新应用
 * python manage.py makemigrations  将模型的更改记录到app/migrations下面  相当于编写sql语句
 * python manage.py migrate 将app/migrations下的修改更改到数据库,相当于执行sql语句
@@ -565,6 +565,113 @@ def testdirect(res:HttpRequest):
 ```
 
 对于render 和 redirect区别就是 如果是render的话 地址栏路径不会变化的,所以刷新页面的话就会重新渲染,redirect的就是地址栏会变化,刷新页面就是就是请求
+
+# 中间件
+
+在Django中，中间件是一个处理HTTP请求和响应的组件，它在**请求进入视图函数之前和响应离开视图函数之后起作用**。中间件可以用于实现多种功能，如**身份验证、授权、会话管理、跨站请求伪造（CSRF）保护、缓存**等。中间件的主要目的是在处理请求和响应的过程中添加额外的处理逻辑，从而使代码更加模块化和可重用。
+
+## 定义中间件
+
+要定义一个中间件，你需要创建一个类，并实现特定的方法，这些方法对应不同的处理阶段。一个中间件可以包含以下方法：
+
+1. `__init__(self, get_response)`：初始化方法，用于接收一个`get_response`参数。这是一个可调用对象，用于获取下一个中间件或视图函数的响应。
+2. `__call__(self, request)`：当中间件类被实例化后，它将变为一个可调用对象。`__call__`方法在每次请求时都会被调用，用于处理请求并返回响应。在这个方法里，您可以处理请求前和请求后的逻辑，但无法捕获视图函数抛出的异常。
+3. `process_view(self, request, view_func, view_args, view_kwargs)`：这个方法在视图函数被调用之前执行。它允许您修改请求对象、视图参数或拦截视图调用。
+4. `process_exception(self, request, exception)`：当视图函数抛出异常时，这个方法会按照相反的顺序（从后向前）被执行。您可以在这里捕获异常并进行处理，例如返回自定义的错误响应。如果返回`None`，Django会继续执行其他中间件的`process_exception`方法或内置的异常处理器。
+5. `process_template_response(self, request, response)`：如果视图函数返回一个`TemplateResponse`对象，这个方法会被调用。它允许您在模板被渲染之前修改响应对象。
+6. `process_response(self, request, response)`：这个方法在响应被发送回客户端之前执行。您可以在这里修改响应对象，例如设置响应头或修改响应内容。请注意，如果`process_exception`已经处理了异常并返回了响应，`process_response`方法也会被调用。
+
+它的执行步骤如下:
+
+* 首先初始化中间就是调用init,给对象传递一个可以响应的方法
+* 有请求到来的时候,调用中间件的call方法,响应请求
+* 进入到get_response函数里面
+* **依次调用每个中间的 process_request方法**
+* 再一次调用每个中间件的process_view方法,这里其实它会组织一下,当**前process_view函数的view_func一定是下一个中间件的process_view方法**,而最后一个中间件的view_func是视图函数
+* 对于异常,我们可以通过process_execption去处理
+
+
+
+> 编写好中间件后一定要在settings.py中去注册
+
+
+
+## 注意点
+
+### 放置中间件的顺序
+
+在Django中，中间件的顺序非常重要，因为它影响了中间件在请求和响应处理过程中的执行顺序。以下是有关如何放置中间件的一些建议：
+
+1. 了解每个中间件的功能：确保您了解每个中间件的作用，以便在安排它们时做出明智的决策。一些中间件可能依赖于其他中间件的输出，或者需要在其他中间件之前或之后执行。
+
+2. 遵循第三方中间件的文档：当使用第三方中间件时，请仔细阅读其文档以获取有关放置顺序的建议。通常，文档会提供关于中间件之间的依赖关系以及它们在请求/响应过程中的执行顺序的详细信息。
+
+3. 顺序从上到下：`MIDDLEWARE`列表中的顺序从上到下决定了中间件在请求处理过程中的执行顺序。在响应处理阶段，顺序是相反的。通常，您应该首先放置处理请求的核心中间件，然后是处理视图、模板和响应的中间件。
+
+4. **处理异常的中间件应靠后放置**：由于异常处理过程是按照相反的顺序执行的，因此处理异常的中间件（实现了`process_exception`方法的中间件）应靠后放置。这样可以确保在异常发生时，它们可以先于其他中间件捕获异常并采取相应的操作。
+
+5. **考虑性能和安全性：在安排中间件时，确保考虑到性能和安全性。对于那些需要在请求开始时执行的中间件（例如，身份验证、授权和缓存中间件），应该将它们放在`MIDDLEWARE`列表的前面**。这有助于减少不必要的计算和网络开销，以及在请求被拒绝之前尽早识别潜在的安全问题。
+
+总之，中间件的放置顺序应该根据中间件的功能、依赖关系和执行顺序来安排。务必阅读中间件的文档以获取关于顺序的建议，并确保在处理请求和响应时考虑性能和安全性。
+
+### 按照指南使用中间件
+
+为了避免混乱，可以遵循以下指南来确定在中间件中使用哪些方法：
+
+1. `__init__(self, get_response)`：始终在中间件中定义这个方法，用于接收`get_response`参数并存储为实例变量。
+
+2. `__call__(self, request)`：在以下情况下使用此方法：
+   - 需要在请求前后执行一些操作
+   - 需要在视图函数执行前修改请求对象
+   - 需要在视图函数执行后修改响应对象
+   请注意，`__call__`方法无法捕获视图函数抛出的异常。
+
+3. `process_view(self, request, view_func, view_args, view_kwargs)`：在以下情况下使用此方法：
+   - 需要在视图函数执行之前修改请求对象、视图参数或拦截视图调用
+   - 需要根据视图函数的特定属性（如视图函数本身、参数或其他条件）执行特定操作
+   请注意，`process_view`方法可以捕获视图函数中抛出的异常，但需要显式调用视图函数并处理异常。
+
+4. `process_exception(self, request, exception)`：在以下情况下使用此方法：
+   - 需要捕获视图函数抛出的异常并执行特定操作，例如返回自定义错误响应
+   请注意，如果返回`None`，Django会继续执行其他中间件的`process_exception`方法或内置的异常处理器。
+
+5. `process_template_response(self, request, response)`：在以下情况下使用此方法：
+   - 需要在模板被渲染之前修改`TemplateResponse`对象
+   请注意，此方法仅在视图函数返回`TemplateResponse`对象时执行。
+
+6. `process_response(self, request, response)`：在以下情况下使用此方法：
+   - 需要在响应被发送回客户端之前执行操作，例如设置响应头或修改响应内容
+   请注意，如果`process_exception`已经处理了异常并返回了响应，`process_response`方法也会被调用。
+
+根据这些指南，可以根据需要在中间件中实现相应的方法。遵循这些指南，您可以保持中间件逻辑的清晰和简洁，并确保每个方法都专注于其特定的职责。当然，在实际项目中，您可能需要根据实际需求灵活运用这些方法。但是，确保每个方法的职责清晰且互不干扰，可以有效减少混乱。
+
+## 装饰器
+
+上面的那种方式定义的中间件是全局有效的,有时候,我们希望对某些视图函数做定制的需求(比如权限校验),我们可以使用装饰器,下面是一个简单的装饰器用来检查用户是否登录
+
+```
+def check_is_login(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if request.session.get("email") is None:
+            return JsonResponse({"code": Code.USER_NOT_LOGIN, "info": "用户未登录"})
+        return func(request, *args, **kwargs)
+    return wrapper
+```
+
+我们只需要在需要检查的视图函数上加上这个装饰器就行
+
+使用装饰器的优点是：
+
+1. 更精确地控制哪些视图函数受到额外逻辑的影响。
+2. 使代码更易于理解，因为额外的逻辑与视图函数紧密相关。
+
+然而，装饰器也有一些缺点：
+
+1. 如果需要将相同的逻辑应用于许多视图函数，您需要在每个视图函数上重复应用装饰器。这可能导致代码冗余和难以维护。
+2. 与中间件相比，装饰器在全局范围内的控制力较弱。例如，中间件可以在每个请求的开始和结束时执行某些操作，而装饰器只能在特定视图函数上执行。
+
+因此，在选择使用装饰器还是中间件时，需要根据您的需求和代码结构进行权衡。如果您需要为特定视图函数添加功能，装饰器可能是更好的选择。然而，如果您需要在全局范围内控制请求处理，中间件可能更适合。
 
 # 管理后台
 
@@ -1065,9 +1172,9 @@ objects常用方法就是QuerySet 里面的常用方法,我们可以直接看Que
 
 ### **aggregate 与 annotate 的区别**
 
-aggregate会对当前QuerySet的所有数据当成一个分组,执行聚合函数,而且返回值还是一个字典
+**aggregate会对当前QuerySet的所有数据当成一个分组,执行聚合函数,而且返回值是一个字典,里面只包含了我们分组的字段的数据**
 
-annotate 会根据values中的分组执行聚合函数,返回值是QuerySet  里面包含很多字典(如果不使用values的话,每个数据自己是一个分组,而且返回值是一个queryset,里面包含的是对象)
+**annotate 会根据values中的分组执行聚合函数,返回值是QuerySet  里面包含很多字典,字典和aggregate产生的字典很像(如果不使用values的话,每个数据自己是一个分组,而且返回值是一个queryset,里面包含的是对象)**
 
 在实际应用中，您可以根据需要选择使用`aggregate()`或`annotate()`。如果您需要对整个数据集执行聚合操作，可以使用`aggregate()`。如果您需要在分组的基础上执行聚合操作，可以使用`annotate()`
 
@@ -1147,6 +1254,47 @@ QuerySet 是惰性的 —— 创建 QuerySet 并不会引发任何数据库活�
 
 虽然这看起来像是三次数据库操作，实际上只在最后一行 (print(q)) 做了一次。一般来说， QuerySet 的结果直到你 “要使用” 时才会从数据库中拿出。当你要用时，才通过数据库 计算 出 QuerySet
 
+## 分页
+
+Django提供了一个方便的分页工具，可以帮助您轻松地对查询结果进行分页。以下是如何在Django项目中使用分页功能的基本步骤：
+
+1. 导入Paginator和PageNotAnInteger、EmptyPage类：
+
+   首先，您需要从`django.core.paginator`模块中导入`Paginator`类，以及用于处理分页异常的`PageNotAnInteger`和`EmptyPage`类。
+
+   ```python
+   from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+   ```
+
+2. 创建Paginator对象：
+
+   然后，您需要创建一个`Paginator`对象，传递查询结果和每页的对象数量。例如，如果您有一个`Post`模型并且希望每页显示5篇文章，可以这样做：
+
+   ```python
+   from .models import Post
+
+   post_list = Post.objects.all() # 这里其实并不会去拿到所有的文章,因为它是惰性的
+   paginator = Paginator(post_list, 5)  # 每页显示5篇文章
+   ```
+
+3. 获取当前页的对象列表：
+
+   使用`Paginator`对象，您可以获取特定页码上的对象列表。为此，您需要从请求参数中获取当前页码（例如，从`page`参数中获取），然后使用`Paginator`对象的`get_page()`方法。
+
+   ```python
+   page = request.GET.get('page')
+   try:
+       posts = paginator.get_page(page)
+   except PageNotAnInteger:
+       # 如果页码不是整数，则显示第一页
+       posts = paginator.get_page(1)
+   except EmptyPage:
+       # 如果页码超出范围，则显示最后一页
+       posts = paginator.get_page(paginator.num_pages)
+   ```
+
+   在这个例子中，我们首先尝试获取请求中指定的页码。如果页码不是整数或超出范围，我们将返回第一页或最后一页的对象列表。
+
 ## 数据库事务
 
 在Django中，事务是用于确保一组数据库操作要么全部成功执行，要么全部失败，从而维护数据库的一致性。Django提供了几种使用事务的方法：
@@ -1154,7 +1302,7 @@ QuerySet 是惰性的 —— 创建 QuerySet 并不会引发任何数据库活�
 1. **使用装饰器**：`django.db.transaction.atomic`是一个装饰器，可以用来确保被装饰的函数中的数据库操作在一个原子事务中执行。如果函数中的任何操作失败，整个事务将被回滚。
 
    ```
-   pythonCopy codefrom django.db import transaction
+   from django.db import transaction
    
    @transaction.atomic
    def create_user_and_profile(username, email):
@@ -1167,7 +1315,7 @@ QuerySet 是惰性的 —— 创建 QuerySet 并不会引发任何数据库活�
 2. **使用上下文管理器**：`django.db.transaction.atomic`还可以作为上下文管理器使用，将一段代码块包含在一个原子事务中。
 
    ```
-   pythonCopy codefrom django.db import transaction
+   from django.db import transaction
    
    def create_user_and_profile(username, email):
        with transaction.atomic():
@@ -1258,15 +1406,60 @@ Django 模板语言是一种简单的、可扩展的标记语言，用于在 Dja
 
 我们对对象的属性进行修改后必须使用save方法才能修改到数据库
 
-# 出现的问题
-
-
-
-## related_query_name失效
-
-我发现如果只是单纯的在定义字段的时候加入related_query_name, 在运行的时候,并不能反向拿到对象
-
 # 额外补充
+
+
+
+## 加密密码
+
+**为什么要对密码进行加密？** 
+
+加密密码的原因是为了保护用户的隐私和安全。当用户在应用程序中注册并提供密码时，**如果以明文形式存储密码，那么任何可以访问数据库的人都可以查看和使用这些密码。这可能导致用户数据泄露，黑客攻击，以及其他安全问题**。为了防止这种情况，我们应该将密码加密存储，以便即使数据库被泄露，攻击者也无法轻易地获取原始密码。
+
+Django提供了`make_password`和`check_password`这两个方便的函数，用于处理密码哈希和验证。它们位于`django.contrib.auth.hashers`模块中。
+
+1. `make_password`：这个函数将明文密码转换为哈希值，可以在数据库中存储。默认情况下，它使用Django的默认哈希器（在Django的设置中通过`PASSWORD_HASHERS`设置）。
+
+示例：
+
+```python
+from django.contrib.auth.hashers import make_password
+
+plaintext_password = "my_password"
+hashed_password = make_password(plaintext_password)
+
+# 将哈希密码存储到数据库中
+```
+
+2. `check_password`：这个函数接受明文密码和哈希密码作为参数。它会尝试使用同样的哈希算法将明文密码转换为哈希值，并将结果与已存储的哈希密码进行比较。如果哈希值匹配，则验证成功，函数返回`True`；否则，返回`False`。
+
+示例：
+
+```python
+from django.contrib.auth.hashers import check_password
+
+plaintext_password = "my_password"
+stored_hashed_password = "some_hashed_password_from_database"
+
+if check_password(plaintext_password, stored_hashed_password):
+    # 密码验证成功
+    pass
+else:
+    # 密码验证失败
+    pass
+```
+
+通过使用Django的`make_password`和`check_password`函数，您可以在自定义数据库字段中方便地处理密码哈希和验证。这些函数已经为您处理了加密和哈希算法，确保了密码的安全性。
+
+
+
+## 时区问题
+
+在使用Django的时候,如果数据库里面字段是Date字段,我发现它总是和中国时区差8个小时,只有将USE_TZ 设置成False的时候才能正确
+
+```python
+USE_TZ=False
+```
 
 
 
@@ -1304,3 +1497,119 @@ def send_verification_code(to_email, verification_code):
 
 ## 使用内置缓存框架
 
+Django提供了一个灵活的内置缓存框架，可以轻松地为您的项目添加缓存功能。以下是如何使用Django内置缓存框架的基本步骤：
+
+1. 配置缓存后端
+
+   在`settings.py`文件中，需要配置一个`CACHES`字典来设置缓存后端。Django支持多种缓存后端，例如内存、文件、Memcached和Redis。以下是一个使用内存缓存的示例：
+
+   ```python
+   CACHES = {
+       'default': {
+           'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+           'LOCATION': 'unique-snowflake',
+       }
+   }
+   ```
+
+   有关更多缓存配置选项，请参阅Django文档：https://docs.djangoproject.com/en/3.2/topics/cache/#setting-up-the-cache
+
+2. 使用缓存API
+
+   Django提供了一个简单的API来存储、获取和删除缓存项。以下是一些基本示例：
+
+   ```python
+   from django.core.cache import cache
+   
+   # 设置缓存值，超时时间为300秒
+   cache.set('my_key', 'my_value', 300)
+   
+   # 获取缓存值
+   value = cache.get('my_key')
+   
+   # 删除缓存值
+   cache.delete('my_key')
+   ```
+
+   Django缓存API还提供了许多其他功能，例如增量操作、批量获取和设置等。有关详细信息，请参阅文档：https://docs.djangoproject.com/en/3.2/topics/cache/#the-low-level-cache-api
+
+   > 这个缓存过期后就会被删除,因此再调用get方法时就是None
+
+
+
+## 状态码
+
+```python
+class HttpStatusCodes:
+    # 2xx 成功状态码
+    HTTP_200_OK = 200  # 请求成功，服务器成功处理了请求
+    HTTP_201_CREATED = 201  # 请求已成功处理，创建了新资源
+    HTTP_202_ACCEPTED = 202  # 请求已接受，但服务器尚未处理
+    HTTP_203_NON_AUTHORITATIVE_INFORMATION = 203  # 返回非权威性信息
+    HTTP_204_NO_CONTENT = 204  # 请求成功，但无需返回任何内容（如删除资源）
+    HTTP_205_RESET_CONTENT = 205  # 请求成功，需要客户端重置文档视图
+    HTTP_206_PARTIAL_CONTENT = 206  # 部分GET请求已成功处理
+
+    # 3xx 重定向状态码
+    HTTP_300_MULTIPLE_CHOICES = 300  # 提供多种可选资源
+    HTTP_301_MOVED_PERMANENTLY = 301  # 永久重定向，资源已被分配了新的URL
+    HTTP_302_FOUND = 302  # 临时重定向，资源现在临时位于不同的URL
+    HTTP_303_SEE_OTHER = 303  # 参照其他信息，请查看其他URI
+    HTTP_304_NOT_MODIFIED = 304  # 资源未更改，缓存有效
+    HTTP_305_USE_PROXY = 305  # 必须使用代理访问
+    HTTP_306_UNUSED = 306  # 未使用的状态码
+    HTTP_307_TEMPORARY_REDIRECT = 307  # 临时重定向，请求应保持原HTTP方法
+
+    # 4xx 客户端错误状态码
+    HTTP_400_BAD_REQUEST = 400  # 错误请求，服务器无法理解或处理
+    HTTP_401_UNAUTHORIZED = 401  # 需要身份验证
+    HTTP_402_PAYMENT_REQUIRED = 402  # 需要付款，预留状态码
+    HTTP_403_FORBIDDEN = 403  # 禁止访问，服务器拒绝请求
+    HTTP_404_NOT_FOUND = 404  # 未找到，服务器找不到请求的资源
+    HTTP_405_METHOD_NOT_ALLOWED = 405  # 方法禁用，服务器禁止使用该方法
+    HTTP_406_NOT_ACCEPTABLE = 406  # 无法满足请求头中的条件
+    HTTP_407_PROXY_AUTHENTICATION_REQUIRED = 407  # 需要代理身份验证
+    HTTP_408_REQUEST_TIMEOUT = 408  # 请求超时，服务器等待请求超时
+    HTTP_409_CONFLICT = 409  # 请求冲突，请求与服务器当前状态冲突
+    HTTP_410_GONE = 410  # 资源已永久删除，服务器找不到请求的资源
+    HTTP_411_LENGTH_REQUIRED = 411  # 需要Content-Length请求头
+    HTTP_412_PRECONDITION_FAILED = 412  # 服务器未满足请求头中的条件
+    HTTP_413_REQUEST_ENTITY_TOO_LARGE = 413  # 请求实体过大
+    HTTP_414_REQUEST_URI_TOO_LONG = 414  # 请求URI过长
+    HTTP_415_UNSUPPORTED_MEDIA_TYPE = 415 # 请求的媒体类型不受支持
+    HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE = 416  # 请求的范围无效
+    HTTP_417_EXPECTATION_FAILED = 417  # 未满足期望请求头的要求
+    HTTP_418_IM_A_TEAPOT = 418  # 当服务器是一个茶壶时返回，主要用于愚人节玩笑
+    HTTP_422_UNPROCESSABLE_ENTITY = 422  # 请求格式正确，但服务器无法处理实体内容
+    HTTP_423_LOCKED = 423  # 资源被锁定
+    HTTP_424_FAILED_DEPENDENCY = 424  # 依赖请求失败
+    HTTP_426_UPGRADE_REQUIRED = 426  # 需要客户端升级协议
+    HTTP_428_PRECONDITION_REQUIRED = 428  # 要求先决条件
+    HTTP_429_TOO_MANY_REQUESTS = 429  # 请求过多，超过服务器限制
+    HTTP_431_REQUEST_HEADER_FIELDS_TOO_LARGE = 431  # 请求头字段过大
+    HTTP_451_UNAVAILABLE_FOR_LEGAL_REASONS = 451  # 因法律原因不可用
+
+    # 5xx 服务器错误状态码
+    HTTP_500_INTERNAL_SERVER_ERROR = 500  # 服务器内部错误
+    HTTP_501_NOT_IMPLEMENTED = 501  # 服务器不具备完成请求的功能
+    HTTP_502_BAD_GATEWAY = 502  # 作为网关或代理，服务器从上游服务器接收到无效响应
+    HTTP_503_SERVICE_UNAVAILABLE = 503  # 服务器不可用，暂时过载或维护
+    HTTP_504_GATEWAY_TIMEOUT = 504  # 作为网关或代理，服务器未及时从上游服务器接收请求
+    HTTP_505_HTTP_VERSION_NOT_SUPPORTED = 505  # 服务器不支持请求所使用的HTTP协议版本
+    HTTP_506_VARIANT_ALSO_NEGOTIATES = 506  # 服务器存在内部配置错误
+    HTTP_507_INSUFFICIENT_STORAGE = 507  # 服务器无法存储完成请求所必须的内容
+    HTTP_508_LOOP_DETECTED = 508  # 服务器在处理请求时检测到无限循环
+    HTTP_510_NOT_EXTENDED = 510  # 获取资源所需的策略并没有被满足
+    HTTP_511_NETWORK_AUTHENTICATION_REQUIRED = 511  # 需要进行网络认证
+
+```
+
+# 遇到的问题
+
+## 无法访问
+
+两个地方要注意
+
+第一个地方是 setttings.py 文件的ALLOWED_HOSTS
+
+另外一个是  启动命令  使用 python runserve  0.0.0.0:8000
