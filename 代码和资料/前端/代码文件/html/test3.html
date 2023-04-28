@@ -13,18 +13,13 @@
 
         
 
-        let data = {
-            b: {
-                a:10
-            }
-        }
-
-        function isObject(value) {
-            return value !== null && typeof value === 'object';
-        }
+       let data = [1,2,3]
         proxy = new Proxy(data, {
             get(target, prop, rev) {
                 console.log("proxyget  "+prop)
+                console.log(target)
+                console.log(prop)
+                console.log(rev)
                 return data[prop]
             },
             set(target, prop, value) {

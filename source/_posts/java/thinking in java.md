@@ -1454,7 +1454,368 @@ Java 反射（Reflection）是一个强大的特性，允许在运行时检查�
 
 尽管 Java 反射具有一定的复杂性和潜在风险，但在许多场景下，它为您提供了强大的动态编程能力
 
-总结
+## 总结
+
+本章主要讲了元类与元类提供的方法, 元类是对一个类的描述,我们可以通过元类获取类定义的一些信息,比如注解,字段,方法,从而可以动态的对一个对象做一些事情
+
+
+
+# 第十二章 克隆
+
+在 Java 里面，克隆（Clone）是一种创建对象副本的过程。在 Java 中，克隆主要通过实现 `java.lang.Cloneable` 接口和覆盖 `clone()` 方法来实现。
+
+克隆的主要作用是在以下场景中：
+
+1. **创建独立副本**：当你需要创建一个对象的副本，与原对象相互独立，以便在不影响原对象的情况下对副本进行修改。
+
+2. **优化性能**：如果创建一个对象的过程非常耗时，可以通过克隆已有的对象来节省时间和资源。
+
+3. **保护对象状态**：当一个对象需要与其他对象共享，但又不希望其他对象更改其状态时，**可以提供一个副本供其他对象使用**。
+
+Java 的克隆分为浅克隆（Shallow Clone）和深克隆（Deep Clone）：
+
+- 浅克隆：只复制对象本身，不复制对象内部引用的其他对象。这意味着原对象和克隆对象共享同一个引用类型的成员变量。
+
+- 深克隆：复制对象及其内部引用的所有对象。这样，原对象和克隆对象不会共享任何引用类型的成员变量。
+
+## 浅克隆
+
+要使用克隆功能，请实现 `Cloneable` 接口，并覆盖 `clone()` 方法。例如：
+
+```java
+class MyClass implements Cloneable {
+    // 类成员和方法
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+}
+```
+
+这样，可以通过调用 `clone()` 方法创建对象的副本：
+
+```java
+MyClass original = new MyClass();
+MyClass copy = (MyClass) original.clone();
+```
+
+## 深度克隆
+
+在 Java 中，深克隆（Deep Clone）是指创建一个对象的副本，同时复制该对象及其所有引用的对象。实现深克隆有多种方法，以下是两种常见的方法：
+
+方法一：使用序列化和反序列化
+
+要使用这种方法，首先需要让你的类实现 `java.io.Serializable` 接口。然后，通过将对象序列化到字节流中，再从字节流中反序列化回对象，实现深克隆。示例如下：
+
+```java
+import java.io.*;
+
+public class DeepCopyUtil {
+    public static Object deepClone(Object object) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(object);
+            oos.close();
+
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            Object clonedObject = ois.readObject();
+            ois.close();
+
+            return clonedObject;
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException("Deep clone failed.", e);
+        }
+    }
+}
+```
+
+方法二：递归克隆
+
+对于每个引用类型的成员变量，实现它们各自的深克隆方法。然后，在覆盖的 `clone()` 方法中递归地调用这些方法。示例如下：
+
+```java
+class MyClass implements Cloneable {
+    private AnotherClass anotherClass;
+
+    public MyClass(AnotherClass anotherClass) {
+        this.anotherClass = anotherClass;
+    }
+
+    // 其他方法
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        MyClass cloned = (MyClass) super.clone();
+        cloned.anotherClass = (AnotherClass) this.anotherClass.clone();
+        return cloned;
+    }
+}
+
+class AnotherClass implements Cloneable {
+    // 类成员和方法
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+}
+```
+
+在这个例子中，`MyClass` 类包含一个引用类型的成员变量 `anotherClass`。我们分别在 `MyClass` 和 `AnotherClass` 中覆盖了 `clone()` 方法，以实现深克隆。当调用 `MyClass` 类的 `clone()` 方法时，它会递归地调用 `AnotherClass` 类的 `clone()` 方法，从而实现深克隆。
+
+注意：深克隆可能会引发性能问题，特别是在处理大型对象图时。在使用深克隆时，请务必权衡好性能与功能之间的平衡。
+
+注意：克隆功能需要谨慎使用，因为它可能导致不可预期的副作用，例如多余的对象创建、内存泄漏等问题。有时，可以考虑使用其他设计模式（如原型模式、工厂模式等）替代克隆。
+
+# 第十四章 多线程
+
+Java 线程是 Java 平台提供的一种基本的并发编程单元。线程允许您在同一个程序中同时执行多个任务。以下是一些关于 Java 线程的核心知识点：
+
+1. 线程的创建和启动
+
+   在 Java 中，有两种主要的方法来创建线程：
+
+   - 继承 `java.lang.Thread` 类并覆盖其 `run()` 方法。创建该类的实例并调用 `start()` 方法启动线程。
+   - 实现 `java.lang.Runnable` 接口并实现其 `run()` 方法。将实现 `Runnable` 的类的实例传递给 `Thread` 类的构造函数，然后调用 `start()` 方法启动线程。
+
+2. 线程的生命周期
+
+   Java 线程有以下几种状态：
+
+   - 新建（New）：线程对象已创建，但尚未启动。
+   - 可运行（Runnable）：线程已启动，正在等待操作系统分配 CPU 时间片进行执行。
+   - 阻塞（Blocked）：线程正在等待获取对象的监视器锁，以进入同步块或同步方法。
+   - 等待（Waiting）：线程处于无限期等待状态，直到满足某个条件。例如，调用了 `wait()`、`join()` 或 `LockSupport.park()` 方法。
+   - 超时等待（Timed Waiting）：线程处于有时间限制的等待状态。例如，调用了 `sleep()`、`wait(long)` 或 `join(long)` 方法。
+   - 终止（Terminated）：线程执行完成或因异常而终止。
+
+3. 线程的优先级
+
+   Java 线程具有优先级，范围从 1（最低）到 10（最高）。默认情况下，线程的优先级设置为 5（普通优先级）。可以使用 `Thread.setPriority(int)` 方法设置线程的优先级。操作系统将根据线程的优先级分配 CPU 时间片。但**是这个不是一定的,不是说优先级越高,你就一定先获得CPU的时间片**
+
+4. 同步和锁
+
+   当多个线程需要访问共享资源时，可能会导致竞态条件和数据不一致。要解决这个问题，可以使用同步来确保同一时间只有一个线程能访问特定资源。Java 提供了以下同步机制：
+
+   - 同步方法：使用 `synchronized` 关键字修饰方法。当线程调用同步方法时，需要获得该方法所属对象的监视器锁。
+   - 同步块：使用 `synchronized` 关键字和一个锁对象来创建同步块。进入同步块时，线程需要获得锁对象的监视器锁。
+
+5. 线程间通信
+
+   Java 提供了以下机制来实现线程间通信：
+
+   - `wait()`、`notify()` 和 `notifyAll()`：这些方法用于线程间的协作，让一个线程等待特定条件，而另一个线程在条件满足时唤醒等待的线程。这些方法必须在同步块或同步方法中使用。
+
+6. 线程局部变量
+
+   `java.lang.ThreadLocal` 类允许每个线程拥有自己的变量副本。当多个线程需要访问相同的变量，但又需要独立副本时，可以使用线程局部变量。这有助于减少竞态条件和同步的需求。
+
+7. 线程安全的集合
+
+   Java 提供了线程安全的集合类，如 `java.util.concurrent.ConcurrentHashMap`、`java.util.concurrent.CopyOnWriteArrayList` 等。这些集合在内部实现了同步和其他并发控制机制，以确保在多线程环境下的安全使用。
+
+8. 线程池和 Executor 框架
+
+   使用线程池可以有效地控制并发线程的数量，并在需要时重用线程。`java.util.concurrent.Executor` 和 `java.util.concurrent.ExecutorService` 接口提供了一个框架来管理和控制线程池。`java.util.concurrent.Executors` 类提供了工厂方法来创建不同类型的线程池，如固定大小的线程池、缓存的线程池等。
+
+9. 并发工具类
+
+   Java 并发库提供了许多高级并发工具类，如信号量（`java.util.concurrent.Semaphore`）、倒计时闩（`java.util.concurrent.CountDownLatch`）、循环屏障（`java.util.concurrent.CyclicBarrier`）等。这些类提供了强大的功能，以帮助解决复杂的多线程问题。
+
+10. CompletableFuture
+
+    `java.util.concurrent.CompletableFuture` 类提供了一种基于回调的异步编程模型。它允许您使用非阻塞操作来编写并发代码，并在操作完成时获得通知。
+
+11. 并行流
+
+    Java 8 引入了 Stream API，该 API 提供了一种简洁的方式来处理集合和数据流。Java 8 还提供了并行流（Parallel Stream），它允许您轻松地将顺序流转换为并行流，以便利用多核处理器并行处理数据。
+
+# 第十五章 网络编程
+
+Java 网络编程主要关注如何在 Java 应用程序中实现数据的传输和通信。以下是 Java 网络编程的主要知识点：
+
+1. OSI 参考模型和 TCP/IP 协议栈：了解网络通信的基本原理和各层协议是学习 Java 网络编程的基础。
+2. InetAddress 类：该类用于表示互联网协议（IP）地址。它提供了用于解析主机名和 IP 地址的方法。
+3. 套接字（Socket）：Java 网络编程的核心是套接字，它是网络通信的端点。Java 提供了以下套接字类：
+
+   - Socket：用于实现客户端的 TCP 套接字。它允许您建立到远程服务器的连接并发送/接收数据。
+   - ServerSocket：用于实现服务器端的 TCP 套接字。它允许您监听来自客户端的连接并接收/发送数据。
+   - DatagramSocket：用于实现基于 UDP 的无连接通信。它允许您发送/接收数据报文。
+4. Java I/O 流：在 Java 网络编程中，常使用 I/O 流进行数据的读取和发送。以下是常用的 I/O 流：
+
+   - InputStream 和 OutputStream：基本的字节流，用于读取和写入原始字节数据。
+   - InputStreamReader 和 OutputStreamWriter：用于处理字符数据的字符流，将字节流转换为字符流。
+   - BufferedReader 和 BufferedWriter：带缓冲的字符流，提高 I/O 性能。
+   - DataInputStream 和 DataOutputStream：用于处理基本数据类型和字符串的数据流。
+5. URL 和 HttpURLConnection：用于处理 HTTP 协议的类。URL 类表示统一资源定位符，可以用于访问网络资源。HttpURLConnection 类提供了发送 HTTP 请求和接收 HTTP 响应的功能。
+6. 多线程：在网络编程中，通常需要使用多线程来处理并发连接和请求。了解如何在 Java 中创建和管理线程是网络编程的重要知识点。
+7. Java NIO：Java 新输入输出（NIO）框架提供了高性能、非阻塞的 I/O 操作。Java NIO 主要包括 Channel、Buffer 和 Selector 等组件，它们允许您实现高效的网络通信。
+
+以下是使用 Java 编程实现 TCP 和 UDP 通信的简单示例。
+
+## TCP 示例：
+
+客户端：
+```java
+import java.io.*;
+import java.net.*;
+
+public class TCPClient {
+    public static void main(String[] args) throws IOException {
+        // 创建一个连接到指定服务器和端口的套接字
+        Socket socket = new Socket("localhost", 8080);
+        
+        // 获取输出流以发送数据到服务器
+        OutputStream outputStream = socket.getOutputStream();
+        PrintWriter writer = new PrintWriter(outputStream, true);
+        
+        // 发送消息到服务器
+        writer.println("Hello, server!");
+
+        // 获取输入流以接收服务器的响应
+        InputStream inputStream = socket.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        
+        // 读取并输出服务器的响应
+        String response = reader.readLine();
+        System.out.println("Server response: " + response);
+
+        // 关闭资源
+        reader.close();
+        writer.close();
+        socket.close();
+    }
+}
+```
+
+服务器：
+```java
+import java.io.*;
+import java.net.*;
+
+public class TCPServer {
+    public static void main(String[] args) throws IOException {
+        // 创建一个在指定端口监听的 ServerSocket
+        ServerSocket serverSocket = new ServerSocket(8080);
+
+        // 等待客户端连接
+        System.out.println("Waiting for a client...");
+        Socket clientSocket = serverSocket.accept();
+        System.out.println("Client connected.");
+
+        // 获取输入流以接收客户端发送的数据
+        InputStream inputStream = clientSocket.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+        // 读取客户端发送的消息
+        String message = reader.readLine();
+        System.out.println("Client message: " + message);
+
+        // 获取输出流以向客户端发送响应
+        OutputStream outputStream = clientSocket.getOutputStream();
+        PrintWriter writer = new PrintWriter(outputStream, true);
+
+        // 向客户端发送响应
+        writer.println("Hello, client!");
+
+        // 关闭资源
+        reader.close();
+        writer.close();
+        clientSocket.close();
+        serverSocket.close();
+    }
+}
+```
+
+## UDP 示例：
+
+发送方（客户端）：
+```java
+import java.io.IOException;
+import java.net.*;
+
+public class UDPSender {
+    public static void main(String[] args) throws IOException {
+        // 创建一个 DatagramSocket
+        DatagramSocket datagramSocket = new DatagramSocket();
+
+        // 准备发送的数据和目标地址
+        String message = "Hello, receiver!";
+        InetAddress address = InetAddress.getByName("localhost");
+        int port = 8080;
+
+        // 将数据转换为字节数组并创建一个 DatagramPacket
+        byte[] buffer = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, port);
+
+        // 发送数据报
+        datagramSocket.send(packet);
+        System.out.println("Message sent.");
+
+        // 准备接收响应
+        byte[] responseBuffer = new byte[1024];
+        DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
+
+        // 接收响应数据报
+        datagramSocket.receive(responsePacket);
+        System.out.println("Response received.");
+
+        // 从响应数据报中提取数据并转换为字符串
+        String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
+        System.out.println("Response content: " + response);
+
+        // 关闭资源
+        datagramSocket.close();
+    }
+}
+
+```
+
+接收方（服务器）：
+```java
+import java.io.IOException;
+import java.net.*;
+
+public class UDPReceiver {
+    public static void main(String[] args) throws IOException {
+        // 创建一个在指定端口监听的 DatagramSocket
+        int port = 8080;
+        DatagramSocket datagramSocket = new DatagramSocket(port);
+
+        // 准备接收数据报的缓冲区和 DatagramPacket
+        byte[] buffer = new byte[1024];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+
+        // 接收数据报
+        datagramSocket.receive(packet);
+        System.out.println("Message received.");
+
+        // 从数据报中提取数据并转换为字符串
+        String message = new String(packet.getData(), 0, packet.getLength());
+        System.out.println("Message content: " + message);
+
+        // 准备发送响应
+        String response = "Hello, sender!";
+        byte[] responseBuffer = response.getBytes();
+        InetAddress senderAddress = packet.getAddress();
+        int senderPort = packet.getPort();
+        DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length, senderAddress, senderPort);
+
+        // 发送响应数据报
+        datagramSocket.send(responsePacket);
+        System.out.println("Response sent.");
+
+        // 关闭资源
+        datagramSocket.close();
+    }
+}
+
+
+       
+```
 
 # 补充
 
@@ -1985,3 +2346,31 @@ MyInterface proxy = (MyInterface) Proxy.newProxyInstance(
 在这个例子中，`proxy` 是一个动态生成的代理类实例，它实现了 `MyInterface` 接口。当 `proxy` 的方法被调用时，会转发到 `MyInvocationHandler` 的 `invoke` 方法。`invoke` 方法中可以实现需要的代理逻辑，例如在目标方法执行前后添加日志。
 
 总之，JDK 动态代理的原理是在运行时动态地生成代理类，并将方法调用转发到处理器（`InvocationHandler`）。处理器负责实现代理逻辑。
+
+
+
+
+
+## Object里面的方法
+
+`java.lang.Object` 是 Java 中所有类的父类。当创建一个新的类时，如果没有显式地继承其他类，那么这个类将默认继承 `Object` 类。`Object` 类中的方法在任何 Java 类中都可以使用。以下是 `Object` 类中的一些主要方法及其作用：
+
+1. `public String toString()`: 返回对象的字符串表示。通常需要在自定义类中覆盖此方法，以便为对象提供有意义的字符串表示。
+
+2. `public boolean equals(Object obj)`: 比较两个对象是否相等。通常需要在自定义类中覆盖此方法，以便根据类的属性来判断对象是否相等。
+
+3. `public int hashCode()`: 返回对象的哈希码值。当覆盖 `equals()` 方法时，通常也需要覆盖 `hashCode()` 方法，以便满足“相等的对象必须具有相等的哈希码”的约定。
+
+4. `protected Object clone() throws CloneNotSupportedException`: 创建并返回当前对象的副本。**为了实现克隆功能，需要实现 `Cloneable` 接口并覆盖此方法。**
+
+5. `public final Class<?> getClass()`: 返回对象的运行时类。此方法可用于获取对象的类信息，如类名、接口、父类等。
+
+6. `protected void finalize() throws Throwable`: **当对象被垃圾回收器回收时，将调用此方法。在 Java 9 中，此方法已被弃用，因为使用 `finalize()` 方法可能导致性能问题和资源泄漏。建议使用其他清理资源的方法，如 `try-with-resources` 语句或 `AutoCloseable` 接口。**
+
+7. `public final void wait() throws InterruptedException`: 使当前线程等待，直到其他线程调用此对象的 `notify()` 方法或 `notifyAll()` 方法。这个方法常用于多线程编程中的线程间同步。
+
+8. `public final void notify()`: 唤醒在此对象监视器上等待的单个线程。这个方法也常用于多线程编程中的线程间同步。
+
+9. `public final void notifyAll()`: 唤醒在此对象监视器上等待的所有线程。这个方法同样常用于多线程编程中的线程间同步。
+
+在自定义类中，可以根据需要覆盖这些方法，以实现特定的功能和行为。
