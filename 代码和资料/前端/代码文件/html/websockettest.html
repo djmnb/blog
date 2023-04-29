@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+    <div>
+        <input type="text" id="from" placeholder="Your name">
+        <input type="text" id="to" placeholder="Recipient">
+        <input type="text" id="message" placeholder="Message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <ul id="chat">
+    </ul>
+
+    <script>
+        // 连接WebSocket服务器
+        const socket = new SockJS("http://localhost:8080/chat-websocket");
+        const stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            console.log("Connected: " + frame);
+            // 订阅/topic/messages以接收聊天消息
+            stompClient.subscribe("/topic/messages", function (response) {
+                const message = JSON.parse(response.body);
+                showMessage(message);
+            });
+        });
+
+        function sendMessage() {
+            const from = document.getElementById("from").value;
+            const to = document.getElementById("to").value;
+            const content = document.getElementById("message").value;
+
+            // 发送聊天消息到/app/sendMessage
+            stompClient.send("/app/sendMessage", {}, JSON.stringify({
+                from: from,
+                to: to,
+                content: content
+            }));
+        }
+
+        function showMessage(message) {
+            const chat = document.getElementById("chat");
+            const li = document.createElement("li");
+            li.appendChild(document.createTextNode(message.from + " to " + message.to + ": " + message.content));
+            chat.appendChild(li);
+        }
+    </script>
+</body>
+</html>

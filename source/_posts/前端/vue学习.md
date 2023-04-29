@@ -2790,7 +2790,7 @@ setup() {
 
 ![image-20230405132313884](../../img/vue学习assets/image-20230405132313884.png)
 
-**这里我们将app组件实例对象放在window上,  发现b的值是2,但是页面还是1**
+**这里我们将app组件代理对象放在window上,  发现b的值是2,但是页面还是1**
 
 我们点击a++
 
@@ -3433,7 +3433,7 @@ const myDirective = {
 <template>
   <div>
     <button @click="changeComponent">Toggle Component</button>
-    <component :is="currentComponent" />
+    <component :is="currentComponent" />  
   </div>
 </template>
 
@@ -3442,7 +3442,7 @@ import ComponentA from "./ComponentA.vue";
 import ComponentB from "./ComponentB.vue";
 import { ref } from "vue";
 
-const currentComponent = ref("ComponentA");
+const currentComponent = ref("ComponentA");  // 可以是组件名字也可以是组件对象
 
 const changeComponent = () => {
     currentComponent.value = currentComponent.value === "ComponentA" ? "ComponentB" : "ComponentA";
