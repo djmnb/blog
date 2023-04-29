@@ -1,5 +1,5 @@
 ---
-title: html+css学习
+title: html+css+js学习
 date: 2023-3-30
 ---
 

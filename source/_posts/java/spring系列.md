@@ -3,17 +3,341 @@ title: spring系列学习
 data: 2023-4-20
 ---
 
+# spring
+
+## 注册bean
+
+在Spring Boot中，有多种方式注册Bean（组件），每种方式都有其使用方法、注意事项、优缺点。以下是主要的注册方式：
+
+### 1. 使用@Component、@Service、@Repository和@Controller注解：
+
+使用方法：将这些注解添加到类上，以便让Spring将其作为组件（Bean）自动注册到上下文中。每个注解都具有特定的用途和语义，但它们都是@Component注解的特殊化版本。
+
+注意事项：确保这些类在组件扫描的路径下，否则Spring将无法自动检测和注册这些组件。
+
+优点：简单易用，易于理解。
+
+缺点：使用注解，与Spring框架产生了耦合。
+
+### 2. 使用@Configuration和@Bean注解：
+
+使用方法：使用@Configuration注解标记配置类，而@Bean注解用于在配置类中定义Bean。在配置类中，每个带有@Bean注解的方法将生成一个Bean，方法的返回值类型决定了Bean的类型，方法名默认为Bean的名称。
+
+> 这种方式只会注入这个bean进去,而不会去扫描它内部的其他一些注入bean的注解
+
+注意事项：确保配置类在组件扫描的路径下。
+
+优点：易于管理，可在一个配置类中集中定义多个Bean，提高代码的可维护性。
+
+缺点：与Spring框架产生了耦合。
+
+### 3. 使用Java配置类和@BeanFactoryPostProcessor：
+
+使用方法：在Java配置类中实现BeanFactoryPostProcessor接口，然后在`postProcessBeanFactory`方法中手动注册Bean。这种方式适用于更高级的用例，例如动态注册Bean。
+
+注意事项：要确保实现了BeanFactoryPostProcessor接口的类被Spring扫描到。
+
+优点：灵活，适用于高级用例和动态注册Bean。
+
+缺点：相对复杂，需要更多的代码。
+
+### 4. 使用XML配置文件：
+
+使用方法：在XML文件中使用`<bean>`标签定义Bean，然后在启动类或配置类上使用@ImportResource注解导入XML配置文件。
+
+注意事项：确保XML配置文件位于类路径下，且@ImportResource注解正确指向文件。
+
+优点：与Spring框架的耦合相对较低，易于在不同项目中复用。
+
+缺点：与Java配置相比，XML配置可读性较差，且需要额外维护一个配置文件。
+
+总结：根据具体需求和场景选择合适的方式来定义和注册Bean。在大多数情况下，使用注解（如@Component、@Service等）和@Configuration类是最简单且推荐的方式，因为它们易于理解和维护。当有高级需求或需要动态注册Bean时，可以使用BeanFactoryPostProcessor。如果希望降低与Spring框架的耦合，可以考虑使用XML配置文件。
+
+
+
+## 注入方式
+
+在Spring Boot中，有几种常见的注入Bean的方式。每种方式都有其适用场景、优缺点以及注意事项。以下是主要的注入方式：
+
+### @Autowired
+
+可以使用@Autowired注解在字段、构造函数或方法上进行依赖注入。Spring会自动寻找与目标类型匹配的Bean并注入。
+
+优点：
+
+- 易于使用，代码简洁。
+- 能在字段、构造函数和方法上使用。
+
+缺点：
+
+- 依赖于Spring特定的注解，降低了代码的可移植性。
+
+注意事项：
+
+- 如果没有找到与目标类型匹配的Bean，**Spring将抛出一个异常。为了避免这种情况，可以将@Autowired注解的required属性设置为false。**
+- 当存在多个匹配的Bean时，**可以使用@Qualifier注解指定Bean的名称来消除歧义。**
+
+### @Resource
+
+@Resource注解是JavaEE提供的注解，可用于字段和方法上。它根据名称或类型查找匹配的Bean。
+
+优点：
+
+- 不依赖于Spring特定的注解，更具可移植性。
+- 默认按名称查找Bean，当名称匹配失败时，再按类型查找。
+
+缺点：
+
+- **不能用于构造函数上。**
+- 功能相对较少。
+
+注意事项：
+
+- 当存在多个匹配的Bean时，可以设置@Resource注解的name属性来消除歧义。
+
+### @Inject
+
+@Inject注解来自于Java的依赖注入规范（JSR-330），可用于字段、构造函数和方法上。它根据类型查找匹配的Bean。
+
+优点：
+
+- 不依赖于Spring特定的注解，具有更好的可移植性。
+- 能在字段、构造函数和方法上使用。
+
+缺点：
+
+- **需要额外引入javax.inject依赖。**
+
+注意事项：
+
+- 如果没有找到与目标类型匹配的Bean，Spring将抛出一个异常。
+- 当存在多个匹配的Bean时，可以使用@Named注解指定Bean的名称来消除歧义。
+
+### 使用构造函数注入
+
+通过在类的构造函数上添加@Autowired或@Inject注解，可以实现依赖注入。这是推荐的注入方式，因为它可以确保对象在创建时就已经注入了依赖，使得对象处于有效状态。
+
+优点：
+
+- 可以确保对象在创建时就已经注入了依赖，使得对象处于有效状态。
+- 有助于实现不可变对象，提高代码的健壮性。
+
+缺点：
+
+- 当注入大量依赖时，构造函数可能变得复杂。
+
+注意事项：
+
+- **当使用构造函数注入时，如果只有一个构造函数，可以省略@Autowired或@Inject注解。**
 
 
 
 
-### 配置文件
+
+
+
+## @Import注解
+
+`@Import`注解是Spring框架中用于导入其他配置类的注解。当您需要将多个Java配置类组合在一起时，可以使用`@Import`注解将其他配置类导入到当前配置类中。这样可以实现配置类之间的模块化，提高代码的可维护性和可读性。
+
+例如，假设您有两个配置类`AppConfig1`和`AppConfig2`，您可以在主配置类中使用`@Import`注解将这两个配置类导入：
+
+```java
+@Configuration
+@Import({AppConfig1.class, AppConfig2.class})
+public class MainConfig {
+    // ...
+}
+```
+
+在这个例子中，`MainConfig`类导入了`AppConfig1`和`AppConfig2`两个配置类。当`MainConfig`被加载时，`AppConfig1`和`AppConfig2`中定义的所有Bean也将被注册到Spring应用程序上下文中。
+
+使用`@Import`注解可以将配置类进行分组和模块化，以便于管理和组织。这有助于将不同功能或模块的配置分离，使得代码更加清晰和易于维护。
+
+
+
+## 监听器
+
+Spring Boot中的事件监听器允许您对应用程序中发生的事件进行响应。这些事件包括应用程序生命周期事件、自定义事件等。要使用事件监听器，请遵循以下步骤：
+
+1. 创建事件：
+   如果您要监听的是自定义事件，首先需要创建一个事件类。自定义事件类需要继承`org.springframework.context.ApplicationEvent`。
+
+例如：
+
+```java
+public class CustomEvent extends ApplicationEvent {
+    private String message;
+
+    public CustomEvent(Object source, String message) {
+        super(source);
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
+```
+
+2. 创建事件监听器：
+   在需要监听事件的类中创建一个方法，该方法将在事件发生时被调用。然后使用`@EventListener`注解标记此方法，并指定要监听的事件类型。
+
+例如：
+
+```java
+@Component
+public class CustomEventListener {
+
+    @EventListener
+    public void handleCustomEvent(CustomEvent event) {
+        System.out.println("Received custom event: " + event.getMessage());
+    }
+}
+```
+
+3. 发布事件：
+   要触发事件，需要将事件发布到应用程序上下文中。您可以通过注入`org.springframework.context.ApplicationEventPublisher`并调用其`publishEvent()`方法来实现。
+
+例如：
+
+```java
+@Service
+public class CustomEventPublisher {
+    private final ApplicationEventPublisher eventPublisher;
+
+    public CustomEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+
+    public void publishCustomEvent(String message) {
+        CustomEvent event = new CustomEvent(this, message);
+        eventPublisher.publishEvent(event);
+    }
+}
+```
+
+4. 使用事件监听器：
+   现在您已经准备好使用事件监听器。当您需要触发事件时，只需调用`CustomEventPublisher`中的`publishCustomEvent()`方法，事件监听器将自动响应事件。
+
+例如，在Controller类中使用`CustomEventPublisher`：
+
+```java
+@RestController
+public class CustomEventController {
+
+    private final CustomEventPublisher customEventPublisher;
+
+    public CustomEventController(CustomEventPublisher customEventPublisher) {
+        this.customEventPublisher = customEventPublisher;
+    }
+
+    @GetMapping("/triggerEvent")
+    public String triggerEvent() {
+        customEventPublisher.publishCustomEvent("Hello, this is a custom event!");
+        return "Event triggered";
+    }
+}
+```
+
+通过上述步骤，您可以在Spring Boot应用程序中使用事件监听器来监听和响应特定事件。
+
+
+
+## 后置处理器
+
+### 定义
+
+Spring中有一些后置处理器，它们可以在Bean的生命周期中的不同阶段进行拦截，从而扩展或自定义Bean的行为。按照B**ean在Spring容器中被加载的顺序**，下面是一些常见的后置处理器及其用途和作用时机：
+
+1. BeanDefinitionRegistryPostProcessor：
+用途：它允许在**Bean定义被加载到容器之前，修改或添加Bean定义**。可以用于动态注册Bean或修改Bean的元数据。
+作用时机：在所有Bean定义被加载到容器之前，调用postProcessBeanDefinitionRegistry()方法。
+
+2. BeanFactoryPostProcessor：
+用途：**它允许在Bean定义被加载且尚未实例化Bean之前修改Bean的定义**。主要用于修改Bean的配置元数据。
+作用时机：在所有Bean定义都已加载到容器且还未实例化Bean时，调用postProcessBeanFactory()方法。
+
+3. InstantiationAwareBeanPostProcessor：
+用途：**它允许在Bean实例化之前和之后进行自定义处理**，例如替换Bean的实例、改变属性值等。
+作用时机：在Bean实例化之前调用postProcessBeforeInstantiation()方法，实例化之后调用postProcessAfterInstantiation()方法，然后在设置属性前调用postProcessProperties()方法。
+
+4. BeanPostProcessor：
+用途：它允许在Bean初始化之后执行一些自定义逻辑，例如修改Bean的属性或执行其他配置。对所有的Bean都生效。
+作用时机：**在Bean的初始化方法（如afterPropertiesSet()或自定义的init-method）之前和之后**，分别调用postProcessBeforeInitialization()和postProcessAfterInitialization()方法。
+
+5. DestructionAwareBeanPostProcessor：
+用途：**它允许在Bean销毁之前执行一些自定义逻辑，例如释放资源、清理缓存等**。
+作用时机：在Bean销毁之前调用postProcessBeforeDestruction()方法。
+
+按照Bean的加载顺序，这些后置处理器都在Bean的生命周期中的不同阶段起作用。通过实现相应的接口并注册到Spring容器，可以灵活地扩展Bean的行为。
+
+### spring默认提供的后置处理器
+
+Spring框架默认提供了一些内置的后置处理器，这些后置处理器负责处理各种功能和任务。以下是一些常见的内置后置处理器及其用途：
+
+1. ApplicationContextAwareProcessor：
+用途：负责处理实现了ApplicationContextAware、ResourceLoaderAware、ApplicationEventPublisherAware和MessageSourceAware接口的Bean，为它们注入相应的依赖。
+
+2. InitDestroyAnnotationBeanPostProcessor：
+用途：**处理带有@PostConstruct和@PreDestroy注解的Bean，分别在Bean初始化后和销毁前执行相应的方法。**
+
+3. AutowiredAnnotationBeanPostProcessor：
+用途：**处理带有@Autowired、@Value和@Inject注解的Bean，负责自动装配Bean的属性、方法和构造函数。**
+
+4. RequiredAnnotationBeanPostProcessor：
+用途：处理带有@Required注解的Bean，确保标注了@Required注解的属性已经被设置，否则抛出异常。
+
+5. CommonAnnotationBeanPostProcessor：
+用途：**处理带有@Resource、@PostConstruct和@PreDestroy注解的Bean，分别负责依赖注入和在Bean初始化后、销毁前执行相应的方法。**
+
+6. EventListenerMethodProcessor：
+用途：处理带有@EventListener注解的方法，将它们注册为事件监听器。
+
+7. DefaultEventListenerFactory：
+用途：为@EventListener注解的方法提供默认的事件监听器实例。
+
+8. ConfigurationClassPostProcessor (**BeanDefinitionRegistryPostProcessor**)：
+用途：**处理带有@Configuration、@Bean、@ComponentScan、@Import和@PropertySource注解的配置类，负责解析和注册Bean定义。**
+
+9. ScheduledAnnotationBeanPostProcessor：
+用途：处理带有@Scheduled注解的方法，将它们注册为计划任务。
+
+这些内置后置处理器由Spring框架自动注册，并在不同的生命周期阶段处理各种功能和任务。它们使得开发人员能够更加便捷地使用Spring框架的功能。
+
+# spring boot 
+
+
+
+## 自动配置
+
+Spring Boot 的自动配置是它的一个核心功能，它通过预先定义的默认配置和约定优于配置（Convention over Configuration）的原则，简化了应用程序的配置。自动配置的原理主要依赖以下几个关键技术：
+
+1. 条件注解：Spring Boot 使用条件注解（如 `@ConditionalOnClass`、`@ConditionalOnBean`、`@ConditionalOnMissingBean` 等）来根据当前应用程序上下文和类路径的情况来决定是否应用某个配置。这些注解使得 Spring Boot 能够在满足特定条件时自动配置所需的组件。
+
+2. 自动配置类：Spring Boot 提供了许多自动配置类，它们是带有 `@Configuration` 注解的 Java 配置类，包含了一系列预定义的默认配置。这些自动配置类通常以 `AutoConfiguration` 结尾，例如 `DataSourceAutoConfiguration`、`WebMvcAutoConfiguration` 等。这些自动配置类会在应用程序启动时被加载，并根据条件注解决定是否应用这些默认配置。
+
+3. `spring.factories` 文件：`spring.factories` 文件是 Spring Boot 的一个关键配置文件，它位于 `META-INF` 目录下。该文件定义了许多自动配置类和启用器，它们在应用程序启动时被 Spring Boot 自动发现和加载。自动配置类和启用器都是通过 `org.springframework.boot.autoconfigure.EnableAutoConfiguration` 键列出的。
+
+4. `@EnableAutoConfiguration` 注解：这个注解通常在 Spring Boot 的主配置类或启动类上使用（通过 `@SpringBootApplication` 注解间接启用，因为 `@SpringBootApplication` 包含了 `@EnableAutoConfiguration`）。该注解负责激活自动配置功能，并从 `spring.factories` 文件中加载自动配置类。
+
+整个自动配置过程如下：
+
+1. 当您的应用程序启动时，Spring Boot 会加载带有 `@SpringBootApplication` 注解的主类。
+2. `@SpringBootApplication` 注解包含了 `@EnableAutoConfiguration` 注解，这个注解会激活自动配置功能。
+3. Spring Boot 读取 `spring.factories` 文件，加载并实例化其中定义的自动配置类。
+4. 对于每个自动配置类，Spring Boot 根据条件注解的结果决定是否应用它们。
+5. 在满足条件的情况下，自动配置类会将默认配置和相关组件注册到应用程序上下文中。
+
+通过这个自动配置原理，Spring Boot 能够在适当的时机为应用程序提供合适的默认配置，从而简化开发过程。当然，也可以覆盖这些默认配置，以满足特定的需求。
+
+## 配置文件
 
 Spring Boot中的配置文件是用于配置应用程序的属性和参数的文件。Spring Boot支持多种类型的配置文件，包括属性文件、**YAML文件**、JSON文件等. 配置文件可以包含应用程序的所有配置参数，例如数据库连接信息、日志配置、服务器端口等。这些参数可以通过@ConfigurationProperties注解和@Value注解在应用程序中访问。
 
 Spring Boot 提供了许多有用的特性，以简化配置文件的使用。以下是一些配置文件中的特殊用法：
 
-#### 配置文件的多环境支持：
+### 配置文件的多环境支持：
 
 Spring Boot 支持使用不同的配置文件来区分不同的环境（如开发、测试和生产环境）。您可以在 `application.yml` 或 `application.properties` 文件中使用 `spring.profiles.active` 属性来激活特定的环境配置文件。例如，在 `application.yml` 文件中：
 
@@ -25,7 +349,7 @@ spring:
 
 这将激活名为 `application-dev.yml` 的配置文件。您还可以通过命令行参数或环境变量来覆盖此属性。
 
-#### 配置文件中的占位符
+### 配置文件中的占位符
 
 您可以在配置文件中使用 `${...}` 占位符引用其他属性。例如：
 
@@ -36,11 +360,11 @@ app.greeting=${app.message} Welcome to our application!
 
 在这个例子中，`app.greeting` 的值将包含 `app.message` 的值。
 
-#### 配置文件的优先级
+### 配置文件的优先级
 
 Spring Boot 允许您将配置文件放在不同的位置，如项目的根目录、`config/` 目录、类路径等。不同位置的配置文件具有不同的优先级。例如，项目根目录下的 `application.properties` 文件的优先级高于类路径下的 `application.properties` 文件。这意味着在多个位置定义相同的属性时，具有较高优先级的配置文件中的值将覆盖较低优先级的配置文件中的值。
 
-#### 使用 YAML 配置文件中的锚点和别名
+### 使用 YAML 配置文件中的锚点和别名
 
 在 YAML 格式的配置文件中，您可以使用锚点（`&`）和别名（`*`）来避免重复。例如：
 
@@ -60,7 +384,7 @@ app:
 
 在这个例子中，我们使用了锚点和别名来避免重复定义 `default` 数据源的属性。
 
-#### 获取pom.xml的环境变量
+### 获取pom.xml的环境变量
 
 在配置文件中使用"@@"通常是指使用**Maven资源过滤器**，用于将Maven构建过程中的**项目属性值替换到配置文件中**。
 
@@ -90,11 +414,11 @@ my.property.value=hello world
 
 
 
-### 配置文件读取
+## 配置文件读取
 
 在 Spring Boot 中，常用的配置文件格式有两种：`.properties` 和 `.yml`（或 `.yaml`）。Spring Boot 自动加载项目根目录下的 `application.properties` 或 `application.yml` 文件作为默认的配置文件。您可以使用以下方式来读取配置文件中的值：
 
-#### 使用 `@Value` 注解
+### 使用 `@Value` 注解
 
 在需要注入配置值的地方，使用 `@Value` 注解并指定配置的键。例如，假设 `application.properties` 文件中有一个属性 `app.message`：
 
@@ -120,7 +444,7 @@ public class AppConfig {
 }
 ```
 
-#### 使用 `@ConfigurationProperties` 注解
+### 使用 `@ConfigurationProperties` 注解
 
 为了更方便地管理和验证配置，您可以使用 `@ConfigurationProperties` 注解将配置文件中的属性值绑定到一个 Java 对象上。首先，创建一个带有 `@ConfigurationProperties` 注解的类，并为该类的字段添加 getter 和 setter 方法：
 
@@ -146,7 +470,7 @@ public class AppConfig {
 
 在这个示例中，`prefix = "app"` 表示将配置文件中以 `app` 为前缀的属性绑定到 `AppConfig` 类的字段上。
 
-#### 使用 `Environment` 对象
+### 使用 `Environment` 对象
 
 在 Spring 中，您还可以使用 `Environment` 对象来访问配置文件中的属性值。首先，将 `Environment` 注入到您的组件中：
 
@@ -172,359 +496,6 @@ public class AppConfig {
 这种方法适用于在运行时动态访问配置值的情况。
 
 这些方法可以应用于不同的配置文件格式（`.properties` 或 `.yml`）。您可以根据实际需求和偏好选择合适的方式来读取配置文件中的值。
-
-
-
-### 过滤器
-
-下面是定义过滤器的几种方式
-
-
-
-#### FilterRegistrationBean
-
-在 Spring Boot 中，你可以通过实现 `javax.servlet.Filter` 接口并注册一个 `Filter` Bean 来创建一个过滤器。下面是创建一个简单过滤器的步骤：
-
-1. 首先，创建一个 Java 类，实现 `javax.servlet.Filter` 接口。在这个类中，你需要实现 `init`、`doFilter` 和 `destroy` 方法。
-
-```java
-import javax.servlet.*;
-import javax.servlet.annotation.WebFilter;
-import java.io.IOException;
-
-public class MyFilter implements Filter {
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // 初始化操作，例如加载配置、设置参数等
-    }
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        // 在此处执行过滤逻辑，例如请求头检查、权限验证等
-        // ...
-
-        // 如果符合过滤条件，继续执行后续过滤器和请求处理
-        chain.doFilter(request, response);
-    }
-
-    @Override
-    public void destroy() {
-        // 清理操作，例如释放资源、清理缓存等
-    }
-}
-```
-
-2. 然后，将创建的过滤器类注册为 Spring Bean 并配置过滤器顺序。你可以通过创建一个 `FilterRegistrationBean` Bean 来实现这一点。
-
-```java
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
-public class FilterConfig {
-
-    @Bean
-    public FilterRegistrationBean<MyFilter> myFilterRegistration() {
-        FilterRegistrationBean<MyFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new MyFilter());
-        registration.addUrlPatterns("/*"); // 设置过滤器拦截的 URL 模式
-        registration.setOrder(1); // 设置过滤器的执行顺序
-        return registration;
-    }
-}
-```
-
-在这个示例中，我们创建了一个名为 `MyFilter` 的过滤器，并通过 `FilterConfig` 类将其注册为一个 Spring Bean。`MyFilter` 会拦截所有的 URL（通过 `addUrlPatterns("/*")` 配置），并设置其执行顺序为 1（通过 `setOrder(1)` 配置）。
-
-现在，每当有请求到达应用时，`MyFilter` 都会在请求进入控制器之前执行。你可以在 `doFilter` 方法中实现你的过滤逻辑，例如权限检查、日志记录等。
-
-#### @Component` 和 `@Order 注解
-
-在过滤器类上添加 `@Component` 和 `@Order` 注解，将过滤器作为 Spring Bean 进行注册，同时指定执行顺序。这种方式适用于需要 Spring 执行自动扫描的情况。
-
-```java
-import javax.servlet.*;
-import javax.servlet.annotation.WebFilter;
-import java.io.IOException;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
-
-@Component
-@Order(1)
-public class MyFilter implements Filter {
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // 初始化操作，例如加载配置、设置参数等
-    }
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        // 在此处执行过滤逻辑，例如请求头检查、权限验证等
-        // ...
-
-        // 如果符合过滤条件，继续执行后续过滤器和请求处理
-        chain.doFilter(request, response);
-    }
-
-    @Override
-    public void destroy() {
-        // 清理操作，例如释放资源、清理缓存等
-    }
-}
-```
-
-#### 使用 `@WebFilter` 注解：
-
-在过滤器类上添加 `@WebFilter` 注解，指定要拦截的 URL 模式。同时，需要在启动类上添加 `@ServletComponentScan` 注解以启用自动扫描。这种方式主要用于 Servlet 容器的过滤器，而不是 Spring 的过滤器，因此在过滤器中无法自动注入其他 Spring Bean。
-
-```java
-import javax.servlet.*;
-import javax.servlet.annotation.WebFilter;
-import java.io.IOException;
-
-@WebFilter(urlPatterns = "/*", filterName = "myFilter")
-public class MyFilter implements Filter {
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // 初始化操作，例如加载配置、设置参数等
-    }
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        // 在此处执行过滤逻辑，例如请求头检查、权限验证等
-        // ...
-
-        // 如果符合过滤条件，继续执行后续过滤器和请求处理
-        chain.doFilter(request, response);
-    }
-
-    @Override
-    public void destroy() {
-        // 清理操作，例如释放资源、清理缓存等
-    }
-}
-```
-
-启动类添加 `@ServletComponentScan` 注解：
-
-```java
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
-
-@SpringBootApplication
-@ServletComponentScan
-public class MyApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(MyApplication.class, args);
-    }
-}
-```
-
-
-
-
-
-### 权限校验的几种方式
-
-#### 过滤器
-
-
-
-#### 拦截器
-
-
-
-#### AOP + RestControllerAdvice
-
-AOP
-
-```java
-package com.example.project.AOP;
-
-
-import com.example.project.excption.LoginError;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
-import javax.servlet.http.HttpServletRequest;
-
-/**
- * 检查用户是否登录
- */
-@Aspect
-@Component
-public class LoginCheck {
-
-    @Around("@annotation(com.example.project.annotation.LoginCheckAnnotation)")  // 只对需要校验的方法进行检查
-    public Object checkLogin(ProceedingJoinPoint pjp) throws Throwable {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();  // 拿到request对象
-        Object userinfo = request.getSession().getAttribute("userinfo");
-        if(userinfo == null){
-            throw new LoginError("用户未登录");
-        }
-        return pjp.proceed();
-    }
-
-}
-```
-
-RestControllerAdvice里面去检测这个异常就可以了
-
-
-
-### 请求响应流程
-
-1. 接收请求：客户端（如浏览器或其他应用）向服务器发起 HTTP 请求。请求首先到达服务器上的 Web 服务器，例如 Tomcat、Jetty 或 Undertow。
-2. 过滤器（Filter）链：在请求到达 Spring Boot 应用之前，它会经过一系列的过滤器。这些过滤器可以用于处理跨域请求、安全性、编码等问题。过滤器按照定义的顺序依次执行。
-3. 请求进入 Spring DispatcherServlet：在过滤器链处理完成后，请求进入 Spring 的核心 Servlet，即 DispatcherServlet。DispatcherServlet 负责将请求路由到合适的控制器（Controller）方法。
-4. 解析请求映射：DispatcherServlet 查找与请求 URL 匹配的控制器方法。这是通过处理器映射（HandlerMapping）完成的，它会根据请求的 URL、HTTP 方法和其他条件找到匹配的控制器方法。
-5. 参数解析与数据绑定：在找到匹配的控制器方法后，Spring 会解析请求参数并将其绑定到方法参数上。这是通过参数解析器（ArgumentResolver）完成的。参数解析器可以处理各种类型的参数，例如路径参数、查询参数、请求体等。
-6. 参数校验：根据需要，Spring 可以对请求参数进行校验。例如，可以使用 JSR-303/JSR-380 校验注解（如 `@NotNull`、`@Size` 等）对请求参数进行校验。
-7. 执行控制器方法：参数解析和校验完成后，Spring 会调用匹配的控制器方法并传入解析后的参数。在控制器方法中，可以处理业务逻辑并返回响应数据。
-8. AOP 切面：在执行控制器方法时，可以使用 AOP 为目标方法添加切面。切面可以包含前置通知（Before Advice）、后置通知（After Advice）、环绕通知（Around Advice）等，用于实现日志记录、权限控制等功能。
-9. 返回值处理：控制器方法执行完成后，Spring 会处理其返回值。返回值处理器（ReturnValueHandler）负责将返回值转换为最终的 HTTP 响应。例如，可以使用 `@ResponseBody` 注解将返回值序列化为 JSON，或者返回一个视图名称（如 "index"）以渲染 HTML 页面。
-10. 异常处理：在请求处理过程中，可能会抛出异常。这时，可以使用 `@ControllerAdvice` 或 AOP 的 `@Around` 通知来捕获和处理异常。异常处理方法可以根据异常类型返回不同的错误响应。
-11. 视图解析与渲染：如果控制器方法返回的是一个视图名称（例如 "index"），Spring 会使用视图解析器（ViewResolver）来找到与视图名称匹配的视图模板（如 Thymeleaf、Freemarker、JSP 等）。然后，视图模板将使用控制器方法返回的数据渲染 HTML 页面。
-12. 生成 HTTP 响应：经过视图渲染或返回值处理后，Spring 会将结果封装成一个 HTTP 响应。响应包括 HTTP 状态码、响应头和响应体。响应体可能包含 JSON 数据、HTML 页面等。
-13. 响应过滤器链：在发送响应给客户端之前，响应会经过一系列的过滤器。这些过滤器可以用于处理响应头、响应体等。与请求过滤器链类似，响应过滤器链中的过滤器按照定义的顺序依次执行。
-14. 发送响应：最后，Web 服务器将 HTTP 响应发送回客户端。客户端收到响应后可以解析响应数据并采取相应的操作。
-
-
-
-### 自定义404处理
-
-#### 方法一
-
-在Spring Boot中，如果你想在@ControllerAdvice类中捕获404异常（Not Found异常），你需要实现`ErrorController`接口并重写`getErrorPath`方法。这样，你可以在@ControllerAdvice类中处理404异常。
-
-首先，创建一个类实现`ErrorController`接口：
-
-```java
-import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-public class CustomErrorController implements ErrorController {
-
-    @RequestMapping("/error")
-    public ResponseEntity<?> handleError(HttpServletRequest request) {
-        Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
-        if (statusCode == HttpStatus.NOT_FOUND.value()) {
-            throw new NotFoundException("资源未找到");
-        }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("内部服务器错误");
-    }
-
-    @Override
-    public String getErrorPath() {
-        return "/error";
-    }
-}
-```
-
-然后，在你的@ControllerAdvice类中处理`NotFoundException`：
-
-```java
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.ModelAndView;
-
-@ControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler(NotFoundException.class)
-    public ModelAndView handleNotFoundException(NotFoundException ex) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.addObject("error", ex.getMessage());
-        modelAndView.setViewName("error/404");
-        return modelAndView;
-    }
-
-    // 其他异常处理方法...
-}
-```
-
-这样，当发生404异常时，将会触发`NotFoundException`，然后在`GlobalExceptionHandler`类中处理该异常。
-
-#### 方式二
-
-除了上述方法外，还有一种简单的方法可以在 `@ControllerAdvice` 类中捕获404异常，那就是通过捕获 `NoHandlerFoundException`。首先，你需要在 `application.properties` 或 `application.yml` 文件中启用此功能。
-
-在 `application.properties` 中添加以下内容：
-
-```properties
-spring.mvc.throw-exception-if-no-handler-found=true
-spring.resources.add-mappings=false
-```
-
-或者在 `application.yml` 中添加以下内容：
-
-```yaml
-spring:
-  mvc:
-    throw-exception-if-no-handler-found: true
-  resources:
-    add-mappings: false
-```
-
-这样，Spring Boot会将404视为一个异常，并抛出`NoHandlerFoundException`。现在，在你的 `@ControllerAdvice` 类中处理这个异常：
-
-```java
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.NoHandlerFoundException;
-
-@ControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler(NoHandlerFoundException.class)
-    public ModelAndView handleNoHandlerFoundException(NoHandlerFoundException ex) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.addObject("error", "资源未找到");
-        modelAndView.setViewName("error/404");
-        return modelAndView;
-    }
-
-    // 其他异常处理方法...
-}
-```
-
-现在，当发生404异常时，`NoHandlerFoundException` 会被捕获并在 `GlobalExceptionHandler` 类中处理。这种方法相对简单，不需要实现 `ErrorController` 接口。
-
-在Spring Boot中，将 `spring.resources.add-mappings` 设置为 `false` 是为了禁用默认的静态资源处理。当你使用 `spring.mvc.throw-exception-if-no-handler-found=true` 配置选项启用 `NoHandlerFoundException` 时，这一设置可以确保404异常被正确处理。
-
-Spring Boot默认配置了静态资源处理，如CSS、JS、图片等。如果没有禁用静态资源处理，当访问一个不存在的静态资源时，Spring Boot将不会抛出 `NoHandlerFoundException`，而是直接返回404状态码。这意味着你的 `@ControllerAdvice` 类将无法捕获到404异常。
-
-通过将 `spring.resources.add-mappings` 设置为 `false`，你可以关闭默认的静态资源处理。这样，无论是访问不存在的静态资源还是其他类型的资源，Spring Boot都会抛出 `NoHandlerFoundException`，使得你的 `@ControllerAdvice` 类能够捕获到所有的404异常。需要注意的是，**禁用默认的静态资源处理后，你需要自己配置静态资源处理规则。**
-
-如果你的应用程序没有使用静态资源，或者已经配置了自定义的静态资源处理规则，那么直接禁用默认的静态资源处理不会有任何问题。如果你需要使用默认的静态资源处理规则，可以考虑使用我在之前回答中提到的实现 `ErrorController` 接口的方法来捕获404异常。
-
-
-
-### springmvc中的异常类
-
-
-
-#### HttpMessageNotReadableException
-
-在 Spring Boot 应用程序中，HttpMessageNotReadableException 异常通常代表请求的消息无法读取或解析。这个异常通常是由于以下原因之一导致的：
-
-1. 请求的 Content-Type 不正确：如果请求的 Content-Type 不正确，例如请求头中的 Content-Type 是 application/json，但请求体中的数据格式不是 JSON 格式，则会导致 HttpMessageNotReadableException 异常。
-2. 请求体中的数据格式不正确：如果请求体中的数据格式不正确，例如请求体中的 JSON 数据格式不符合要求，或者请求体中缺少必要的属性等，也会导致 HttpMessageNotReadableException 异常。
-3. 请求体中的数据长度不正确：如果请求体中的数据长度超出了服务器预期的范围，也可能导致 HttpMessageNotReadableException 异常。
-
-当发生 HttpMessageNotReadableException 异常时，Spring Boot 会自动返回一个 HTTP 400 Bad Request 响应，提示客户端请求的消息无法读取或解析。
 
 
 
@@ -586,7 +557,7 @@ spring:
 
 使用TableName 和 TableField
 
-```
+```java
 @Data
 @TableName("message")  // 指定表名字
 public class Message {
@@ -1018,4 +989,417 @@ public class Person {
     <version>5.8.18</version>
 </dependency>
 ```
+
+# springMVC
+
+
+
+### 异常类
+
+
+
+#### HttpMessageNotReadableException
+
+在 Spring Boot 应用程序中，HttpMessageNotReadableException 异常通常代表请求的消息无法读取或解析。这个异常通常是由于以下原因之一导致的：
+
+1. 请求的 Content-Type 不正确：如果请求的 Content-Type 不正确，例如请求头中的 Content-Type 是 application/json，但请求体中的数据格式不是 JSON 格式，则会导致 HttpMessageNotReadableException 异常。
+2. 请求体中的数据格式不正确：如果请求体中的数据格式不正确，例如请求体中的 JSON 数据格式不符合要求，或者请求体中缺少必要的属性等，也会导致 HttpMessageNotReadableException 异常。
+3. 请求体中的数据长度不正确：如果请求体中的数据长度超出了服务器预期的范围，也可能导致 HttpMessageNotReadableException 异常。
+
+当发生 HttpMessageNotReadableException 异常时，Spring Boot 会自动返回一个 HTTP 400 Bad Request 响应，提示客户端请求的消息无法读取或解析。
+
+### 过滤器
+
+下面是定义过滤器的几种方式
+
+
+
+#### FilterRegistrationBean
+
+在 Spring Boot 中，你可以通过实现 `javax.servlet.Filter` 接口并注册一个 `Filter` Bean 来创建一个过滤器。下面是创建一个简单过滤器的步骤：
+
+1. 首先，创建一个 Java 类，实现 `javax.servlet.Filter` 接口。在这个类中，你需要实现 `init`、`doFilter` 和 `destroy` 方法。
+
+```java
+import javax.servlet.*;
+import javax.servlet.annotation.WebFilter;
+import java.io.IOException;
+
+public class MyFilter implements Filter {
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        // 初始化操作，例如加载配置、设置参数等
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        // 在此处执行过滤逻辑，例如请求头检查、权限验证等
+        // ...
+
+        // 如果符合过滤条件，继续执行后续过滤器和请求处理
+        chain.doFilter(request, response);
+    }
+
+    @Override
+    public void destroy() {
+        // 清理操作，例如释放资源、清理缓存等
+    }
+}
+```
+
+2. 然后，将创建的过滤器类注册为 Spring Bean 并配置过滤器顺序。你可以通过创建一个 `FilterRegistrationBean` Bean 来实现这一点。
+
+```java
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class FilterConfig {
+
+    @Bean
+    public FilterRegistrationBean<MyFilter> myFilterRegistration() {
+        FilterRegistrationBean<MyFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new MyFilter());
+        registration.addUrlPatterns("/*"); // 设置过滤器拦截的 URL 模式
+        registration.setOrder(1); // 设置过滤器的执行顺序
+        return registration;
+    }
+}
+```
+
+在这个示例中，我们创建了一个名为 `MyFilter` 的过滤器，并通过 `FilterConfig` 类将其注册为一个 Spring Bean。`MyFilter` 会拦截所有的 URL（通过 `addUrlPatterns("/*")` 配置），并设置其执行顺序为 1（通过 `setOrder(1)` 配置）。
+
+现在，每当有请求到达应用时，`MyFilter` 都会在请求进入控制器之前执行。你可以在 `doFilter` 方法中实现你的过滤逻辑，例如权限检查、日志记录等。
+
+#### @Component` 和 `@Order 注解
+
+在过滤器类上添加 `@Component` 和 `@Order` 注解，将过滤器作为 Spring Bean 进行注册，同时指定执行顺序。这种方式适用于需要 Spring 执行自动扫描的情况。
+
+```java
+import javax.servlet.*;
+import javax.servlet.annotation.WebFilter;
+import java.io.IOException;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+@Component
+@Order(1)
+public class MyFilter implements Filter {
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        // 初始化操作，例如加载配置、设置参数等
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        // 在此处执行过滤逻辑，例如请求头检查、权限验证等
+        // ...
+
+        // 如果符合过滤条件，继续执行后续过滤器和请求处理
+        chain.doFilter(request, response);
+    }
+
+    @Override
+    public void destroy() {
+        // 清理操作，例如释放资源、清理缓存等
+    }
+}
+```
+
+#### 使用 `@WebFilter` 注解：
+
+在过滤器类上添加 `@WebFilter` 注解，指定要拦截的 URL 模式。同时，需要在启动类上添加 `@ServletComponentScan` 注解以启用自动扫描。这种方式主要用于 Servlet 容器的过滤器，而不是 Spring 的过滤器，因此在过滤器中无法自动注入其他 Spring Bean。
+
+```java
+import javax.servlet.*;
+import javax.servlet.annotation.WebFilter;
+import java.io.IOException;
+
+@WebFilter(urlPatterns = "/*", filterName = "myFilter")
+public class MyFilter implements Filter {
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        // 初始化操作，例如加载配置、设置参数等
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        // 在此处执行过滤逻辑，例如请求头检查、权限验证等
+        // ...
+
+        // 如果符合过滤条件，继续执行后续过滤器和请求处理
+        chain.doFilter(request, response);
+    }
+
+    @Override
+    public void destroy() {
+        // 清理操作，例如释放资源、清理缓存等
+    }
+}
+```
+
+启动类添加 `@ServletComponentScan` 注解：
+
+```java
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.ServletComponentScan;
+
+@SpringBootApplication
+@ServletComponentScan
+public class MyApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MyApplication.class, args);
+    }
+}
+```
+
+
+
+
+
+### 权限校验的几种方式
+
+#### 过滤器
+
+
+
+#### 拦截器
+
+
+
+#### AOP + RestControllerAdvice
+
+AOP
+
+```java
+package com.example.project.AOP;
+
+
+import com.example.project.excption.LoginError;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
+
+/**
+ * 检查用户是否登录
+ */
+@Aspect
+@Component
+public class LoginCheck {
+
+    @Around("@annotation(com.example.project.annotation.LoginCheckAnnotation)")  // 只对需要校验的方法进行检查
+    public Object checkLogin(ProceedingJoinPoint pjp) throws Throwable {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();  // 拿到request对象
+        Object userinfo = request.getSession().getAttribute("userinfo");
+        if(userinfo == null){
+            throw new LoginError("用户未登录");
+        }
+        return pjp.proceed();
+    }
+
+}
+```
+
+RestControllerAdvice里面去检测这个异常就可以了
+
+
+
+### 请求响应流程
+
+1. 接收请求：客户端（如浏览器或其他应用）向服务器发起 HTTP 请求。请求首先到达服务器上的 Web 服务器，例如 Tomcat、Jetty 或 Undertow。
+2. 过滤器（Filter）链：在请求到达 Spring Boot 应用之前，它会经过一系列的过滤器。这些过滤器可以用于处理跨域请求、安全性、编码等问题。过滤器按照定义的顺序依次执行。
+3. 请求进入 Spring DispatcherServlet：在过滤器链处理完成后，请求进入 Spring 的核心 Servlet，即 DispatcherServlet。DispatcherServlet 负责将请求路由到合适的控制器（Controller）方法。
+4. 解析请求映射：DispatcherServlet 查找与请求 URL 匹配的控制器方法。这是通过处理器映射（HandlerMapping）完成的，它会根据请求的 URL、HTTP 方法和其他条件找到匹配的控制器方法。
+5. 参数解析与数据绑定：在找到匹配的控制器方法后，Spring 会解析请求参数并将其绑定到方法参数上。这是通过参数解析器（ArgumentResolver）完成的。参数解析器可以处理各种类型的参数，例如路径参数、查询参数、请求体等。
+6. 参数校验：根据需要，Spring 可以对请求参数进行校验。例如，可以使用 JSR-303/JSR-380 校验注解（如 `@NotNull`、`@Size` 等）对请求参数进行校验。
+7. 执行控制器方法：参数解析和校验完成后，Spring 会调用匹配的控制器方法并传入解析后的参数。在控制器方法中，可以处理业务逻辑并返回响应数据。
+8. AOP 切面：在执行控制器方法时，可以使用 AOP 为目标方法添加切面。切面可以包含前置通知（Before Advice）、后置通知（After Advice）、环绕通知（Around Advice）等，用于实现日志记录、权限控制等功能。
+9. 返回值处理：控制器方法执行完成后，Spring 会处理其返回值。返回值处理器（ReturnValueHandler）负责将返回值转换为最终的 HTTP 响应。例如，可以使用 `@ResponseBody` 注解将返回值序列化为 JSON，或者返回一个视图名称（如 "index"）以渲染 HTML 页面。
+10. 异常处理：在请求处理过程中，可能会抛出异常。这时，可以使用 `@ControllerAdvice` 或 AOP 的 `@Around` 通知来捕获和处理异常。异常处理方法可以根据异常类型返回不同的错误响应。
+11. 视图解析与渲染：如果控制器方法返回的是一个视图名称（例如 "index"），Spring 会使用视图解析器（ViewResolver）来找到与视图名称匹配的视图模板（如 Thymeleaf、Freemarker、JSP 等）。然后，视图模板将使用控制器方法返回的数据渲染 HTML 页面。
+12. 生成 HTTP 响应：经过视图渲染或返回值处理后，Spring 会将结果封装成一个 HTTP 响应。响应包括 HTTP 状态码、响应头和响应体。响应体可能包含 JSON 数据、HTML 页面等。
+13. 响应过滤器链：在发送响应给客户端之前，响应会经过一系列的过滤器。这些过滤器可以用于处理响应头、响应体等。与请求过滤器链类似，响应过滤器链中的过滤器按照定义的顺序依次执行。
+14. 发送响应：最后，Web 服务器将 HTTP 响应发送回客户端。客户端收到响应后可以解析响应数据并采取相应的操作。
+
+
+
+### 自定义404处理
+
+#### 方法一
+
+在Spring Boot中，如果你想在@ControllerAdvice类中捕获404异常（Not Found异常），你需要实现`ErrorController`接口并重写`getErrorPath`方法。这样，你可以在@ControllerAdvice类中处理404异常。
+
+首先，创建一个类实现`ErrorController`接口：
+
+```java
+import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class CustomErrorController implements ErrorController {
+
+    @RequestMapping("/error")
+    public ResponseEntity<?> handleError(HttpServletRequest request) {
+        Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
+        if (statusCode == HttpStatus.NOT_FOUND.value()) {
+            throw new NotFoundException("资源未找到");
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("内部服务器错误");
+    }
+
+    @Override
+    public String getErrorPath() {
+        return "/error";
+    }
+}
+```
+
+然后，在你的@ControllerAdvice类中处理`NotFoundException`：
+
+```java
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.ModelAndView;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NotFoundException.class)
+    public ModelAndView handleNotFoundException(NotFoundException ex) {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("error", ex.getMessage());
+        modelAndView.setViewName("error/404");
+        return modelAndView;
+    }
+
+    // 其他异常处理方法...
+}
+```
+
+这样，当发生404异常时，将会触发`NotFoundException`，然后在`GlobalExceptionHandler`类中处理该异常。
+
+#### 方式二
+
+除了上述方法外，还有一种简单的方法可以在 `@ControllerAdvice` 类中捕获404异常，那就是通过捕获 `NoHandlerFoundException`。首先，你需要在 `application.properties` 或 `application.yml` 文件中启用此功能。
+
+在 `application.properties` 中添加以下内容：
+
+```properties
+spring.mvc.throw-exception-if-no-handler-found=true
+spring.resources.add-mappings=false
+```
+
+或者在 `application.yml` 中添加以下内容：
+
+```yaml
+spring:
+  mvc:
+    throw-exception-if-no-handler-found: true
+  resources:
+    add-mappings: false
+```
+
+这样，Spring Boot会将404视为一个异常，并抛出`NoHandlerFoundException`。现在，在你的 `@ControllerAdvice` 类中处理这个异常：
+
+```java
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.NoHandlerFoundException;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ModelAndView handleNoHandlerFoundException(NoHandlerFoundException ex) {
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("error", "资源未找到");
+        modelAndView.setViewName("error/404");
+        return modelAndView;
+    }
+
+    // 其他异常处理方法...
+}
+```
+
+现在，当发生404异常时，`NoHandlerFoundException` 会被捕获并在 `GlobalExceptionHandler` 类中处理。这种方法相对简单，不需要实现 `ErrorController` 接口。
+
+在Spring Boot中，将 `spring.resources.add-mappings` 设置为 `false` 是为了禁用默认的静态资源处理。当你使用 `spring.mvc.throw-exception-if-no-handler-found=true` 配置选项启用 `NoHandlerFoundException` 时，这一设置可以确保404异常被正确处理。
+
+Spring Boot默认配置了静态资源处理，如CSS、JS、图片等。如果没有禁用静态资源处理，当访问一个不存在的静态资源时，Spring Boot将不会抛出 `NoHandlerFoundException`，而是直接返回404状态码。这意味着你的 `@ControllerAdvice` 类将无法捕获到404异常。
+
+通过将 `spring.resources.add-mappings` 设置为 `false`，你可以关闭默认的静态资源处理。这样，无论是访问不存在的静态资源还是其他类型的资源，Spring Boot都会抛出 `NoHandlerFoundException`，使得你的 `@ControllerAdvice` 类能够捕获到所有的404异常。需要注意的是，**禁用默认的静态资源处理后，你需要自己配置静态资源处理规则。**
+
+如果你的应用程序没有使用静态资源，或者已经配置了自定义的静态资源处理规则，那么直接禁用默认的静态资源处理不会有任何问题。如果你需要使用默认的静态资源处理规则，可以考虑使用我在之前回答中提到的实现 `ErrorController` 接口的方法来捕获404异常。
+
+
+
+# 补充
+
+## BeanFactory 和 FactoryBean
+
+`BeanFactory` 和 `FactoryBean` 是 Spring 框架中两个重要的概念，它们在功能和用途上有一些区别。
+
+1. `BeanFactory`：
+
+`BeanFactory` 是 Spring 框架中最基本的容器，它负责管理和创建 Bean。`BeanFactory` 是一个接口，包含了 Bean 的创建、配置和管理的基本功能。在实际应用中，我们通常使用它的扩展接口 `ApplicationContext`，后者提供了更多的高级特性，如事件发布、国际化支持等。
+
+主要功能：
+
+- 负责创建和管理 Bean。
+- 提供对 Bean 的依赖注入的支持。
+- 实现了基本的 IoC（控制反转）容器功能。
+
+2. `FactoryBean`：
+
+`FactoryBean` 是一个接口，通常用于封装复杂对象的创建过程。当一个 Bean 的创建过程比较复杂，或者需要进行一些特殊的初始化操作时，可以考虑实现 `FactoryBean` 接口。这样，容器在获取 Bean 时，会调用 `FactoryBean` 的 `getObject()` 方法来创建 Bean 实例。
+
+主要功能：
+
+- 封装复杂对象的创建过程。
+- 提供一种自定义 Bean 创建和初始化的机制。
+
+总结：
+
+- `BeanFactory` 是 Spring 容器的基础接口，负责创建和管理 Bean。实际应用中，通常使用 `ApplicationContext`。
+- `FactoryBean` 是一个接口，用于封装复杂对象的创建过程。通过实现 `FactoryBean`，可以自定义 Bean 的创建和初始化逻辑。
+
+以下是一个简单的 `FactoryBean` 示例：
+
+```java
+@Component
+public class MyFactoryBean implements FactoryBean<MyObject> {
+
+    @Override
+    public MyObject getObject() throws Exception {
+        // 创建和初始化 MyObject 实例
+        MyObject myObject = new MyObject();
+        myObject.initialize();
+        return myObject;
+    }
+
+    @Override
+    public Class<?> getObjectType() {
+        return MyObject.class;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+}
+```
+
+在这个例子中，`MyFactoryBean` 实现了 `FactoryBean` 接口，并负责创建和初始化 `MyObject` 类的实例。当 Spring 容器需要获取 `MyObject` 类的实例时，会调用 `MyFactoryBean` 的 `getObject()` 方法。
 
