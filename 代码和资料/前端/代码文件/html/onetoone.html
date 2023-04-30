@@ -1,36 +1,33 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var socket = new SockJS('ws://localhost:8080/chat-websocket');
+            var socket = new SockJS('http://localhost:8080/chat-websocket');
             var stompClient = Stomp.over(socket);
 
             stompClient.connect({}, function (frame) {
                 console.log('Connected: ' + frame);
-                
 
                 stompClient.subscribe('/user/queue/messages', function (message) {
                     console.log("Received private message: " + message.body);
+                    alert('Received private message: ' + message.body);
                 });
             });
 
             document.getElementById('sendButton').addEventListener('click', function () {
-                var recipientId = document.getElementById('recipientIdInput').value;
+                var recipientSessionId = document.getElementById('recipientSessionIdInput').value;
                 var message = document.getElementById('messageInput').value;
-                stompClient.send("/app/sendMessage", {}, recipientId + ":" + message);
+                stompClient.send("/app/sendMessage", {}, recipientSessionId + ":" + message);
             });
         });
     </script>
 </head>
-
 <body>
-    <input id="recipientIdInput" type="text" placeholder="Recipient ID" />
+    <input id="recipientSessionIdInput" type="text" placeholder="Recipient Session ID" />
     <input id="messageInput" type="text" />
     <button id="sendButton">Send</button>
 </body>
-
 </html>
