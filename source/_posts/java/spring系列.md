@@ -1,9 +1,63 @@
 ---
 title: spring系列学习
-data: 2023-4-20
+data: 2023-4-28
 ---
 
+# 前言
+
+> 源码看了又看,忘了又忘,还不如多学学怎么用吧
+
+## 全家桶
+
+Spring 全家桶（Spring Ecosystem）包括许多项目和模块，以支持各种应用程序开发需求。以下是 Spring 全家桶中的一些主要项目：
+
+1. Spring Framework：核心框架，提供了依赖注入（DI）、面向切面编程（AOP）、事件处理等基本功能。
+
+2. Spring Boot：简化 Spring 应用程序开发的框架，提供了自动配置、内嵌容器、快速创建微服务等特性。
+
+3. Spring Cloud：基于 Spring Boot 的微服务框架，提供了服务发现、配置中心、断路器等分布式系统开发组件。
+
+4. Spring Data：提供了统一的数据访问层解决方案，包括对关系型数据库、NoSQL 数据库和其他数据存储技术的支持。
+
+5. Spring Security：提供了强大的安全解决方案，支持认证、授权、攻击防护等功能。
+
+6. Spring Integration：提供了企业集成模式的实现，用于集成不同系统和服务。
+
+7. Spring Batch：用于创建高性能批处理应用程序，支持任务调度、分块处理等功能。
+
+8. Spring Web MVC：用于构建基于 Servlet API 的 Web 应用程序，支持 RESTful API、表单处理、文件上传等功能。
+
+9. Spring WebFlux：用于构建响应式 Web 应用程序，支持非阻塞 I/O、异步处理等功能。
+
+10. Spring WebSocket：提供了 WebSocket 通信支持，用于构建实时 Web 应用程序。
+
+11. Spring AMQP：提供了对高级消息队列协议（AMQP）的支持，用于实现消息队列通信。
+
+12. Spring Cloud Stream：基于 Spring Boot 的消息队列框架，提供了对多种消息中间件的抽象和统一接口。
+
+13. Spring Cloud Data Flow：用于构建数据集成和实时数据处理管道的微服务框架。
+
+14. Spring Cloud Gateway：基于 Spring Boot 的 API 网关，提供了路由、过滤、限流等功能。
+
+15. Spring Cloud Function：提供了将 Spring Boot 应用程序作为函数进行部署的支持，用于无服务器计算场景。
+
+以上只是 Spring 全家桶中的部分项目。随着社区的不断发展，Spring 生态系统不断扩展，为开发者提供了丰富的工具和组件。更多关于 Spring 项目的详细信息，可以访问 Spring 官方网站：https://spring.io/projects
+
+> 后面的代码都是基于springboot, 但是很多东西都是spring框架的核心概念
+
 # spring
+
+## 什么是spring
+
+Spring Framework 是一个开源的 Java 应用框架，由 Rod Johnson 创立于 2003 年。它旨在简化企业级 Java 开发，提供了一套完整的解决方案，用于创建各种类型的 Java 应用程序，包括 Web、桌面和分布式应用。Spring Framework 的主要特性如下：
+
+1. Inversion of Control（IoC，控制反转）：Spring Framework 提供了一个 IoC 容器，负责管理对象之间的依赖关系。通过使用控制反转，开发者可以将关注点集中在业务逻辑上，而不是依赖关系的管理和实例化过程。
+2. Dependency Injection（DI，依赖注入）：依赖注入是实现 IoC 的一种方法。Spring Framework 支持构造器注入和属性注入，使得对象之间的依赖关系可以在配置文件或注解中声明，从而提高代码的可测试性和可维护性。
+3. Aspect-Oriented Programming（AOP，面向切面编程）：Spring Framework 提供了 AOP 支持，允许开发者将横切关注点（如日志记录、事务管理等）从核心业务逻辑中分离出来。这有助于提高代码的模块化程度和可读性。
+
+
+
+
 
 ## 注册bean
 
@@ -52,6 +106,10 @@ data: 2023-4-20
 缺点：与Java配置相比，XML配置可读性较差，且需要额外维护一个配置文件。
 
 总结：根据具体需求和场景选择合适的方式来定义和注册Bean。在大多数情况下，使用注解（如@Component、@Service等）和@Configuration类是最简单且推荐的方式，因为它们易于理解和维护。当有高级需求或需要动态注册Bean时，可以使用BeanFactoryPostProcessor。如果希望降低与Spring框架的耦合，可以考虑使用XML配置文件。
+
+
+
+## 作用域
 
 
 
@@ -156,93 +214,97 @@ public class MainConfig {
 
 
 
-## 监听器
+## AOP
 
-Spring Boot中的事件监听器允许您对应用程序中发生的事件进行响应。这些事件包括应用程序生命周期事件、自定义事件等。要使用事件监听器，请遵循以下步骤：
+AOP（Aspect-Oriented Programming，面向切面编程）是一种编程范式，用于将通用功能（如日志记录、安全检查等）从业务逻辑代码中分离出来，以提高代码的模块化程度。在 Spring Boot 中，可以使用 Spring AOP 框架实现 AOP 功能。以下是一些 AOP 相关的概念：
 
-1. 创建事件：
-   如果您要监听的是自定义事件，首先需要创建一个事件类。自定义事件类需要继承`org.springframework.context.ApplicationEvent`。
+1. Aspect（切面）：封装横切关注点（如日志记录、事务管理等）的模块。切面可以包含多个通知（Advice）。
 
-例如：
+2. Advice（通知）：在特定连接点（Join Point）执行的动作。根据执行时机的不同，通知可以分为前置通知、后置通知、环绕通知、异常通知和最终通知。
 
-```java
-public class CustomEvent extends ApplicationEvent {
-    private String message;
+3. Pointcut（切点）：定义在哪些连接点应用通知的表达式。切点确定了通知应该在何时、何地执行。
 
-    public CustomEvent(Object source, String message) {
-        super(source);
-        this.message = message;
-    }
+4. Join Point（连接点）：程序执行过程中的某个特定点，如方法调用、异常抛出等。连接点是通知实际应用的地方。
 
-    public String getMessage() {
-        return message;
-    }
-}
+5. Target（目标对象）：被通知的对象，即包含业务逻辑的对象。
+
+6. Proxy（代理）：由 AOP 框架创建的目标对象的代理，用于在调用目标方法前后插入通知的逻辑。
+
+在 Spring Boot 中使用 AOP，通常需要进行以下步骤：
+
+1. 引入依赖：首先，在 `pom.xml` 文件中引入 Spring AOP 相关依赖。
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
 ```
 
-2. 创建事件监听器：
-   在需要监听事件的类中创建一个方法，该方法将在事件发生时被调用。然后使用`@EventListener`注解标记此方法，并指定要监听的事件类型。
-
-例如：
+2. 定义切面：创建一个类，并使用 `@Aspect` 注解标注该类为切面。在切面类中，定义通知方法，并使用相应的通知注解（如 `@Before`、`@After`、`@Around` 等）标注这些方法。
 
 ```java
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+
+@Aspect
 @Component
-public class CustomEventListener {
+public class LoggingAspect {
 
-    @EventListener
-    public void handleCustomEvent(CustomEvent event) {
-        System.out.println("Received custom event: " + event.getMessage());
+    @Before("execution(* com.example.demo.service.*.*(..))")
+    public void logBefore(JoinPoint joinPoint) {
+        System.out.println("Method called: " + joinPoint.getSignature().getName());
     }
 }
 ```
 
-3. 发布事件：
-   要触发事件，需要将事件发布到应用程序上下文中。您可以通过注入`org.springframework.context.ApplicationEventPublisher`并调用其`publishEvent()`方法来实现。
+在这个示例中，我们定义了一个名为 `LoggingAspect` 的切面，它包含一个前置通知方法 `logBefore`，用于在 `com.example.demo.service` 包下的所有方法执行前记录日志。
 
-例如：
+3. 配置 AOP：在 Spring Boot 中，AOP 通常是自动配置的。但是，在某些情况下，你可能需要自定义 AOP 的配置。在这种情况下，可以创建一个配置类，并使用 `@EnableAspectJAutoProxy` 注解开启 AOP 自动代理。
 
 ```java
-@Service
-public class CustomEventPublisher {
-    private final ApplicationEventPublisher eventPublisher;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Configuration;
 
-    public CustomEventPublisher(ApplicationEventPublisher eventPublisher) {
-        this.eventPublisher = eventPublisher;
-    }
-
-    public void publishCustomEvent(String message) {
-        CustomEvent event = new CustomEvent(this, message);
-        eventPublisher.publishEvent(event);
-    }
+@Configuration
+@EnableAspectJAutoProxy
+public class AopConfig {
+// 可以在此处自定义 AOP 相关的 Bean 或配置
 }
 ```
 
-4. 使用事件监听器：
-   现在您已经准备好使用事件监听器。当您需要触发事件时，只需调用`CustomEventPublisher`中的`publishCustomEvent()`方法，事件监听器将自动响应事件。
 
-例如，在Controller类中使用`CustomEventPublisher`：
+
+### 通知
+
+在通知方法中，可以使用一些特定的参数来获取关于目标方法和执行上下文的信息。以下是一些常用的通知方法参数：
+
+1. JoinPoint：表示连接点的对象，提供了许多与目标方法相关的信息。一般在前置通知（`@Before`）、后置通知（`@After`）、异常通知（`@AfterThrowing`）和最终通知（`@AfterReturning`）中使用。`JoinPoint` 接口提供了以下一些常用方法：
+
+    - `Signature getSignature()`：获取目标方法的签名信息。
+    - `Object[] getArgs()`：获取目标方法的参数列表。
+    - `Object getTarget()`：获取目标对象，即包含业务逻辑的对象。
+    - `Object getThis()`：获取代理对象，即 AOP 框架创建的代理。
+    - `SourceLocation getSourceLocation()`：获取源代码位置信息。
+
+2. ProceedingJoinPoint：扩展自 `JoinPoint` 接口，表示可继续执行的连接点。一般在环绕通知（`@Around`）中使用。`ProceedingJoinPoint` 提供了一个额外的方法：
+
+    - `Object proceed() throws Throwable`：执行目标方法。在环绕通知中，可以通过调用此方法来控制何时执行目标方法。
+
+3. MethodInvocation：表示方法调用连接点的对象。它扩展自 `JoinPoint` 接口，并提供了一些额外的方法，如 `Method getMethod()`（获取目标方法的 `java.lang.reflect.Method` 对象）。在 Spring AOP 中，`MethodInvocation` 接口的实例通常作为 `JoinPoint` 或 `ProceedingJoinPoint` 的实现。
+
+除了这些参数，还可以在通知方法中使用 `@annotation`、`@args`、`@target` 和 `@within` 等注解来绑定特定的目标方法参数、注解、目标对象类型等信息。例如，可以使用 `@annotation` 注解来获取目标方法上的自定义注解：
 
 ```java
-@RestController
-public class CustomEventController {
-
-    private final CustomEventPublisher customEventPublisher;
-
-    public CustomEventController(CustomEventPublisher customEventPublisher) {
-        this.customEventPublisher = customEventPublisher;
-    }
-
-    @GetMapping("/triggerEvent")
-    public String triggerEvent() {
-        customEventPublisher.publishCustomEvent("Hello, this is a custom event!");
-        return "Event triggered";
-    }
+@Before("execution(* com.example.demo.service.*.*(..)) && @annotation(myAnnotation)")
+public void logBefore(JoinPoint joinPoint, MyAnnotation myAnnotation) {
+    // ...
 }
 ```
 
-通过上述步骤，您可以在Spring Boot应用程序中使用事件监听器来监听和响应特定事件。
+在这个示例中，`logBefore` 方法有两个参数：`JoinPoint` 和 `MyAnnotation`。`MyAnnotation` 参数使用 `@annotation` 注解绑定目标方法上的 `MyAnnotation` 注解。这样，在通知方法中，可以访问目标方法上的 `MyAnnotation` 注解及其属性值。
 
-
+了解这些参数及其用法可以帮助你在通知方法中获取关于目标方法和执行上下文的详细信息，从而实现更复杂的横切关注点逻辑。
 
 ## 后置处理器
 
@@ -309,7 +371,7 @@ Spring框架默认提供了一些内置的后置处理器，这些后置处理�
 
 
 
-## 自动配置
+## 自动配置原理
 
 Spring Boot 的自动配置是它的一个核心功能，它通过预先定义的默认配置和约定优于配置（Convention over Configuration）的原则，简化了应用程序的配置。自动配置的原理主要依赖以下几个关键技术：
 
@@ -499,19 +561,400 @@ public class AppConfig {
 
 
 
+## 监听器
 
 
-## 实用功能
 
-### actuator
+### 常用监听器与事件
+
+Spring Boot中的监听器和事件是基于Spring框架的事件驱动模型。下面列出了一些常见的监听器和事件：
+
+监听器（Listener）：
+
+1. ApplicationListener：这是一个通用的监听器接口，用于监听各种类型的事件。你可以实现此接口并根据需要定义自己的监听器。
+
+2. ServletContextListener：这是Java Servlet规范中的监听器，用于在Web应用程序的生命周期中监听ServletContext的创建和销毁事件。
+
+3. HttpSessionListener：这是Java Servlet规范中的监听器，用于在Web应用程序的生命周期中监听HttpSession的创建和销毁事件。
+
+4. ServletRequestListener：这是Java Servlet规范中的监听器，用于在Web应用程序的生命周期中监听ServletRequest的创建和销毁事件。
+
+事件（Event）：
+
+1. ContextRefreshedEvent：当ApplicationContext初始化或刷新时触发此事件。
+
+2. ContextStartedEvent：当ApplicationContext启动时触发此事件。
+
+3. ContextStoppedEvent：当ApplicationContext停止时触发此事件。
+
+4. ContextClosedEvent：当ApplicationContext关闭时触发此事件。
+
+5. ServletContextInitializedEvent：当ServletContext初始化时触发此事件。
+
+6. ServletContextDestroyedEvent：当ServletContext销毁时触发此事件。
+
+7. HttpSessionCreatedEvent：当HttpSession创建时触发此事件。
+
+8. HttpSessionDestroyedEvent：当HttpSession销毁时触发此事件。
+
+9. ServletRequestInitializedEvent：当ServletRequest创建时触发此事件。
+
+10. ServletRequestDestroyedEvent：当ServletRequest销毁时触发此事件。
+
+11. ApplicationEnvironmentPreparedEvent：在应用环境准备完成且ApplicationContext创建之前触发此事件。
+
+12. ApplicationPreparedEvent：在ApplicationContext创建完成但尚未刷新时触发此事件。
+
+13. ApplicationReadyEvent：在ApplicationContext刷新并启动后触发此事件，此时应用已经准备好接受请求。
+
+14. ApplicationFailedEvent：当应用启动失败时触发此事件。
+
+15. SpringApplicationEvent：**这是所有Spring Boot事件的基类，可以用于监听所有Spring Boot相关事件**。
+
+通过实现监听器并监听相应的事件，你可以在应用程序的生命周期中的特定时刻执行特定操作。此外，你还可以创建自定义事件和监听器，以满足特定的业务需求。
+
+### springboot启动过程中发出的事件
+
+Spring Boot在启动过程中会主动触发一系列事件，这些事件通常用于在应用程序生命周期的不同阶段执行特定的操作。以下是Spring Boot启动过程中的一些关键事件：
+
+1. ApplicationStartingEvent：在Spring Boot应用程序开始运行，但任何处理开始之前触发。这是启动过程中触发的第一个事件。
+
+2. ApplicationEnvironmentPreparedEvent：在应用环境准备完成且ApplicationContext创建之前触发。此时，应用已经加载了配置文件并准备好了环境。
+
+3. ApplicationContextInitializedEvent：在ApplicationContext准备好后触发，但在它被刷新前。此时，已经注册了bean定义，但bean实例还没有被创建。
+
+4. ApplicationPreparedEvent：在ApplicationContext创建完成但尚未刷新时触发。此时，所有bean定义已经加载到容器中，但bean实例尚未创建。
+
+5. ContextRefreshedEvent：当ApplicationContext初始化或刷新时触发。此时，所有bean已经被创建并初始化。 **从这一步开始,我们通过注解定义的事件监听器才会响应事件**
+
+6. ServletWebServerInitializedEvent：在嵌入式Servlet容器（如Tomcat、Jetty等）初始化完成时触发。此时，应用程序已经准备好处理HTTP请求。
+
+7. ApplicationStartedEvent：在ApplicationContext刷新并启动后触发，但在任何应用程序和命令行运行器（ApplicationRunner和CommandLineRunner）开始之前。此时，应用程序已经准备好处理业务逻辑。
+
+8. ApplicationReadyEvent：在所有应用程序和命令行运行器（ApplicationRunner和CommandLineRunner）执行完成后触发。此时，应用已经准备好接受请求，此事件表明应用已完全启动并处于运行状态。
+
+9. ApplicationFailedEvent：当应用启动失败时触发。这个事件只有在启动过程中出现异常时才会触发。
+
+通过监听这些事件，你可以在应用程序的生命周期中的特定时刻执行特定操作。例如，在`ApplicationReadyEvent`触发时执行一些初始化任务，或者在`ApplicationFailedEvent`触发时执行错误处理操作。
+
+### 创建监听器
+
+#### 基于@EventListener 
+
+Spring Boot中的事件监听器允许您对应用程序中发生的事件进行响应。这些事件包括应用程序生命周期事件、自定义事件等。要使用事件监听器，请遵循以下步骤：
+
+1. 创建事件：
+   如果您要监听的是自定义事件，首先需要创建一个事件类。自定义事件类需要继承`org.springframework.context.ApplicationEvent`。
+
+例如：
+
+```java
+public class CustomEvent extends ApplicationEvent {
+    private String message;
+
+    public CustomEvent(Object source, String message) {
+        super(source);
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
+```
+
+2. 创建事件监听器：
+   在需要监听事件的类中创建一个方法，该方法将在事件发生时被调用。然后使用`@EventListener`注解标记此方法，并指定要监听的事件类型。
+
+例如：
+
+```java
+@Component
+public class CustomEventListener {
+
+    @EventListener
+    public void handleCustomEvent(CustomEvent event) {
+        System.out.println("Received custom event: " + event.getMessage());
+    }
+}
+```
+
+3. 发布事件：
+   要触发事件，需要将事件发布到应用程序上下文中。您可以通过注入`org.springframework.context.ApplicationEventPublisher`并调用其`publishEvent()`方法来实现。
+
+例如：
+
+```java
+@Service
+public class CustomEventPublisher {
+    private final ApplicationEventPublisher eventPublisher;
+
+    public CustomEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+
+    public void publishCustomEvent(String message) {
+        CustomEvent event = new CustomEvent(this, message);
+        eventPublisher.publishEvent(event);
+    }
+}
+```
+
+4. 使用事件监听器：
+   现在您已经准备好使用事件监听器。当您需要触发事件时，只需调用`CustomEventPublisher`中的`publishCustomEvent()`方法，事件监听器将自动响应事件。
+
+例如，在Controller类中使用`CustomEventPublisher`：
+
+```java
+@RestController
+public class CustomEventController {
+
+    private final CustomEventPublisher customEventPublisher;
+
+    public CustomEventController(CustomEventPublisher customEventPublisher) {
+        this.customEventPublisher = customEventPublisher;
+    }
+
+    @GetMapping("/triggerEvent")
+    public String triggerEvent() {
+        customEventPublisher.publishCustomEvent("Hello, this is a custom event!");
+        return "Event triggered";
+    }
+}
+```
+
+通过上述步骤，您可以在Spring Boot应用程序中使用事件监听器来监听和响应特定事件。
+
+#### 基于接口
+
+有些事件并不支持上面那种方法,当然支持上面那种方法的,一定可以基于接口使用, 我们来定义一个session创建与销毁的监听器
+
+```java
+
+import org.springframework.stereotype.Component;
+
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
+
+@Component
+public class MyHttpSessionEventListener implements HttpSessionListener {
+    @Override
+    public void sessionCreated(HttpSessionEvent se) {
+        System.out.println("session创建: " + se.getSession().getId());
+    }
+
+    @Override
+    public void sessionDestroyed(HttpSessionEvent se) {
+        System.out.println("session销毁: " + se.getSession().getId());
+    }
+}
+```
+
+
+
+## 日志
+
+### 日志门面和日志实现
+
+![image-20230430143718193](../../img/spring系列assets/image-20230430143718193.png)
+
+
+
+JUL是jdk自带，在java.util.logging包下的Logger类
+
+Log4j是Apache下的一款开源的日志框架
+
+**Logback是由log4j创始人设计的另一个开源日志组件，性能比log4j要好**
+
+Log4j 2是对Log4j的升级版，参考了logback的一些优秀的设计
+
+Log4j2主要有以下特色:
+
+性能提升：Log4j 2包含基于LMAX Disruptor库的下一代**异步记录器**。在多线程方案中，与Log4j 1.x和Logback相比，异步Logger的吞吐量高18倍，延迟降低了几个数量级
+
+自动重载配置：与Logback一样，Log4j 2可以在修改后自动重新加载其配置。与Logback不同，它在进行重新配置时不会丢失日志事件
+
+无垃圾机制：在稳态日志记录期间，Log4j 2 在独立应用程序中是无垃圾的，而在Web应用程序中是低垃圾的。这样可以减少垃圾收集器上的压力，并可以提供更好的响应时间性能
+
+### 使用日志框架
+
+Spring Boot内置了对日志的支持，它为开发者提供了一个统一、易于配置的日志框架。默认情况下，**Spring Boot使用Logback作为其日志实现**。然而，它也提供了对其他日志框架（如Log4j2）的支持，可以通过简单的配置进行切换。
+
+日志级别：
+Spring Boot支持以下日志级别，按照日志输出的详细程度递减排列：
+
+1. ERROR：错误级别，仅记录错误信息。
+2. WARN：警告级别，记录警告和错误信息。
+3. INFO：信息级别，记录信息、警告和错误信息。**这是Spring Boot的默认日志级别**。
+4. DEBUG：调试级别，记录调试、信息、警告和错误信息。比INFO级别的日志更详细。
+5. TRACE：追踪级别，记录所有日志信息，包括追踪、调试、信息、警告和错误信息。这是最详细的日志级别。
+
+#### 方式一
+
+为了在你的应用程序中使用日志，你需要导入适当的日志API。对于Spring Boot，默认情况下，**你应该使用SLF4J（Simple Logging Facade for Java）API**。首先，在你的Java类中导入以下包：
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+```
+
+然后，创建一个`Logger`实例：
+
+```java
+private static final Logger logger = LoggerFactory.getLogger(YourClassName.class);
+```
+
+现在，你可以使用`logger`实例记录不同级别的日志：
+
+```java
+logger.error("这是一条错误日志");
+logger.warn("这是一条警告日志");
+logger.info("这是一条信息日志");
+logger.debug("这是一条调试日志");
+logger.trace("这是一条追踪日志");
+```
+
+#### 方式二
+
+使用lombok注解,自动帮我们生成一个log对象
+
+```java
+@Component
+@Log
+@Slf4j
+public class MyHttpSessionEventListener implements HttpSessionListener {
+
+    @Override
+    public void sessionCreated(HttpSessionEvent se) {
+
+        log.info("session创建: " + se.getSession().getId());
+        System.out.println("session创建: " + se.getSession().getId());
+    }
+
+    @Override
+    public void sessionDestroyed(HttpSessionEvent se) {
+        System.out.println("session销毁: " + se.getSession().getId());
+    }
+}
+
+```
+
+
+
+### 日志配置
+
+Spring Boot允许你通过`application.properties`或`application.yml`文件轻松地配置日志。以下是一些常见的日志配置选项：
+
+- 日志级别配置：通过`logging.level`属性设置包或类的日志级别。例如：
+  ```properties
+  logging.level.root=WARN
+  logging.level.com.example.demo=DEBUG
+  ```
+
+- 日志文件配置：通过`logging.file.name`或`logging.file.path`属性设置日志输出文件。例如：
+  ```properties
+  logging.file.name=myapp.log
+  logging.file.path=logs
+  ```
+
+- 日志文件的滚动策略、最大文件大小等配置：在Logback或Log4j2的配置文件中设置。例如，在`src/main/resources`目录下创建一个名为`logback-spring.xml`的文件，然后自定义相关配置。
+
+### 配置文件
+
+Spring Boot 在启动时会自动检测项目 `src/main/resources` 目录下的一些特定命名的配置文件，并根据这些文件的名称来确定它们的用途。对于日志配置，Spring Boot 会检查以下文件名：
+
+- Logback：`logback-spring.xml`、`logback.xml`
+- Log4j2：`log4j2-spring.xml`、`log4j2.xml`
+
+当 Spring Boot 找到这些文件中的一个时，它会自动将其用作日志系统的配置。在这些文件中，你可以使用相应日志框架的语法和配置元素来定制日志系统的行为。
+
+请注意，对于 Logback，推荐使用 `logback-spring.xml` 而不是 `logback.xml`。使用 `logback-spring.xml` 文件名，你可以利用 Spring Boot 提供的一些额外特性，例如使用 Spring Profile 进行条件化配置。而使用 `logback.xml`，这些特性将不可用。
+
+总之，Spring Boot 通过检测特定的文件名来识别日志配置文件，并在启动过程中自动应用这些配置。
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+
+    <!-- 设置日志级别 -->
+    <logger name="com.example.demo" level="DEBUG" />
+
+    <!-- 控制台日志输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 文件日志输出 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 设置滚动策略 -->
+            <fileNamePattern>logs/app-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 将输出引用到控制台和文件日志 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
+
+```
+
+滚动策略是用于管理日志文件的生成和清理的一种策略。当日志文件的大小或时间达到一定阈值时，滚动策略会自动将当前日志文件“滚动”为一个新的日志文件。这样可以避免日志文件无限增长，同时使得日志易于查找和管理。
+
+以下是一些常见的滚动策略：
+
+1. 基于大小的滚动策略（Size-Based Rolling Policy）：当日志文件大小达到指定值时，创建一个新的日志文件。例如，在 Logback 中，可以使用 `ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy` 来实现这种策略。
+
+2. 基于时间的滚动策略（Time-Based Rolling Policy）：根据时间间隔（如每天、每小时等）创建新的日志文件。例如，在 Logback 中，可以使用 `ch.qos.logback.core.rolling.TimeBasedRollingPolicy` 来实现这种策略。
+
+3. 混合滚动策略：结合基于大小和基于时间的滚动策略，当满足其中任一条件时，创建新的日志文件。例如，在 Logback 中，可以将 `SizeBasedTriggeringPolicy` 和 `TimeBasedRollingPolicy` 一起使用。
+
+此外，滚动策略还可以包含日志文件的清理策略，如最大日志文件数量、最长日志保留期限等。在达到这些限制时，最早的日志文件将被自动删除。
+
+以 Logback 的 `TimeBasedRollingPolicy` 为例，以下是一个配置示例：
+
+```xml
+<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/app.log</file>
+    <encoder>
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <!-- 每天滚动日志文件 -->
+        <fileNamePattern>logs/app-%d{yyyy-MM-dd}.log</fileNamePattern>
+        <!-- 保留最近30天的日志 -->
+        <maxHistory>30</maxHistory>
+    </rollingPolicy>
+</appender>
+```
+
+在这个示例中，滚动策略被设置为每天创建一个新的日志文件，同时保留最近 30 天的日志。当超过 30 天时，最早的日志文件将被自动删除。
+
+滚动策略在日志管理中起着重要作用，有助于防止日志文件过大，提高日志文件的可读性和可维护性。要了解更多关于滚动策略的详细信息，请参阅相应日志框架的官方文档。
+
+
+
+## actuator
 
 用来检测项目运行状况
 
 搭配spring-boot-admin **来可视化的监控** spring-boot 程序的运行状态
 
-### Mybatis-Plus
+## Mybatis-Plus
 
-#### 导入依赖
+### 导入依赖
 
 ```
 <dependency>
@@ -521,7 +964,7 @@ public class AppConfig {
         </dependency>
 ```
 
-#### 配置数据源
+### 配置数据源
 
 ```
 spring:
@@ -534,7 +977,7 @@ spring:
 
 
 
-#### 命名规则
+### 命名规则
 
 在 MyBatis-Plus 中，数据库表名、字段名和 Java 对象名（实体类名）及其属性名之间的映射关系通常遵循以下规则：
 
@@ -553,7 +996,7 @@ spring:
 
 > 一定要注意Mybatis-Plus和springboot版本的关系,切记切记
 
-#### 属性名字或者类名与关键字冲突
+### 属性名字或者类名与关键字冲突
 
 使用TableName 和 TableField
 
@@ -576,7 +1019,7 @@ public class Message {
 
 
 
-#### 代码生成
+### 代码生成
 
 导入依赖
 
@@ -653,7 +1096,7 @@ public class test {
 
 
 
-### jwt认证
+## jwt认证
 
 JWT是指JSON Web Token（JSON网络令牌），是一种用于在网络应用之间传递信息的开放标准（RFC 7519）。它可以作为一种轻量级的安全性传输方式，用于在发送方和接收方之间传递声明。这些声明可以被验证和信任，因此可以用来实现单点登录、用户认证等功能。
 
@@ -989,6 +1432,8 @@ public class Person {
     <version>5.8.18</version>
 </dependency>
 ```
+
+
 
 # springMVC
 
@@ -1345,6 +1790,34 @@ Spring Boot默认配置了静态资源处理，如CSS、JS、图片等。如果�
 
 
 
+# Spring Security 
+
+Spring Security 是一个用于为 Java 应用程序提供身份验证和授权功能的安全框架。在 Spring Boot 中，Spring Security 可以轻松集成，提供自动配置和默认安全设置。以下是 Spring Security 在 Spring Boot 应用中的工作机制和工作流程：
+
+1. 配置和启动：当 Spring Boot 检测到 Spring Security 在 classpath 中时，它会自动启用 Spring Security，并提供基本的安全配置。你可以通过在配置文件中添加自定义配置或创建自定义的 `WebSecurityConfigurerAdapter` 类来覆盖默认配置。
+
+2. 过滤器链：Spring Security 在应用中使用 Servlet 过滤器链来处理 HTTP 请求。过滤器链中包含多个过滤器，负责处理不同的安全功能，如身份验证、授权、跨站请求伪造保护（CSRF）等。当一个请求到达应用时，它首先经过过滤器链的处理。
+
+3. 身份验证：在过滤器链中，`UsernamePasswordAuthenticationFilter` 负责处理基于表单的登录请求。**这个过滤器会尝试从请求中提取用户名和密码**，然后将它们封装成一个 `Authentication` 对象。接着，`AuthenticationManager` 负责处理这个 `Authentication` 对象，将其传递给相应的 `AuthenticationProvider`，如 `DaoAuthenticationProvider`。`AuthenticationProvider` 会调用 `UserDetailsService` 来加载用户的详细信息（如密码、角色等），并将其与请求中提供的凭据进行比较。如果凭据匹配，`AuthenticationProvider` 会返回一个已认证的 `Authentication` 对象，包含用户的详细信息和授权。
+
+4. 授权：Spring Security 使用 `AccessDecisionManager` 来处理授权决策。当一个已认证的请求尝试访问受保护的资源时，`AccessDecisionManager` 会检查用户的授权（如角色、权限等）是否允许访问该资源。如果用户具有相应的授权，请求将被允许访问资源；否则，将返回一个 HTTP 403（Forbidden）响应。
+
+5. 异常处理：Spring Security 使用 `AuthenticationEntryPoint` 和 `AccessDeniedHandler` 来处理身份验证和授权异常。例如，当未认证的用户尝试访问受保护资源时，`AuthenticationEntryPoint` 会返回一个 HTTP 401（Unauthorized）响应，通常会引导用户登录。当已认证的用户尝试访问不具有权限的资源时，`AccessDeniedHandler` 会返回一个 HTTP 403（Forbidden）响应。
+
+6. 会话管理：Spring Security 提供了会话管理功能，包括创建新会话、超时设置和并发控制等。此外，Spring Security 支持持久化会话数据，以便在应用重启后还能保持会话状态。
+
+7. 注销：Spring Security 提供了注销功能，允许用户安全地结束会话并清除相关的认证信息。默认情况下，用户可以通过访问 `/logout` URL 发起注销请求。`LogoutFilter` 负责处理这些请求，并调用配置的 `LogoutHandler` 实现来执行注销操作，如清除安全上下文、使当前会话失效、删除持久化的会话数据等。注销完成后，可以将用户重定向到指定的 URL，通常是登录页面或主页。
+
+8. 记住我：Spring Security 支持“记住我”功能，允许用户在关闭浏览器或会话过期后仍然保持登录状态。该功能通过在用户浏览器中设置一个特殊的 cookie 来实现。在接收到请求时，`RememberMeAuthenticationFilter` 会检查这个 cookie，如果存在并有效，它会自动为用户创建一个已认证的安全上下文，无需重新登录。你可以在配置中启用和自定义“记住我”功能，例如设置 cookie 的有效期、加密密钥等。
+
+9. 跨站请求伪造（CSRF）保护：Spring Security 提供了 CSRF 保护功能，可以防止恶意网站伪造用户的请求。默认情况下，Spring Security 会为所有的 POST、PUT、DELETE 等非幂等请求启用 CSRF 保护。要实现这个功能，`CsrfFilter` 会在每个请求中查找一个名为 `_csrf` 的 token（通常以参数或 HTTP 头的形式传递），并将其与服务器端存储的 token 进行比较。如果 token 不存在或不匹配，请求将被拒绝。开发者需要在表单提交和 AJAX 请求中正确携带 CSRF token，以确保请求能够通过验证。
+
+10. 跨域资源共享（CORS）配置：Spring Security 支持 CORS 配置，允许在不同域名之间进行安全的资源共享。你可以通过 `WebSecurityConfigurerAdapter` 定义全局或特定的 CORS 策略，例如允许的源、请求方法、头部等。
+
+11. 自定义扩展：Spring Security 提供了许多扩展点，允许开发者根据需求定制安全功能。例如，你可以实现自定义的 `UserDetailsService`、`AuthenticationProvider`、`AccessDecisionVoter` 等，以支持特定的认证和授权策略。此外，Spring Security 支持 OAuth2、OpenID Connect、SAML 等多种身份验证和单点登录（SSO）协议，可以通过添加相应的依赖和配置来集成这些协议。
+
+    
+
 # 补充
 
 ## BeanFactory 和 FactoryBean
@@ -1402,4 +1875,8 @@ public class MyFactoryBean implements FactoryBean<MyObject> {
 ```
 
 在这个例子中，`MyFactoryBean` 实现了 `FactoryBean` 接口，并负责创建和初始化 `MyObject` 类的实例。当 Spring 容器需要获取 `MyObject` 类的实例时，会调用 `MyFactoryBean` 的 `getObject()` 方法。
+
+## 
+
+
 
