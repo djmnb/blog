@@ -7,13 +7,13 @@ cover: /img/k8s-3assets/image-20221213104035867.png
 
 
 
-## 什么是docker
+# 什么是docker
 
 Docker 使用 Google 公司推出的 Go 语言 进行开发实现，基于 Linux 内核的 cgroup，namespace，以及 OverlayFS 类的 Union FS 等技术，对进程进行封装隔离，属于操作系统层面的虚拟化技术(虚拟机是属于软件层面的虚拟化技术)。由于隔离的进程独立于宿主和其它的隔离的进程(既然是一个进程,当然能够直接使用系统资源)，因此也称其为容器
 
-> 以下所有操作均在CentOS Linux release 7.6.1810 (Core)中进行,仅供参考哦,不同版本可能回有区别
+> 以下所有操作均在CentOS Linux release 7.6.1810 (Core)中进行,仅供参考哦,不同版本可能会有区别
 
-## 为什么要用docker
+# 为什么要用docker
 
 传统的虚拟技术是利用软件虚拟出一套硬件环境,而且还需要再跑一个操作系统,所以无论执行速度,内存损耗,文件存储,都比传统的虚拟技术,而且一套dockerfile可以保证相同的环境,一次创建,到处可以运行,Docker 使用的分层存储以及镜像的技术，使得应用重复部分的复用更为容易，也使得应用的维护更新更加简单，基于基础镜像进一步扩展镜像也变得非常简单,因此docker有以下几个优势
 
@@ -23,9 +23,9 @@ Docker 使用 Google 公司推出的 Go 语言 进行开发实现，基于 Linux
 * 更轻松的迁移
 * 更轻松的拓展与维护
 
-## 搭建与卸载
+# 搭建与卸载
 
-### 安装
+## 安装
 
 ```shell
 # 下载包管理工具
@@ -40,75 +40,120 @@ yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 ```
 
-#### 启动docker服务
+### 启动docker服务
 
 ```shell
 #启动docker 并且设置开机自启动
 systemctl enable docker --now
 ```
 
-#### 配置docker镜像加速源
+### 配置docker镜像加速源
 
 ```shell
 mkdir -p /etc/docker
 tee /etc/docker/daemon.json <<-'EOF'
 {
-  "registry-mirrors":["https://o13jbvy6.mirror.aliyuncs.com"],
-  "exec-opts": ["native.cgroupdriver=systemd"],
+  "registry-mirrors":["https://o13jbvy6.mirror.aliyuncs.com","https://docker.mirrors.ustc.edu.cn/"],
+  "exec-opts": ["native.cgroupdriver=systemd"]
 }
 EOF
 systemctl daemon-reload
 systemctl restart docker
 ```
 
-### 卸载
-
-```shell
-yum remove docker \
-                  docker-client \
-                  docker-client-latest \
-                  docker-common \
-                  docker-latest \
-                  docker-latest-logrotate \
-                  docker-logrotate \
-                  docker-engine
-# 查看还有哪些配置没删掉
-whereis docker
-# docker: /etc/docker /usr/libexec/docker
-#删掉所有相关配置
-rm -rf /etc/docker /usr/libexec/docker
-
+```
+https://docker.mirrors.ustc.edu.cn/
 ```
 
-## 镜像
+
+
+## 卸载
+
+要在 Linux 系统上彻底卸载 Docker，请按照以下步骤操作：
+
+1. 停止 Docker 服务：
+```shell
+sudo systemctl stop docker.service
+```
+
+2. 禁用 Docker 服务：
+```shell
+sudo systemctl disable docker.service
+```
+
+3. 删除 Docker 包。根据您的系统和安装方式，命令可能略有不同。
+
+对于基于 Debian/Ubuntu 的系统，使用以下命令：
+```
+sudo apt-get purge docker-ce docker-ce-cli containerd.io
+```
+
+对于基于 RHEL/CentOS/Fedora 的系统，使用以下命令：
+```
+sudo yum remove docker-ce docker-ce-cli containerd.io
+```
+或者：
+```
+sudo dnf remove docker-ce docker-ce-cli containerd.io
+```
+
+4. 删除 Docker 相关的目录和文件。以下命令将删除 Docker 的数据、配置文件和缓存文件。**请注意，这将删除所有 Docker 容器和镜像，以及任何 Docker 生成的数据。在执行这些命令之前，请确保您已备份所有重要数据。**
+```
+sudo rm -rf /var/lib/docker
+sudo rm -rf /var/lib/containerd
+sudo rm -rf /etc/docker
+sudo rm -rf /etc/systemd/system/docker.service.d
+```
+
+5. 如果您在 `/etc/docker/daemon.json` 中添加了自定义配置，请手动删除该文件。
+
+6. 删除所有 Docker 网络接口。这通常不是必需的，但如果您创建了自定义网络，可能需要执行此操作。首先，使用以下命令列出所有 Docker 网络接口：
+```
+ip link show | grep docker
+```
+然后，使用以下命令删除每个接口，将 `INTERFACE_NAME` 替换为实际的接口名称：
+```
+sudo ip link delete INTERFACE_NAME
+```
+
+7. 如果您之前添加了任何 Docker 相关的环境变量或配置，请检查 `~/.bashrc`、`~/.bash_profile` 或 `/etc/environment` 文件，并删除这些设置。
+
+8. 最后，重新启动您的系统：
+```
+sudo reboot
+```
+
+现在，Docker 应该已从您的系统上彻底卸载。如果需要，您可以随时重新安装 Docker。
+
+# 镜像
 
 Docker的镜像是一个特殊的文件系统,提供容器运行时所需要的程序,库,资源,配置,以及运行时准备的参数(环境变量,用户)等等,镜像不包含动态数据,构建好后,镜像的内容也不会发生改变
 
-### 分层存储
+## 分层存储
 
-docker的镜像是由基础镜像一层一层构建过来的,每一层的内容都只可读不可以更改,这么设计的好处是可以共享镜像,如果需要更改只能在容器层记录哪些文件被更改了,所有我们尽量把那些需要更改的文件通过容器卷的方式传递给容器,因为容器卷里面的东西不属于镜像,属于宿主机,
+docker的镜像是由基础镜像一层一层构建过来的,每一层的内容都只可读不可以更改,**这么设计的好处是可以共享镜像**,如果需要更改只能在容器层记录哪些文件被更改了,所有我们尽量把那些需要更改的文件通过容器卷的方式传递给容器,因为容器卷里面的东西不属于镜像,属于宿主机,
 
-### registry
+## registry
 
 这个就代表镜像所在的仓库
 
-### repository
+## repository
 
 这个是一组镜像的集合,比如centos镜像的所有版本,所以,repository是镜像的集合,registry是repository的集合
 
-### manifest
+## manifest
 
 主要存在与registry中作为docker镜像的元数据文件,在pull,push,save,load中作为镜像结构与基础信息的描述文件
 
-## 容器
+# 容器
 
 容器其实就是一个进程,但与直接在宿主执行的进程不同，容器进程运行于属于自己的独立的 命名空间。因此容器可以拥有自己的 root 文件系统、自己的网络配置、自己的进程空间，甚至自己的用户 ID 空间。容器内的进程是运行在一个隔离的环境里，使用起来，就好像是在一个独立于宿主的系统下操作一样。这种特性使得容器封装的应用比直接在宿主运行更加安全
 
 容器启动时,在镜像的基础上加了一层**容器存储层**,所有的更改操作都进行在这一层,当容器死亡的时候,这一层也将消失
 
-## 常用命令
+# 常用命令
 
-### pull
+## pull
 
 拉取一个镜像
 
@@ -116,20 +161,30 @@ docker的镜像是由基础镜像一层一层构建过来的,每一层的内容�
 docker pull (地址/仓库/)镜像名字:版本号(没有版本号默认拉取最新版)
 ```
 
-### images
+```
+docker pull centos:7
+```
+
+## images
 
 查看所有镜像 
 
-### rmi
+```
+docker images
+```
 
-删除一个镜像
+
+
+## rmi
+
+删除镜像
 
 ```shell
 docker rmi 镜像名字或者id
 docker rmi $(docker images -q)  # 删除所有镜像
 ```
 
-### run
+## run
 
 基于镜像启动一个容器
 
@@ -147,12 +202,18 @@ docker rmi $(docker images -q)  # 删除所有镜像
 
 > 如果镜像不存在,会去自动拉取
 
-### exec
+```shell
+docker run -it --name centostest centos:7	
+```
 
-进入一个运行中的容器
+## exec
+
+在运行的容器中执行命令
 
 ```shell
-docker exec -it 容器名字/id bash(进入方式)
+docker exec -it 容器名字/id bash
+docker exec -it centostest bash
+docker exec centostest ls /
 ```
 
 * -i 将当前终端输入流给容器
@@ -161,19 +222,36 @@ docker exec -it 容器名字/id bash(进入方式)
 * -e 指定环境变量
 * -u 指定用户
 
-### logs
+## logs
 
 查看容器后台输出的信息,方便我们纠错
 
-### stop
+```shell
+docker logs centostest
+docker logs -f centostest # 实时日志
+```
+
+## stop
 
 关闭一个容器  docker stop  id或者名字
 
-### restart
+```
+docker stop centostest
+```
+
+
+
+## restart
 
 重启一个容器 docker restart id 或者名字
 
-### rm
+```
+docker restart centostest
+```
+
+
+
+## rm
 
 删掉一个容器
 
@@ -182,18 +260,22 @@ docker rm -f id或者名字
 docker rm -f $(docker ps -aq) #删除所有容器
 ```
 
-### rename
+## rename
 
 更改容器的名字
 
-### ps
+```
+docker rename centostest centos7
+```
+
+## ps
 
 与linux的ps功能差不多
 
 * docker ps 查看运行的容器
 * docker ps -a 查看运行和停止的容器
 
-### commit
+## commit
 
 将容器打包成镜像(不推荐使用,建议使用build),这个
 
@@ -201,47 +283,231 @@ docker rm -f $(docker ps -aq) #删除所有容器
 * --author 作者
 * docker commit 容器  (仓库名字)镜像:标签
 
-### diff
+```
+docker commit nginx mynginx:v1
+```
+
+
+
+## cp
+
+在容器和本地文件系统之间复制文件或文件夹
+
+* docker cp <container_id>:<container_path>  <local_path>  将容器中的内容复制到本地
+* docker cp <local_path>  <container_id>:<container_path> 将本地内容复制到容器中
+
+```
+docker cp centos7:/root ./test
+```
+
+```
+docker cp ./test centos7:/root/test
+```
+
+
+
+## diff
 
 拿容器层与镜像层做对比,看多了哪些,修改了哪些,删除了哪些东西
 
-### inspect
+```
+docker diff centos7
+```
+
+## inspect
 
 查看容器,网络,镜像,容器卷,网络的详细信息或者说元信息
 
-### network
+```
+
+```
+
+
+
+## network
 
 * create -d 类型(一般用bridge,也是默认值) 网络名字 创建一个网络
 * rm 删除一个网络
 * prune 删除未使用的网络
 * connect 将容器加入到某个网络当中去
+* disconnect  将容器从某个网络中移除
 
-### volume 
+#### 示例
+
+创建一个网络
+
+```shell
+docker network create my-network
+```
+
+创建两个容器,使用两种不同的方式加入网络吧
+
+```
+docker run -itd --name container1 --network my-network busybox  # 创建的时候就加入网络
+```
+
+```
+docker run -itd --name container2  busybox
+docker network connect my-network container2  # 后面再加入网络
+```
+
+进入到container1中ping container2
+
+```
+docker exec -it container1 sh
+ping container2
+```
+
+会发现是可以ping 通的
+
+删除网络
+
+```
+docker rm -f container1 container2  # 得先删除属于这个网络的容器,或者移除 
+docker network rm my-network
+```
+
+
+
+#### 答疑
+
+Docker 不会在 `/etc/hosts` 文件中为每个容器添加条目。相反，Docker 使用内置的 DNS 服务器来实现容器之间的名称解析。当您将容器连接到用户定义的网络（如本示例中的 `my-network`）时，Docker 会自动为该网络配置一个内置 DNS 服务器。容器可以使用这个 DNS 服务器来解析其他容器的名称。
+
+在我们的示例中，`container1` 和 `container2` 都连接到了 `my-network`。当您从 `container1` 尝试 ping `container2` 时，`container1` 会向 Docker 内置的 DNS 服务器发送一个 DNS 请求，以解析 `container2` 的 IP 地址。DNS 服务器会返回 `container2` 的 IP 地址，然后 `container1` 可以通过 IP 地址与 `container2` 进行通信。
+
+请注意，这种名称解析功能仅在用户定义的网络中可用。对于默认的桥接网络（`bridge`），容器需要使用 IP 地址进行通信，或者您需要手动更新 `/etc/hosts` 文件以添加容器名称和 IP 地址的映射。这就是为什么建议在需要容器间通信时使用用户定义的网络。
+
+我们可以查看这个网络的信息
+
+```
+docker network inspect my-network
+```
+
+```json
+[
+    {
+        "Name": "my-network",
+        "Id": "aaa94bd17fe571805aa60cdf4ca5dc2ef7252b3ac26b45c4f97861c5303e63aa",
+        "Created": "2023-05-03T01:35:46.849865799-07:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "0425b460b23ab302a321987e57f80c0c22ec8d212261fcea2cc1023b62aa44e9": {
+                "Name": "container1",
+                "EndpointID": "857cca4d333a6989f47a107677e47f720410c3888c098d4f952e0ccb6797f6d2",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            },
+            "48bcbe65a098ea7d96feebd0a72a4f731ea8cf475872e0ebaf983ac225af0aa2": {
+                "Name": "container2",
+                "EndpointID": "1db1fd068f327f11f1df3bc1339b266d030938e95411a8f2bef3db826c3290a9",
+                "MacAddress": "02:42:ac:12:00:03",
+                "IPv4Address": "172.18.0.3/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+
+```
+
+
+
+## volume 
 
 * create name 创建一个容器卷
 * rm name/id 删除一个容器
+* ls 列出容器卷
 * inspect name/id 查看容器卷的元信息
 * prune 删除没有在使用的容器卷(只要有容器挂载,不管是运行的容器,还是停止的容器,都算在使用)
 
-### build
+
+
+```shell
+docker volume create my-volume # 创建一个容器卷
+
+docker volume rm my-volume # 删除,如果有容器挂载了,那么无法删除
+
+docker inspect my-volume # 查看容器卷信息
+
+docker volume ls #列出容器卷
+
+```
+
+
+
+## build
 
 基于dockerfile构建一个镜像
 
-```shell
-docker build -t 镜像名字:版本  .
+```
+docker build [OPTIONS] PATH | URL | -
 ```
 
-* -t 指定镜像名字与版本
-* -f 指定dockerfile路径(默认在上下文中)
-* 后面这个点 **.** 是指上下文路径  build的时候,会将这个路径下的所有文件打包发给docker 服务端
+- `OPTIONS`：构建镜像时使用的选项。
+- `PATH`：Dockerfile 所在的本地路径。通常为当前目录（`.`）。 这个目录就是上下文路径
+- `URL`：从远程仓库（如 GitHub）获取 Dockerfile 的 URL。
+- `-`：从标准输入（stdin）读取 Dockerfile。
 
-### history
+常用的 `docker build` 选项：
+
+1. `-t` 或 `--tag`：为构建的镜像指定一个名称和可选的标签（格式为 `name:tag`）。如果没有指定标签，将使用 `latest` 作为默认标签。示例：`-t myimage:1.0`。
+2. `--build-arg`：设置构建参数。这些参数可以在 Dockerfile 中使用 `ARG` 指令定义。示例：`--build-arg API_KEY=myapikey`。
+3. `--no-cache`：在构建过程中不使用缓存。默认情况下，Docker 会使用缓存以加速构建过程。
+4. `--file` 或 `-f`：指定一个非默认名称或位置的 Dockerfile。**默认情况下，Docker 会在构建上下文路径中查找名为 `Dockerfile` 的文件**。示例：`-f mydockerfile`。
+5. `--rm`：在构建过程完成后删除中间容器。默认为 true。
+6. `--pull`：尝试从远程仓库拉取基础镜像的新版本，即使本地已经存在该镜像。默认为 false。
+
+示例：
+
+1. **使用当前目录下的 `Dockerfile` 构建一个名为 `myapp` 的镜像**：
+
+   ```
+   docker build -t myapp .
+   ```
+
+2. **从 GitHub 仓库中的 `Dockerfile` 构建镜像**：
+
+   ```
+   docker build -t myapp https://github.com/user/repo.git
+   ```
+
+3. 使用名为 `custom.dockerfile` 的文件构建镜像，并设置构建参数：
+
+   ```
+   docker build -t myapp --build-arg API_KEY=myapikey -f custom.dockerfile .
+   ```
+
+在构建过程中，Docker 会按照 Dockerfile 中的指令逐步执行，并为每个指令创建一个新的层。当所有指令执行完成后，Docker 将构建出一个新的镜像。如果在构建过程中遇到错误，Docker 将返回错误信息，您可以根据错误信息修改 Dockerfile 并重新尝试构建。
+
+## history
 
 查看镜像的构建历史命令
 
 * --no-trunc 查看完整命令(默认只能看到前几个字符)
 
-### tag
+## tag
 
 可以改变一个镜像的仓库名字,镜像名字,版本号
 
@@ -249,7 +515,7 @@ docker build -t 镜像名字:版本  .
 docker tag nginx:latest mynginx:v1
 ```
 
-### export
+## export
 
 将一个容器导出成一个文件,但是这么打包出来的镜像,它只会包含一层了,所以不会保存所有的commit记录,比如说你的CMD命令,entrypoint的这些都不会保存,因此在打出的镜像执行的时候需要去重新输入CMD命令才能保证容器继续运行
 
@@ -263,7 +529,7 @@ docker export nginx -o mynginx.tar
 
 
 
-### import 
+## import 
 
 将本地或者远程文件导入成镜像
 
@@ -279,23 +545,139 @@ docker import ./my-nginx.tar my-nginx:v2
 docker run -d --name mynginx nginx /docker-entrypoint.sh "nginx" "-g" "daemon off;" 
 ```
 
+# 容器卷
 
 
-## 容器卷
 
-挂在容器卷的几种方式:
+Docker 中的容器卷（Volume）是一种用于**持久化和共享容器数据的机制**。**容器卷独立于容器生命周期，即使容器被删除，卷中的数据仍然存在。容器卷可以被一个或多个容器挂载，以便在容器之间共享数据。**
 
-* 先创建 容器卷 docker volume create --name vol (会创建 /var/lib/docker/volumes/vol/_data 然后 将这个目录挂载到容器指定目录上去
-* 直接使用不存在的容器卷名字,docker会给我们创建一个容器卷假设名字为a,那么对应的目录就为 /var/lib/docker/volumes/a/_data
-* 使用自定义文件或者文件夹,**必须使用绝对路径**,然后使用-v 宿主机路径:容器路径   如果两个路径都不存在,docker会为我们创建,如果容器路径存在,那么里面东西会被宿主机的东西覆盖
+与直接将宿主机的目录挂载到容器相比，使用容器卷具有以下优点：
 
-一个容器可以挂载多个容器卷,我们可以设置容器对容器卷的操作权限,比如只读 -v 宿主机路径:容器路径:ro
+1. 数据持久化：容器卷可以在容器之间持久化数据，即使容器被删除，数据仍然存在。
+2. 数据共享：容器卷可以被多个容器同时挂载，从而实现数据共享。
+3. 容器迁移：容器卷可以方便地在不同的宿主机之间迁移，使得数据迁移变得更加容易。
+4. 性能：容器卷通常具有更好的性能，因为它们直接由 Docker 管理。
+5. 隔离：容器卷可以提供更好的隔离，因为它们不依赖于宿主机的文件系统结构。
+
+
+
+## 容器卷类型
+
+1. **匿名卷（Anonymous volume）：**
+
+   使用 `-v` 时，如果仅提供容器内的路径，Docker 会在宿主机上为卷自动生成一个唯一的 ID，而不是指定的名称。这被称为匿名卷。
+
+   ```
+   docker run -v /container/path your_image
+   ```
+
+   在这种情况下，Docker 将在容器的 `/container/path` 目录下创建一个匿名卷。由于未指定卷名称，数据将存储在宿主机的 Docker 卷目录下的一个随机目录中。
+
+2. **命名卷（Named volume）：**
+
+   如果同时指定卷名称和容器内路径，就可以创建一个命名卷。命名卷允许您更轻松地引用和管理数据。
+
+   ```
+   docker run -v volume_name:/container/path your_image
+   ```
+
+   在这种情况下，Docker 将在容器的 `/container/path` 目录下创建一个名为 `volume_name` 的卷。数据将存储在宿主机的 Docker 卷目录下的一个子目录中，该子目录的名称与指定的卷名称相同。
+
+3. **绑定挂载（Bind mount）：**
+
+   如果提供宿主机上的一个路径和容器内的一个路径，就可以创建一个绑定挂载。绑定挂载将容器内的路径映射到宿主机上的路径，从而允许对宿主机上的文件和目录进行读写。
+
+   ```
+   docker run -v /host/path:/container/path your_image
+   ```
+
+   在这种情况下，Docker 将宿主机上的 `/host/path` 目录映射到容器的 `/container/path` 目录。这意味着在容器内对 `/container/path` 目录的任何更改都会直接反映到宿主机上的 `/host/path` 目录中，反之亦然。
+
+> 不论哪边路径不存在,默认都会创建一个这样的路径,而且宿主机的目录会挂载到容器上,所以,容器对应路径里面的内容是不可见的,不是覆盖了,如果我们没有挂在容器卷,它
+
+## 挂在多个容器卷
+
+一个容器可以挂载多个卷，并且可以为每个卷指定权限。您可以使用 `:ro`（read-only，只读）或 `:rw`（read-write，读写）标志为卷指定权限。默认情况下，卷是以读写模式挂载的。
+
+例如，假设您有两个卷：`volume1` 和 `volume2`，您希望将 `volume1` 以只读模式挂载到容器的 `/data1` 目录，将 `volume2` 以读写模式挂载到容器的 `/data2` 目录。您可以使用以下命令：
+
+```
+docker run -v volume1:/data1:ro -v volume2:/data2:rw your_image
+```
 
 权限问题,当我们使用容器卷的时候,会发现里面的数据我们居然没办法查看,也没有办法创建文件,这个时候,我们需要使用  --privileged=true 创建容器
 
-## 构建镜像
+## 容器卷的迁移
 
-### commit
+如果您需要在不同机器之间迁移容器卷，可以使用以下方法之一来实现：
+
+**方法一：使用 `docker cp` 命令备份和恢复容器卷数据**
+
+1. 首先，创建一个临时容器，并将要迁移的卷挂载到该容器：
+
+   ```
+   docker run -d --name temp_container -v my_volume:/data busybox sleep infinity
+   ```
+
+   这里，我们使用了一个名为 `my_volume` 的卷，并将其挂载到了 `/data` 目录。
+
+2. 使用 `docker cp` 命令从临时容器中复制卷数据到宿主机：
+
+   ```
+   docker cp temp_container:/data /path/to/backup
+   ```
+
+   这将把卷数据复制到宿主机的 `/path/to/backup` 目录。
+
+3. 将备份数据传输到目标机器。您可以使用 `scp`、`rsync` 或其他文件传输工具来实现这一步。
+
+4. 在目标机器上创建一个新的卷：
+
+   ```
+   docker volume create my_new_volume
+   ```
+
+5. 在目标机器上创建一个新的临时容器，并将新卷挂载到该容器：
+
+   ```
+   docker run -d --name new_temp_container -v my_new_volume:/data busybox sleep infinity
+   ```
+
+6. 将备份数据从目标机器的宿主机复制到新的临时容器：
+
+   ```
+   docker cp /path/to/backup new_temp_container:/data
+   ```
+
+7. 最后，删除两个临时容器：
+
+   ```
+   docker rm -f temp_container new_temp_container
+   ```
+
+**方法二：使用 `docker save` 和 `docker load` 命令备份和恢复带有卷数据的镜像**
+
+此方法适用于卷数据和应用程序代码一起打包在 Docker 镜像中的场景。
+
+1. 使用 `docker save` 命令将镜像导出为 `.tar` 文件：
+
+   ```
+   docker save -o my_image.tar my_image
+   ```
+
+2. 将 `.tar` 文件传输到目标机器。
+
+3. 在目标机器上使用 `docker load` 命令导入镜像：
+
+   ```
+   docker load -i my_image.tar
+   ```
+
+注意：这两种方法都需要手动备份和恢复容器卷数据。在迁移过程中，务必确保不会丢失任何数据。根据您的需求和环境，选择最适合您的方法。
+
+# 构建镜像
+
+## commit
 
 当我们使用commit 之后,是将当前容器的存储层+原来的镜像打包成一个新的镜像,这样容器的存储层就会被保留下来,后面也无法再更改,如果我们使用了卷的话,这个东西并不属于存储层,自然不会被保存
 
@@ -320,11 +702,58 @@ docker images #查看我们自己的镜像
 docker run -d --name nginx1  -p 8081:80 mynginx:v1
 # 访问ip:8081就能访问到我们修改的页面
 
-#不要使用docker commit 来制作镜像,这样会导致很多文件被加入到这一层中,到时候docker commit的次数越来越多,镜像会变得很臃肿
-# 而且docker commit 制作镜像,别人根本不知道我们在基础镜像上面干了些什么东西
+#尽量不要使用docker commit 来制作镜像,这样不利于我们使用分层镜像,而且也不利于修改镜像,每一次commit都要在原有的基础上新增,而如果使用build的话,可以充分利用以前的镜像分层, 还有就是commit的话是不知道我们在容器的基础上干了些什么的
 ```
 
-### dockerfile
+## dockerfile
+
+### 常用配置项
+
+抱歉刚刚没有详细列出 Dockerfile 的所有配置项。以下是 Dockerfile 中的一些主要指令及其用途：
+
+1. `FROM`: 指定基础镜像。例如：`FROM ubuntu:20.04`。
+2. `LABEL`: 添加元数据标签，如维护者信息。例如：`LABEL maintainer="your_name <your_email@example.com>"`。
+3. `RUN`: 执行命令，用于安装软件包、更新配置文件等。例如：`RUN apt-get update && apt-get install -y nginx`。
+4. `CMD`: 设置容器启动时运行的默认命令。如果在 `docker run` 时传递了参数，`CMD` 中的命令将被覆盖。例如：`CMD ["nginx", "-g", "daemon off;"]`。
+5. `ENTRYPOINT`: 设置容器启动时运行的命令，与 `CMD` 类似，但不会被 `docker run` 时传递的参数覆盖。例如：`ENTRYPOINT ["nginx", "-g", "daemon off;"]`。
+6. `COPY`: 将本地文件复制到镜像中。例如：`COPY index.html /var/www/html/`。
+7. `ADD`: 与 `COPY` 类似，但可以在复制之前执行解压操作。例如：`ADD myapp.tar.gz /app/`。
+8. `WORKDIR`: 设置镜像中的工作目录。例如：`WORKDIR /app`。
+9. `ENV`: 设置环境变量。例如：`ENV MY_VAR=my_value`。
+10. `EXPOSE`: 声明容器需要监听的端口。例如：`EXPOSE 8080`。**仅仅做声明用,告诉别人我内部使用了什么端口,好让别人运行这个容器的时候做端口映射**
+11. `USER`: 设置运行容器的用户。例如：`USER myuser`。
+12. `VOLUME`: 定义匿名卷，用于数据持久化和共享。例如：`VOLUME /var/lib/mysql`。
+13. `ARG`: 定义构建时变量，可以在 `docker build` 命令中使用 `--build-arg` 参数设置。例如：`ARG MY_BUILD_ARG`。
+14. `ONBUILD`: 为基础镜像添加触发器，在其他镜像中使用该基础镜像时触发。例如：`ONBUILD RUN echo "Hello from base image"`。
+15. `STOPSIGNAL`: 设置停止容器时发送的信号。例如：`STOPSIGNAL SIGQUIT`。
+16. `SHELL`: 设置运行 `RUN`, `CMD` 和 `ENTRYPOINT` 指令时使用的默认 shell。例如：`SHELL ["/bin/bash", "-c"]`。
+
+### 注意点
+
+Dockerfile 是一个文本文件，其中包含了一系列用于构建 Docker 镜像的指令。编写 Dockerfile 时，需要注意以下几点：
+
+1. 从基础镜像开始：使用 `FROM` 指令来指定基础镜像。例如：`FROM ubuntu:20.04`。
+2. 标签：为了便于维护和版本控制，尽量使用具体的基础镜像标签，而不是 `latest`。
+3. 维护者信息：使用 `LABEL` 指令添加维护者信息。例如：`LABEL maintainer="your_name <your_email@example.com>"`。
+4. 运行命令：使用 `RUN` 指令来执行安装软件包、更新配置文件等操作。避免在一个 `RUN` 指令中执行过多操作，以免产生过大的镜像层。另外，可以使用反斜杠（`\`）在多行书写这些命令以提高可读性。
+5. 分层：**合理安排 Dockerfile 中的指令顺序，将经常变动的部分放在底部，以便充分利用镜像缓存**。
+6. 复制文件：使用 `COPY` 和 `ADD` 指令将本地文件复制到镜像中。尽量使用 `COPY`，因为它更简单，只复制文件；而 `ADD` 在复制文件之前还可以执行解压操作。
+7. 工作目录：使用 `WORKDIR` 指令设置镜像中的工作目录。这会影响后续指令的相对路径。
+8. 设置环境变量：使用 `ENV` 指令设置环境变量。例如：`ENV MY_VAR=my_value`。
+9. 暴露端口：使用 `EXPOSE` 指令声明容器需要监听的端口。例如：`EXPOSE 8080`。
+10. 设置用户：使用 `USER` 指令设置运行容器的用户，以避免使用 root 用户运行应用程序。例如：`USER myuser`。
+11. 容器启动命令：使用 `CMD` 或 `ENTRYPOINT` 指令设置容器启动时运行的命令。`CMD` 可以被 `docker run` 时传递的参数覆盖，而 `ENTRYPOINT` 则不会。
+
+为了更好地编写 Dockerfile，请注意以下几点：
+
+- **保持 Dockerfile 简洁：删除不必要的指令，减少镜像层数**。
+- 使用多阶段构建：通过使用多个 `FROM` 指令，可以将构建过程分为多个阶段，以减小最终镜像的大小。
+- 避免使用 `sudo`：Dockerfile 中的指令默认以 root 用户身份运行，因此不需要使用 `sudo`。
+- **清理缓存：**在安装软件包或执行其他操作时，确保在同一个 `RUN` 指令中清理不必要的缓存文件，以减小镜像大小。例如，在使用 `apt-get` 安装软件包后，可以运行 `apt-get clean` 和 `rm -rf /var/lib/apt/lists/*` 来清理缓存。
+- **避免在容器中运行 SSH**：尽量不要在容器中运行 SSH 服务，因为这会增加安全风险。取而代之的是，使用 `docker exec` 命令来进入正在运行的容器。
+- **使用 `.dockerignore` 文件**：创建一个 `.dockerignore` 文件以排除不需要复制到镜像中的文件，从而减小镜像大小。
+- 文档和注释：在 Dockerfile 中添加必要的注释和文档，以提高可读性和可维护性。
+- 定期更新和审查：定期更新基础镜像、软件包和配置，以确保容器始终运行在最新且安全的环境中。同时，定期审查 Dockerfile，以确保其符合最佳实践。
 
 ```shell
 # dockerfile 的编写
@@ -335,8 +764,7 @@ ENV 设置环境变量(到时候容器里面会存在这个变量哦)
 RUN 命令   
 CP 源路径(相对于上下文来说) 目标路径(可以相对于容器来说,也可以相对于容器里面的工作目录(通过WORKDIR指定来说)
 ADD 压缩包路径(相对于上下文) 目录路径(同上)  add 可以做其他的事(和cp一样的功能,下载文件),但是推荐只做这个事情
-CMD ["可执行文件","参数"] 容器启动时默认执行命令,当然我们自己写的命令会替换掉这个,CMD里面的命令会最终被替换成
-sh -c "可执行文件","参数"
+CMD ["可执行文件","参数"] 容器启动时默认执行命令,当然我们自己写的命令会替换掉这个,CMD里面的命令会最终被替换成sh -c "可执行文件","参数"
 ENTRYPOINT ["可执行文件","参数",CMD] 这个命令和CMD命令的目的都是一样的,让容器启动的时候执行一些命令,但是如果这个命令与CMD
 一起使用的时候,CMD里面的东西会被当成参数,默认这个命令是不会被替换掉的,我们需要使用--entrypoint来指定
 VOLUME 定义一个匿名卷,如果用户没有指定容器卷,我们也能挂在一个匿名卷,把动态数据放在容器卷中,这样就能防止一些动态数据的写操作发生在容器层
@@ -434,20 +862,37 @@ docker rm -f `docker ps -aq` 快速删除所有容器  docker ps -aq 是列出�
 
 
 
-* 
+## 对比
+
+`docker commit` 和 `docker build` 都用于创建 Docker 镜像，但它们之间存在一些关键差异。以下是它们之间的对比：
+
+1. **构建过程**：
+
+   - `docker commit`：从现有的容器创建新的镜像。首先，您需要启动一个容器，对其进行更改（例如安装软件或修改配置文件），然后使用 `docker commit` 命令将这些更改保存到新的镜像。
+
+   - `docker build`：使用 Dockerfile 描述的一系列指令来创建镜像。Docker 会根据 Dockerfile 中的指令自动执行容器的更改、提交和删除。这为镜像构建过程提供了自动化和可重复性。
+
+2. **可重复性和可维护性**：
+
+   - `docker commit`：手动执行更改和提交可能导致不一致和难以追踪的结果。当需要修改镜像时，您需要记住并手动执行所有更改和提交。
+
+   - `docker build`：Dockerfile 提供了一种声明式的方式来描述镜像构建过程。这使得在不同环境中构建相同镜像变得简单，也有助于团队成员之间共享构建过程。此外，当需要修改镜像时，可以轻松地查看和编辑 Dockerfile。
+
+3. **层次结构和缓存**：
+
+   - `docker commit`：当您使用 `docker commit` 创建镜像时，所有更改都会保存在单个镜像层中。这可能导致较大的镜像和较低的缓存效率。
+
+   - `docker build`：`docker build` 会为 Dockerfile 中的每个指令创建一个新的镜像层。这有助于更好地管理镜像的大小和缓存。例如，如果只更改了 Dockerfile 中的一个指令，那么 Docker 只需要重新构建该指令对应的层，而无需重新构建整个镜像。这有助于加速构建过程。
+
+总的来说，虽然 `docker commit` 可以用于从现有容器创建新镜像，但在大多数情况下，建议使用 `docker build` 和 Dockerfile 来构建镜像。这样可以确保镜像构建过程的可重复性、可维护性以及更高效的层次结构和缓存管理。
 
 
- **容器是否会长久运行，是和 `docker run` 指定的命令有关，和 `-d` 参数无关**
 
-如果使用attach进入容器,退出后则会结束容器,但是使用exec命令
-
-
-
-## docker-compose
+# docker-compose
 
 这个东西是用来管理docker容器的,那么多docker容器,难道我们每次部署都要去一一启动并且配置吗?那多麻烦,得用docker-compose去管理
 
-###  安装
+##  安装
 
 ```shell
 curl -L https://get.daocloud.io/docker/compose/releases/download/v2.4.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
@@ -461,13 +906,13 @@ chmod o+x /usr/local/bin/docker-compose
 $ curl -L https://raw.githubusercontent.com/docker/compose/1.27.4/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
 ```
 
-### 卸载
+## 卸载
 
 ```shell
 rm -f /usr/local/bin/docker-compose
 ```
 
-### 常用命令
+## 常用命令
 
 ​	我们使用docker-compose的时候可以指定一些参数
 
@@ -477,55 +922,55 @@ rm -f /usr/local/bin/docker-compose
 > docker-compose只有在具有docker-compose.yml目录下使用才有用(**除非指定docker-compse.yml的位置**),否则会提示
 > no configuration file provided: not found
 
-#### build
+### build
 
 构建项目中的镜像,就是构建在配置文件中使用了build配置项的服务,如果有的话,则会构建一个镜像到仓库中,默认名字是当前目录名字+service对应的名字
 
-#### config
+### config
 
 检查配置文件是否正确,正确则显示完整配置文件,否则说明错误原因
 
-#### down
+### down
 
 删掉项目中通过up启动的服务,并且删除网络
 
-#### exec
+### exec
 
 进入项目中的容器
 
-#### images
+### images
 
 列出compose文件中启动的容器对应的镜像
 
-#### kill
+### kill
 
 杀掉一个项目中的服务(得使用服务名字哦)
 
-#### stop
+### stop
 
 停止一个服务
 
-#### up
+### up
 
 这个命令巨屌好吧,帮我们省了不少事,它将尝试自动完成包括构建镜像，（重新）创建服务，启动服务，并关联服务相关容器的一系列操作
 
-#### scale
+### scale
 
 指定开启服务个数,如果服务多于这个就停止,少了就增加 
 
-### docker-compose.yml 模板
+## docker-compose.yml 模板
 
-#### build
+### build
 
 如果镜像存在则不会构建镜像,否则根据指定文件夹路径(可以是相对docker-compose.yml的路径,也可以是绝对路径)构建镜像,构建镜像的名字为当前docker-compose 文件所在目录的目录名+服务名字版本为最新版本,子命令
 
 * context 指定dockerfile的位置
 
-#### command
+### command
 
 覆盖容器启动的时候执行的命令,也就是相当于在dockerfile后面多加一条CMD
 
-#### devices
+### devices
 
 设备映射关系
 
@@ -534,7 +979,7 @@ devices:
   - "/dev/ttyUSB1:/dev/ttyUSB0"
 ```
 
-#### depends_on
+### depends_on
 
 解决容器依赖关系,比如先得启动哪些服务,在启动自己
 
@@ -550,11 +995,11 @@ services:
 
 比如这个先启动,db,redis 然后就启动自己(不是等db,redis,完全启动后再启动自己哦)
 
-#### dns
+### dns
 
 指定DNS服务器,可以是单个数据,也可以是列表
 
-#### environment
+### environment
 
 指定环境变量
 
@@ -575,7 +1020,7 @@ environment:
 
 如果变量名称或者值中用到 `true|false，yes|no` 等表达 [布尔](https://yaml.org/type/bool.html) 含义的词汇，最好放到引号里，避免 YAML 自动解析某些内容为对应的布尔语义。
 
-#### expose
+### expose
 
 暴露端口,但是不映射,互联在一个网络中的容器可以访问
 
@@ -585,7 +1030,7 @@ expose:
  - "8000"
 ```
 
-#### extra_hosts
+### extra_hosts
 
 ```yaml
 extra_hosts:
@@ -598,7 +1043,7 @@ extra_hosts:
 123.323.12.12 mysql
 ```
 
-#### healthcheck
+### healthcheck
 
 通过命令检查容器是否健康运行。
 
@@ -611,25 +1056,37 @@ healthcheck:
   retries: 3
 ```
 
-#### image
+### image
 
 指定为镜像名称或镜像 ID。如果镜像在本地不存在，Compose 将会尝试拉取这个镜像,用这个镜像启动作为容器
 
-#### logging
+### logging
 
 配置日志
 
-#### port 
+### port 
 
 与docker run -p 里面的作用是差不多的
 
-## 额外补充
+# 额外补充
 
-### 打标签
+## 打标签
 
 如果我们虚拟机没有连接外网,但是我们本机可以连接外网,我们可以使用本地下载好后,上传到虚拟机,然后
 
-## 遇到的坑
+
+
+## build使用缓存问题
+
+Docker 使用镜像层的概念来构建和存储镜像。在构建过程中，Docker 会根据 Dockerfile 中的每个指令创建一个新的镜像层。每个层都会在前一个层的基础上应用更改。**Docker 使用内容寻址的方式来存储这些层，这意味着每个层都有一个唯一的哈希值，该哈希值取决于层的内容。**
+
+**当 Docker 遇到一个已经构建过的指令时，它会检查该指令对应的缓存层是否存在。如果存在，Docker 将直接使用该缓存层，而无需重新构建。这可以显著加速构建过程。Docker 根据指令内容和上下文来确定缓存层的有效性。**
+
+当您在 Dockerfile 中新增一条指令时，Docker 将从头开始执行 Dockerfile。在遇到新增指令之前，Docker 会尝试使用之前构建过程中产生的缓存。一旦到达新增指令，Docker 将根据该指令创建一个新的层。此时，Docker 会重新构建该指令之后的所有层，因为它们取决于新增指令所创建的层。
+
+简而言之，Docker 通过镜像层的唯一哈希值来记住缓存，这些哈希值取决于指令内容和上下文。当 Dockerfile 更改时，Docker 会尽可能使用现有的缓存，但在遇到更改点时，它将重新构建受影响的层。这样可以确保构建出的镜像始终是最新的。
+
+# 遇到的坑
 
 * 开启或者关闭防火墙后,一定要重启docker,不然会报错
 * 如果挂载好容器卷发现在容器里面无法访问数据,权限出问题,那大概率是selinux没有设置成disabled   修改/etc/selinux/config 里面的SELINUX为disabled
