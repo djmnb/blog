@@ -1874,7 +1874,7 @@ Java 注解（Annotation）是一种为代码添加元数据的机制。它们�
 
       - `RetentionPolicy.SOURCE`：注解仅在源代码中可用，编译器会在编译时丢弃它。
       - `RetentionPolicy.CLASS`：注解在编译后的类文件中可用，但 JVM 在运行时不保留它。这是默认保留策略。
-      - `RetentionPolicy.RUNTIME`：注解在运行时可用，因此可以通过反射访问。
+      - `RetentionPolicy.RUNTIME`：**注解在运行时可用，因此可以通过反射访问。**
 
    2. `@Target`：限制注解可以应用的 Java 元素类型。可能的取值包括：
 

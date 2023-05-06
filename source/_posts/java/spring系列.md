@@ -957,217 +957,6 @@ Spring Boot 在启动时会自动检测项目 `src/main/resources` 目录下的�
 
 搭配spring-boot-admin **来可视化的监控** spring-boot 程序的运行状态
 
-## Mybatis-Plus
-
-### 导入依赖
-
-```
-<dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-            <version>3.5.3.1</version>
-        </dependency>
-```
-
-### 配置数据源
-
-```
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/mybatis?useUnicode=true&characterEncoding=utf-8&useSSL=false
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-```
-
-
-
-### 命名规则
-
-在 MyBatis-Plus 中，数据库表名、字段名和 Java 对象名（实体类名）及其属性名之间的映射关系通常遵循以下规则：
-
-1. 数据库表名与实体类名：
-   - 数据库表名通常使用下划线命名法，例如 `user_info`。
-   - Java 实体类名应使用驼峰命名法（Pascal Case），例如 `UserInfo`。
-   - 如果数据库表名与实体类名不匹配，可以使用 `@TableName` 注解指定实体类对应的数据库表名，例如 `@TableName("user_info")`。
-2. 数据库字段名与实体类属性名：
-   - 数据库字段名通常使用下划线命名法，例如 `first_name`。
-   - Java 实体类属性名应使用小驼峰命名法（Camel Case），例如 `firstName`。
-   - 如果数据库字段名与实体类属性名不匹配，可以使用 `@TableField` 注解指定属性对应的数据库字段名，例如 `@TableField("first_name")`。
-
-在 MyBatis-Plus 的默认配置下，框架会自动将下划线命名法的数据库表名和字段名映射到驼峰命名法的实体类名和属性名。因此，只要遵循这些命名规则，通常不需要额外的注解来指定映射关系。
-
-当然，如果您的项目有特殊的命名规则，您可以根据实际需求调整这些映射关系。使用 `@TableName` 和 `@TableField` 注解可以灵活地定制实体类与数据库表之间的映射关系。
-
-> 一定要注意Mybatis-Plus和springboot版本的关系,切记切记
-
-### 属性名字或者类名与关键字冲突
-
-使用TableName 和 TableField
-
-```java
-@Data
-@TableName("message")  // 指定表名字
-public class Message {
-    @TableId(type = IdType.AUTO)  // 自增
-    private long id;
-    @TableField("`like`")
-    private int like;  // 这里与关键字冲突,用双引号加反引号
-    private String text;
-    private long carId;
-    private long userId;
-}
-
-```
-
-> 尽量不要跟关键字冲突
-
-
-
-### 代码生成
-
-导入依赖
-
-```
- <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-generator</artifactId>
-            <version>3.4.1</version>
-        </dependency>
-```
-
-
-
-编写代码
-
-```java
-package com.example;
-
-import com.baomidou.mybatisplus.generator.AutoGenerator;
-import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
-import com.baomidou.mybatisplus.generator.config.GlobalConfig;
-import com.baomidou.mybatisplus.generator.config.PackageConfig;
-import com.baomidou.mybatisplus.generator.config.StrategyConfig;
-import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
-
-public class test {
-
-    public static void main(String[] args) {
-        // 1. 创建 AutoGenerator 对象
-        AutoGenerator generator = new AutoGenerator();
-
-        // 2. 配置数据源
-        DataSourceConfig dataSourceConfig = new DataSourceConfig();
-        dataSourceConfig.setUrl("jdbc:mysql://localhost:3306/test");
-        dataSourceConfig.setDriverName("com.mysql.cj.jdbc.Driver");
-        dataSourceConfig.setUsername("root");
-        dataSourceConfig.setPassword("mysql666.");
-        generator.setDataSource(dataSourceConfig);
-
-        // 3. 配置全局策略
-        GlobalConfig globalConfig = new GlobalConfig();
-        globalConfig.setOutputDir(System.getProperty("user.dir") + "/src/main/java");
-        globalConfig.setAuthor("Your Name");
-        globalConfig.setOpen(false);
-        generator.setGlobalConfig(globalConfig);
-
-        // 4. 配置包信息
-        PackageConfig packageConfig = new PackageConfig();
-        packageConfig.setParent("com.example");
-        packageConfig.setModuleName("test1");
-        generator.setPackageInfo(packageConfig);
-
-        // 5. 配置生成策略
-        StrategyConfig strategyConfig = new StrategyConfig();
-        strategyConfig.setNaming(NamingStrategy.underline_to_camel);
-        strategyConfig.setColumnNaming(NamingStrategy.underline_to_camel);
-        strategyConfig.setEntityLombokModel(true);
-        strategyConfig.setRestControllerStyle(true);
-        strategyConfig.setInclude("car_info","message","order","user"); // 要生成的表名
-        generator.setStrategy(strategyConfig);
-
-        // 6. 执行生成
-        generator.execute();
-    }
-}
-
-
-
-```
-
-执行一遍即可
-
-**他就会帮我们生成好实体类与mapper还是service,还有controller**
-
-
-
-### Mapper文件
-
-在Spring Boot应用中，`@MapperScan`注解和配置文件中的`mybatis.mapper-locations`配置都可以用于指定MyBatis的mapper接口和XML映射文件的位置。**这两者是互补的，它们会合并而不是替换**。这意味着，如果您在`@MapperScan`注解中指定了一个包路径，并且在配置文件中也指定了一个或多个文件路径，那么MyBatis将会扫描这些路径，加载所有符合条件的mapper接口和XML映射文件。
-
-
-
-### 配置项
-
-```java
-    private String configLocation;  //MyBatis 配置文件（如：mybatis-config.xml）的位置
-    private String[] mapperLocations = new String[]{"classpath*:/mapper/**/*.xml"}; //XML 映射文件的位置，可以使用通配符来指定多个文件
-    private String typeAliasesPackage; // 别名包，用于为实体类自动创建别名
-    private Class<?> typeAliasesSuperType; //为继承自某个类的子类创建别名
-    private String typeHandlersPackage;  // 类型处理器包，用于指定自定义类型处理器所在的包
-    private boolean checkConfigLocation = false; // 是否检查配置文件的存在。如果设置为 true，则会在找不到配置文件时抛出异常。
-    private ExecutorType executorType;  // MyBatis 的执行器类型（如：SIMPLE、REUSE、BATCH）
-    private Class<? extends LanguageDriver> defaultScriptingLanguageDriver;  // 默认的脚本语言驱动
-    private Properties configurationProperties; // 自定义配置项。
-    @NestedConfigurationProperty
-    private MybatisConfiguration configuration;  //MyBatis 的配置，可以用来配置一些 MyBatis 原生的特性。
-		   protected final MybatisMapperRegistry mybatisMapperRegistry; // MyBatis 映射器注册表
-            protected final Map<String, Cache> caches; //MyBatis 缓存对象的映射
-            protected final Map<String, ResultMap> resultMaps; // 结果映射的映射
-            protected final Map<String, ParameterMap> parameterMaps; 
-            protected final Map<String, KeyGenerator> keyGenerators;
-            protected final Map<String, XNode> sqlFragments;
-            protected final Map<String, MappedStatement> mappedStatements; //映射语句的映射
-            private boolean useGeneratedShortKey; //是否使用自动生成的短键名
-    /** @deprecated */
-    @Deprecated
-    private String typeEnumsPackage; // 枚举类型的包名（已弃用）
-    @NestedConfigurationProperty
-    private GlobalConfig globalConfig = GlobalConfigUtils.defaults()
-        private boolean banner = true;  //是否在启动时显示 MyBatis-Plus 的 Banner 信息，默认为 true
-        private boolean enableSqlRunner = false; //是否启用 SQL 运行器，它允许在项目启动后直接运行 SQL，而无需编写映射器和服务类，默认为 false
-        private GlobalConfig.DbConfig dbConfig;  //MyBatis-Plus 的数据库配置，用于配置数据库相关的参数
-			   private IdType idType; //主键类型，用于配置实体类的主键生成策略（如：AUTO、INPUT、UUID 等）。
-                private String tablePrefix; // 表前缀，用于自动映射实体类和数据库表之间的关系
-                private String schema; // 数据库 schema，用于指定查询时的默认 schema
-                private String columnFormat; //列名格式化，用于自定义数据库列名的格式
-                private String propertyFormat; // 属性名格式化，用于自定义实体类属性名的格式
-                private boolean replacePlaceholder; // 是否替换占位符，默认为 false。
-                private String escapeSymbol; // 转义符，用于在 SQL 中转义特殊字符。
-                private boolean tableUnderline; //是否使用表名下划线分隔，默认为 true。
-                private boolean capitalMode;  // 是否使用大写命名，默认为 false。
-                private List<IKeyGenerator> keyGenerators; 
-                private String logicDeleteField;
-                private String logicDeleteValue;
-                private String logicNotDeleteValue;
-                private FieldStrategy insertStrategy;
-                private FieldStrategy updateStrategy;
-                /** @deprecated */
-                @Deprecated
-                private FieldStrategy selectStrategy;
-                private FieldStrategy whereStrategy;
-			
-        private ISqlInjector sqlInjector = new DefaultSqlInjector(); //SQL 注入器，用于向 MyBatis-Plus 添加自定义的 SQL 方法，默认为 DefaultSqlInjector
-        private Class<?> superMapperClass = Mapper.class; // Mapper 接口的超类，所有的 Mapper 接口都应继承这个超类，默认为 Mapper.class。
-        private SqlSessionFactory sqlSessionFactory; //MyBatis 的 SqlSessionFactory 实例，用于创建 SqlSession。
-        private Set<String> mapperRegistryCache = new ConcurrentSkipListSet(); //映射器注册缓存，存储已注册的 Mapper 接口。
-        private MetaObjectHandler metaObjectHandler; // 元对象处理器，用于自动填充实体类中的字段。
-        private PostInitTableInfoHandler postInitTableInfoHandler = new PostInitTableInfoHandler() {
-        }; //表信息初始化后的处理器，允许您在表信息初始化后自定义一些操作。
-        private IdentifierGenerator identifierGenerator; //标识符生成器，用于自定义实体类的主键生成策略
-        
-```
-
 
 
 
@@ -1866,6 +1655,571 @@ Spring Boot默认配置了静态资源处理，如CSS、JS、图片等。如果�
 
 
 
+# Mybatis-Plus
+
+## 导入依赖
+
+```
+<dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.3.1</version>
+        </dependency>
+```
+
+## 配置数据源
+
+```
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mybatis?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+```
+
+
+
+## 命名规则
+
+在 MyBatis-Plus 中，数据库表名、字段名和 Java 对象名（实体类名）及其属性名之间的映射关系通常遵循以下规则：
+
+1. 数据库表名与实体类名：
+   - 数据库表名通常使用下划线命名法，例如 `user_info`。
+   - Java 实体类名应使用驼峰命名法（Pascal Case），例如 `UserInfo`。
+   - 如果数据库表名与实体类名不匹配，可以使用 `@TableName` 注解指定实体类对应的数据库表名，例如 `@TableName("user_info")`。
+2. 数据库字段名与实体类属性名：
+   - 数据库字段名通常使用下划线命名法，例如 `first_name`。
+   - Java 实体类属性名应使用小驼峰命名法（Camel Case），例如 `firstName`。
+   - 如果数据库字段名与实体类属性名不匹配，可以使用 `@TableField` 注解指定属性对应的数据库字段名，例如 `@TableField("first_name")`。
+
+在 MyBatis-Plus 的默认配置下，框架会自动将下划线命名法的数据库表名和字段名映射到驼峰命名法的实体类名和属性名。因此，只要遵循这些命名规则，通常不需要额外的注解来指定映射关系。
+
+当然，如果您的项目有特殊的命名规则，您可以根据实际需求调整这些映射关系。使用 `@TableName` 和 `@TableField` 注解可以灵活地定制实体类与数据库表之间的映射关系。
+
+> 一定要注意Mybatis-Plus和springboot版本的关系,切记切记
+
+## 属性名字或者类名与关键字冲突
+
+使用TableName 和 TableField
+
+```java
+@Data
+@TableName("message")  // 指定表名字
+public class Message {
+    @TableId(type = IdType.AUTO)  // 自增
+    private long id;
+    @TableField("`like`")
+    private int like;  // 这里与关键字冲突,用双引号加反引号
+    private String text;
+    private long carId;
+    private long userId;
+}
+
+```
+
+> 尽量不要跟关键字冲突
+
+
+
+## 代码生成
+
+导入依赖
+
+```
+ <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-generator</artifactId>
+            <version>3.4.1</version>
+        </dependency>
+```
+
+
+
+编写代码
+
+```java
+package com.example;
+
+import com.baomidou.mybatisplus.generator.AutoGenerator;
+import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
+import com.baomidou.mybatisplus.generator.config.GlobalConfig;
+import com.baomidou.mybatisplus.generator.config.PackageConfig;
+import com.baomidou.mybatisplus.generator.config.StrategyConfig;
+import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
+
+public class test {
+
+    public static void main(String[] args) {
+        // 1. 创建 AutoGenerator 对象
+        AutoGenerator generator = new AutoGenerator();
+
+        // 2. 配置数据源
+        DataSourceConfig dataSourceConfig = new DataSourceConfig();
+        dataSourceConfig.setUrl("jdbc:mysql://localhost:3306/test");
+        dataSourceConfig.setDriverName("com.mysql.cj.jdbc.Driver");
+        dataSourceConfig.setUsername("root");
+        dataSourceConfig.setPassword("mysql666.");
+        generator.setDataSource(dataSourceConfig);
+
+        // 3. 配置全局策略
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setOutputDir(System.getProperty("user.dir") + "/src/main/java");
+        globalConfig.setAuthor("Your Name");
+        globalConfig.setOpen(false);
+        generator.setGlobalConfig(globalConfig);
+
+        // 4. 配置包信息
+        PackageConfig packageConfig = new PackageConfig();
+        packageConfig.setParent("com.example");
+        packageConfig.setModuleName("test1");
+        generator.setPackageInfo(packageConfig);
+
+        // 5. 配置生成策略
+        StrategyConfig strategyConfig = new StrategyConfig();
+        strategyConfig.setNaming(NamingStrategy.underline_to_camel);
+        strategyConfig.setColumnNaming(NamingStrategy.underline_to_camel);
+        strategyConfig.setEntityLombokModel(true);
+        strategyConfig.setRestControllerStyle(true);
+        strategyConfig.setInclude("car_info","message","order","user"); // 要生成的表名
+        generator.setStrategy(strategyConfig);
+
+        // 6. 执行生成
+        generator.execute();
+    }
+}
+
+
+
+```
+
+执行一遍即可
+
+**他就会帮我们生成好实体类与mapper还有service,还有controller**
+
+
+
+
+
+
+
+## 映射文件编写
+
+映射文件是MyBatis框架中用于描述数据库操作和Java对象之间映射关系的XML文件。它包含了执行SQL操作所需的各种信息，如SQL语句、输入参数、返回结果等。映射文件可以将SQL语句和Java代码分离，使得代码更易于维护和阅读。映射文件通常以`.xml`为扩展名，并位于项目的资源文件夹（如`src/main/resources`）中。
+
+映射文件的基本结构如下：
+
+```xml
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.YourMapper">
+    <!-- SQL操作映射，例如select、insert、update、delete等 -->
+</mapper>
+```
+
+1. `<!DOCTYPE ...>`：这是DTD（Document Type Definition）声明，用于指定XML文档的验证规则。对于MyBatis映射文件，它需要指定MyBatis 3映射文件的DTD。
+2. `<mapper>`：映射文件的根元素，包含一个`namespace`属性，用于指定映射接口的完全限定类名。映射文件中的所有SQL操作映射都应位于此元素中。
+
+### sql标签
+
+**这个元素可以用来定义可重用的 SQL 代码片段**，以便在其它语句中使用。 参数可以静态地（在加载的时候）确定下来，并且可以在不同的 include 元素中定义不同的参数值。比如：
+
+```xml
+<sql id="userColumns"> ${alias}.id,${alias}.username,${alias}.password </sql>
+```
+
+这个 SQL 片段可以在其它语句中使用，例如：
+
+```xml
+<select id="selectUsers" resultType="map">
+  select
+    <include refid="userColumns"><property name="alias" value="t1"/></include>,
+    <include refid="userColumns"><property name="alias" value="t2"/></include>
+  from some_table t1
+    cross join some_table t2
+</select>
+```
+
+
+
+### SQL映射标签
+
+`<select>`、`<insert>`、`<update>`和`<delete>`这四个标签用于定义不同类型的SQL操作。它们有一些共同的属性，也有各自独有的属性。下面分别列出这些标签的属性及其用途。
+
+**共同属性**：
+
+1. `id`（必需）：指定映射语句的唯一标识符，对应Java接口中的方法名。在`<mapper>`元素内，`id`属性的值必须唯一。
+
+2. `parameterType`（可选）：指定输入参数的Java类型。可以是完全限定类名或类型别名。如果方法参数是单个基本类型或者简单的Java对象，可以省略此属性。
+
+3. `flushCache`（可选）：指定是否在执行此映射语句后清空一级缓存。默认值为`false`对于`<select>`，`true`对于`<insert>`、`<update>`和`<delete>`。
+
+4. `timeout`（可选）：指定此映射语句的超时时间（以秒为单位）。如果未指定，则使用全局默认超时时间。
+
+**`<select>`独有属性**：
+
+1. `resultType`（可选）：指定返回结果的Java类型。可以是完全限定类名或类型别名。对于简单类型和单个Java对象，可以使用此属性。如果返回结果需要自定义映射规则，应该使用`resultMap`属性。
+
+2. `resultMap`（可选）：指定一个自定义`<resultMap>`来处理返回结果。如果返回结果需要自定义映射规则，应该使用此属性，而不是`resultType`。
+
+3. `fetchSize`（可选）：指定JDBC驱动程序每次获取的记录数。此属性对于处理大量数据时非常有用，因为它可以降低内存占用。不过，此属性的实际行为取决于JDBC驱动程序的实现。
+
+4. `resultSetType`（可选）：指定`ResultSet`的类型。可选值有`FORWARD_ONLY`（只向前滚动）、`SCROLL_SENSITIVE`（可滚动，但对数据库更改敏感）和`SCROLL_INSENSITIVE`（可滚动，对数据库更改不敏感）。默认值为`undefined`，即使用JDBC驱动程序的默认设置。
+
+5. `useCache`（可选）：指定是否启用二级缓存。默认值为`true`。
+
+**`<insert>`独有属性**：
+
+1. `keyProperty`（可选）：指定用于保存自动生成主键的Java对象属性。仅在使用自动生成主键的数据库时有效。
+
+2. `keyColumn`（可选）：指定用于保存自动生成主键的数据库列。仅在使用自动生成主键的数据库时有效。
+
+3. `useGeneratedKeys`（可选）：**指定是否使用数据库自动生成的主键。默认值为`false`。如果设置为`true`，MyBatis会尝试获取数据库生成的主键，并将其赋值给`keyProperty`指定的Java对象属性。**
+
+4. `statementType`（可选）：指定SQL语句的类型。可选值有`PREPARED`（预编译SQL语句，默认值）、`CALLABLE`（调用存储过程）和`STATEMENT`（普通SQL语句）。
+
+**`<update>`和`<delete>`独有属性**：
+
+1. `statementType`（可选）：与`<insert>`标签的`statementType`属性相同，指定SQL语句的类型。可选值有`PREPARED`（预编译SQL语句，默认值）、`CALLABLE`（调用存储过程）和`STATEMENT`（普通SQL语句）。
+
+这些属性使得MyBatis在处理各种SQL操作时具有很高的灵活性。通过为这些标签提供不同的属性值，可以调整SQL操作的行为以满足特定的需求。
+
+
+
+### 结果映射
+
+`resultMap` 元素是 MyBatis 中最重要最强大的元素。**它可以让你从 90% 的 JDBC `ResultSets` 数据提取代码中解放出来**，并在一些情形下允许你进行一些 JDBC 不支持的操作。实际上，在为一些比如连接的复杂语句编写映射代码的时候，一份 `resultMap` 能够代替实现同等功能的数千行代码。ResultMap 的设计思想是，对简单的语句做到零配置，对于复杂一点的语句，只需要描述语句之间的关系就行了。
+
+对于映射类型 **如果没有指定别名的话,一般需要全路径类名**,我们可以配置type-aliases-package来指定别名,就能直接使用类名
+
+对于这么一个对象,我们来举例resultType的使用
+
+```
+@Data
+public class User {
+    Long id;
+    String name;
+    Long age;
+    String email;
+}
+```
+
+
+
+#### 隐式配置
+
+```
+    <select id="getUser" resultType="com.djm.pojo.User">
+        select * from user where id=#{id}
+    </select>
+```
+
+这里需要User里面属性名字 与 字段名字相同(**规则映射相同,不是名字完全相同,比如字段名字是下划线分割,属性名是小驼峰**),  如果不同的话我们也可以通过设置字段别名,但是对于字段很多的话,使用又频繁的话,建议使用显示配置,我们举个设置字段别名的例子, 我们把user改成这样
+
+```
+@Data
+public class User {
+    Long id;
+    String myName;
+    Long age;
+    String email;
+}
+```
+
+```
+    <select id="getUser" resultType="User">
+        select *,name my_name from user where id=#{id}
+    </select>
+```
+
+
+
+#### 显示配置
+
+```
+ <resultMap id="userResultMap" type="User">
+        <result property="myName" column="name"/>
+    </resultMap>
+    <select id="getUser" resultMap ="userResultMap">
+        select * from user where id=#{id}
+    </select>
+```
+
+**其实我们也只需要配置不同的地方就行了,但是为了能够多处使用,建议写全**
+
+resultMap里面的子配置项:
+
+在MyBatis的`<resultMap>`元素中，可以使用以下子配置项来定义映射关系和处理复杂关系。以下是常见的子配置项及其意义：
+
+1. `<id>`：用于指定实体类的主键属性与数据库表中的主键列之间的映射关系。`property`属性指定实体类中的属性名，`column`属性指定数据库表中的列名。
+
+2. `<result>`：用于指定普通实体类属性与数据库表列之间的映射关系。与`<id>`类似，`property`属性指定实体类中的属性名，`column`属性指定数据库表中的列名。
+
+3. `<association>`：用于定义一对一关系。`property`属性指定实体类中的属性名，`javaType`属性指定关联实体类的完全限定类名。`<association>`元素内部可以包含`<id>`、`<result>`、`<constructor>`等子元素来描述关联实体类的映射关系。
+
+4. `<collection>`：用于定义一对多关系。`property`属性指定实体类中的属性名，`ofType`属性指定集合元素类型的完全限定类名。`<collection>`元素内部可以包含`<id>`、`<result>`、`<constructor>`等子元素来描述集合元素的映射关系。
+
+5. `<constructor>`：用于指定实体类的构造方法参数与数据库表列之间的映射关系。`<constructor>`元素内部可以包含`<idArg>`和`<arg>`子元素。
+
+   - `<idArg>`：用于指定作为构造方法参数的主键属性与数据库表中的主键列之间的映射关系。其用法类似于`<id>`。
+   - `<arg>`：用于指定作为构造方法参数的普通属性与数据库表列之间的映射关系。其用法类似于`<result>`。
+
+6. `<discriminator>`：用于实现基于数据库表列值的映射结果类型判断。`column`属性指定用于判断的数据库表列名，`javaType`属性指定该列对应的Java类型。`<discriminator>`元素内部可以包含`<case>`子元素来定义不同列值对应的映射关系。
+
+   - `<case>`：用于定义`<discriminator>`中特定列值对应的映射关系。`value`属性指定列值，`resultType`属性指定映射结果的完全限定类名。`<case>`元素内部可以包含`<id>`、`<result>`、`<constructor>`等子元素来描述映射关系。
+
+举个列子
+
+```
+<resultMap id="userResultMap" type="com.example.entity.User">
+    <id column="user_id" property="id" />
+    <result column="username" property="username" />
+    <association property="profile" javaType="com.example.entity.Profile">
+        <id column="profile_id" property="id" />
+        <result column="email" property="email" />
+        <result column="phone" property="phone" />
+    </association>
+    <collection property="orders" ofType="com.example.entity.Order">
+        <id column="order_id" property="id" />
+        <result column="order_number" property="orderNumber" />
+    </collection>
+</resultMap>
+
+```
+
+
+
+### 动态SQL
+
+动态SQL是MyBatis中的一种功能，它使你能够根据参数、条件等动态地构建和修改SQL语句。动态SQL提高了代码的可读性和灵活性，尤其在处理复杂查询、条件过滤和分页等场景时非常有用。
+
+以下是MyBatis中常用的动态SQL元素及其用途：
+
+1. `<if>`：条件判断，只有当条件成立时，才会包含`<if>`元素内的SQL片段。
+   示例：
+   ```
+   <select id="findUsers" resultType="User">
+     SELECT * FROM users
+     <where>
+       <if test="username != null">
+         AND username = #{username}
+       </if>
+       <if test="email != null">
+         AND email = #{email}
+       </if>
+     </where>
+   </select>
+   ```
+   当`username`和`email`参数不为`null`时，相应的条件将被包含在查询语句中。
+
+2. `<choose>`、`<when>`和`<otherwise>`：类似于Java的`switch`语句，用于根据条件选择不同的SQL片段。
+   示例：
+   ```
+   <select id="findUsers" resultType="User">
+     SELECT * FROM users
+     <where>
+       <choose>
+         <when test="username != null">
+           username = #{username}
+         </when>
+         <when test="email != null">
+           email = #{email}
+         </when>
+         <otherwise>
+           id = #{id}
+         </otherwise>
+       </choose>
+     </where>
+   </select>
+   ```
+   当`username`不为`null`时，查询将根据`username`进行；当`username`为`null`且`email`不为`null`时，查询将根据`email`进行；否则，查询将根据`id`进行。
+
+3. `<where>`：用于生成`WHERE`子句，可以包含动态元素。它会自动处理开头的`AND`或`OR`关键字。
+   示例：
+   ```
+   <select id="findUsers" resultType="User">
+     SELECT * FROM users
+     <where>
+       <if test="username != null">
+         username = #{username}
+       </if>
+       <if test="email != null">
+         AND email = #{email}
+       </if>
+     </where>
+   </select>
+   ```
+   `<where>`元素会自动处理开头的`AND`关键字，生成有效的SQL语句。
+
+4. `<set>`：用于生成`SET`子句，常用于`UPDATE`语句。它会自动处理结尾的逗号。
+   示例：
+   ```
+   <update id="updateUser" parameterType="User">
+     UPDATE users
+     <set>
+       <if test="username != null">
+         username = #{username},
+       </if>
+       <if test="email != null">
+         email = #{email},
+       </if>
+     </set>
+     WHERE id = #{id}
+   </update>
+   ```
+   `<set>`元素会自动处理结尾的逗号，生成有效的SQL语句。
+
+5. `<foreach>`：用于遍历集合或数组，并对每个元素执行相同的SQL片段。`<foreach>`元素可以生成`IN`子句，或用于批量插入、更新、删除操作。示例：
+
+      ```
+      <select id="findUsersByIds" resultType="User">
+        SELECT * FROM users
+        WHERE id IN
+        <foreach item="id" index="index" collection="ids" open="(" separator="," close=")">
+          #{id}
+        </foreach>
+      </select>
+      ```
+   当`ids`参数为一个包含多个`id`值的集合时，`<foreach>`元素会生成一个`IN`子句，查询所有匹配的用户。
+
+6. `<trim>`：用于自定义SQL片段的前缀、后缀、前缀覆盖和后缀覆盖。`<trim>`元素内可以包含动态元素，如`<if>`。`<trim>`元素提供了比`<where>`和`<set>`更高的灵活性。 示例：
+
+   ```
+   bashCopy code<update id="updateUser" parameterType="User">
+     UPDATE users
+     <trim prefix="SET" suffixOverrides=",">
+       <if test="username != null">
+         username = #{username},
+       </if>
+       <if test="email != null">
+         email = #{email},
+       </if>
+     </trim>
+     WHERE id = #{id}
+   </update>
+   ```
+
+   `<trim>`元素会根据指定的前缀和后缀覆盖规则生成SQL片段，使得SQL语句更加灵活。
+
+7. `<bind>`：用于创建一个变量，并将其绑定到指定的表达式。`<bind>`元素可以用于计算中间结果，或在多个地方重复使用相同的表达式。 示例：
+
+   ```
+   bashCopy code<select id="findUsers" resultType="User">
+     <bind name="pattern" value="'%' + username + '%'"/>
+     SELECT * FROM users
+     <where>
+       <if test="username != null">
+         username LIKE #{pattern}
+       </if>
+     </where>
+   </select>
+   ```
+
+   `<bind>`元素创建了一个名为`pattern`的变量，将其绑定到一个包含通配符的表达式，用于模糊查询。
+
+通过组合使用这些动态SQL元素，你可以根据不同的条件和参数值生成灵活、可维护的SQL语句。动态SQL在处理复杂查询、条件过滤和分页等场景时非常有用。
+
+### $ 与 #
+
+在MyBatis中，`$`和`#`都用于在SQL语句中插入参数值，但它们的用途和行为有所不同。
+
+1. `#{}`：使用`#`括起来的参数表示预编译参数。MyBatis会将这些参数值作为预编译语句的参数进行传递，这样可以避免SQL注入的风险。此外，MyBatis会根据参数类型自动进行类型处理，例如将Java中的`Date`类型转换为数据库中的`TIMESTAMP`类型。
+
+   示例：
+   ```
+   SELECT * FROM users WHERE username = #{username}
+   ```
+   当`username`参数为`'admin'`时，生成的SQL语句如下：
+   ```
+   SELECT * FROM users WHERE username = ?
+   ```
+   在执行SQL语句时，MyBatis会将`'admin'`作为预编译参数传递给数据库。
+
+2. `${}`：使用`$`括起来的参数表示直接插入参数值。MyBatis会将这些参数值直接替换到SQL语句中，而不会进行预编译。这样做可能会导致SQL注入的风险。因此，你应该谨慎使用`$`，尽量避免在可控制的参数上使用它。`$`通常用于动态表名、列名等无法通过预编译参数实现的场景。
+
+   示例：
+   ```
+   SELECT * FROM users ORDER BY ${columnName} ${order}
+   ```
+   当`columnName`参数为`'username'`，`order`参数为`'ASC'`时，生成的SQL语句如下：
+   ```
+   SELECT * FROM users ORDER BY username ASC
+   ```
+
+总结：
+- `#{}`：用于预编译参数，安全且支持类型处理。
+- `${}`：用于直接插入参数值，可能导致SQL注入，谨慎使用。
+
+在大多数情况下，你应该优先使用`#{}`作为参数占位符，以保证安全和正确的类型处理。只有在必要的时候，如动态表名、列名等，才考虑使用`${}`。
+
+## Mapper位置扫描
+
+在Spring Boot应用中，`@MapperScan`注解和配置文件中的`mybatis.mapper-locations`配置都可以用于指定MyBatis的mapper接口和XML映射文件的位置。**这两者是互补的，它们会合并而不是替换**。这意味着，如果您在`@MapperScan`注解中指定了一个包路径，并且在配置文件中也指定了一个或多个文件路径，那么MyBatis将会扫描这些路径，加载所有符合条件的mapper接口和XML映射文件。
+
+
+
+## 配置项
+
+```java
+    private String configLocation;  //MyBatis 配置文件（如：mybatis-config.xml）的位置
+    private String[] mapperLocations = new String[]{"classpath*:/mapper/**/*.xml"}; //XML 映射文件的位置，可以使用通配符来指定多个文件
+    private String typeAliasesPackage; // 别名包，用于为实体类自动创建别名
+    private Class<?> typeAliasesSuperType; //为继承自某个类的子类创建别名
+    private String typeHandlersPackage;  // 类型处理器包，用于指定自定义类型处理器所在的包
+    private boolean checkConfigLocation = false; // 是否检查配置文件的存在。如果设置为 true，则会在找不到配置文件时抛出异常。
+    private ExecutorType executorType;  // MyBatis 的执行器类型（如：SIMPLE、REUSE、BATCH）
+    private Class<? extends LanguageDriver> defaultScriptingLanguageDriver;  // 默认的脚本语言驱动
+    private Properties configurationProperties; // 自定义配置项。
+    @NestedConfigurationProperty
+    private MybatisConfiguration configuration;  //MyBatis 的配置，可以用来配置一些 MyBatis 原生的特性。
+		   protected final MybatisMapperRegistry mybatisMapperRegistry; // MyBatis 映射器注册表
+            protected final Map<String, Cache> caches; //MyBatis 缓存对象的映射
+            protected final Map<String, ResultMap> resultMaps; // 结果映射的映射
+            protected final Map<String, ParameterMap> parameterMaps; 
+            protected final Map<String, KeyGenerator> keyGenerators;
+            protected final Map<String, XNode> sqlFragments;
+            protected final Map<String, MappedStatement> mappedStatements; //映射语句的映射
+            private boolean useGeneratedShortKey; //是否使用自动生成的短键名
+    /** @deprecated */
+    @Deprecated
+    private String typeEnumsPackage; // 枚举类型的包名（已弃用）
+    @NestedConfigurationProperty
+    private GlobalConfig globalConfig = GlobalConfigUtils.defaults()
+        private boolean banner = true;  //是否在启动时显示 MyBatis-Plus 的 Banner 信息，默认为 true
+        private boolean enableSqlRunner = false; //是否启用 SQL 运行器，它允许在项目启动后直接运行 SQL，而无需编写映射器和服务类，默认为 false
+        private GlobalConfig.DbConfig dbConfig;  //MyBatis-Plus 的数据库配置，用于配置数据库相关的参数
+			   private IdType idType; //主键类型，用于配置实体类的主键生成策略（如：AUTO、INPUT、UUID 等）。
+                private String tablePrefix; // 表前缀，用于自动映射实体类和数据库表之间的关系
+                private String schema; // 数据库 schema，用于指定查询时的默认 schema
+                private String columnFormat; //列名格式化，用于自定义数据库列名的格式
+                private String propertyFormat; // 属性名格式化，用于自定义实体类属性名的格式
+                private boolean replacePlaceholder; // 是否替换占位符，默认为 false。
+                private String escapeSymbol; // 转义符，用于在 SQL 中转义特殊字符。
+                private boolean tableUnderline; //是否使用表名下划线分隔，默认为 true。
+                private boolean capitalMode;  // 是否使用大写命名，默认为 false。
+                private List<IKeyGenerator> keyGenerators; 
+                private String logicDeleteField;
+                private String logicDeleteValue;
+                private String logicNotDeleteValue;
+                private FieldStrategy insertStrategy;
+                private FieldStrategy updateStrategy;
+                /** @deprecated */
+                @Deprecated
+                private FieldStrategy selectStrategy;
+                private FieldStrategy whereStrategy;
+			
+        private ISqlInjector sqlInjector = new DefaultSqlInjector(); //SQL 注入器，用于向 MyBatis-Plus 添加自定义的 SQL 方法，默认为 DefaultSqlInjector
+        private Class<?> superMapperClass = Mapper.class; // Mapper 接口的超类，所有的 Mapper 接口都应继承这个超类，默认为 Mapper.class。
+        private SqlSessionFactory sqlSessionFactory; //MyBatis 的 SqlSessionFactory 实例，用于创建 SqlSession。
+        private Set<String> mapperRegistryCache = new ConcurrentSkipListSet(); //映射器注册缓存，存储已注册的 Mapper 接口。
+        private MetaObjectHandler metaObjectHandler; // 元对象处理器，用于自动填充实体类中的字段。
+        private PostInitTableInfoHandler postInitTableInfoHandler = new PostInitTableInfoHandler() {
+        }; //表信息初始化后的处理器，允许您在表信息初始化后自定义一些操作。
+        private IdentifierGenerator identifierGenerator; //标识符生成器，用于自定义实体类的主键生成策略
+        
+```
+
+
+
 # Spring Security 
 
 Spring Security 是一个用于为 Java 应用程序提供身份验证和授权功能的安全框架。在 Spring Boot 中，Spring Security 可以轻松集成，提供自动配置和默认安全设置。以下是 Spring Security 在 Spring Boot 应用中的工作机制和工作流程：
@@ -1968,5 +2322,76 @@ public class MyFactoryBean implements FactoryBean<MyObject> {
 
 了解这些用法和注意点有助于您在 Spring Boot 项目中更加高效地使用 `classpath` 路径。
 
+## 资源路径问题
 
+1. 静态资源路径：
 
+   - 加载静态资源，如HTML、CSS、JavaScript等，Spring Boot默认从以下路径加载：
+     - `/META-INF/resources/`
+     - `/resources/`
+     - `/static/`
+     - `/public/`
+     
+   - 注意：这些路径是相对于类路径（classpath）的。它们通常位于项目的`src/main/resources`目录下。
+   
+   - 读取：使用相对路径访问静态资源。例如，`<img src="/images/logo.png">`。
+   
+   - 写入：通常不建议在静态资源目录下写入内容，因为它们可能会被覆盖。对于需要写入的文件，建议使用文件系统路径（见下文）。
+
+2. 类路径（classpath）资源：
+
+   - 类路径资源通常位于`src/main/resources`目录或`WEB-INF/classes`、`WEB-INF/lib`目录下。
+
+   - 读取：使用`ClassLoader`的`getResourceAsStream()`方法或Spring的`ResourceLoader`获取资源。
+     - 示例：`resourceLoader.getResource("classpath:config.properties")`
+     
+   - 写入：类路径资源通常是只读的。如果需要写入配置文件或其他资源文件，建议使用文件系统路径（见下文）。
+
+3. Web应用上下文资源：
+
+   - Web应用上下文资源位于Web应用的部署目录下。
+
+   - 读取：使用`ServletContext`的`getResourceAsStream()`方法获取资源。
+     - 示例：`servletContext.getResourceAsStream("/WEB-INF/config/config.xml")`
+
+   - 写入：通常不建议在Web应用上下文目录下写入内容。对于需要写入的文件，建议使用文件系统路径（见下文）。
+
+4. 文件系统资源：
+
+   - 文件系统资源位于服务器的文件系统中。
+
+   - 读取：使用Java的`File`类或`java.nio.file`包中的类来读取文件，或者使用Spring的`ResourceLoader`获取`file:`前缀的资源。
+     - 示例：`resourceLoader.getResource("file:/path/to/file.txt")`
+
+   - 写入：使用Java的`File`类或`java.nio.file`包中的类来写入文件。
+     - 示例：
+       ```java
+       File file = new File("./path/to/file.txt");
+       FileWriter fileWriter = new FileWriter(file);
+       fileWriter.write("Hello, World!");
+       fileWriter.close();
+       ```
+
+5. 外部配置文件路径：
+
+   - 外部配置文件通常位于服务器文件系统中。
+
+   - 读取：在`application.properties`或`application.yml`中指定配置文件路径，然后使用`@Value`注解或`@ConfigurationProperties`注解将配置文件的内容绑定到Java对象。
+     - 示例：`@Value("${myapp.config.file-path}") private String configFilePath;`
+
+   - 写入：使用Java的`File`类或`java.nio.file`包中的类来写入文件。
+     
+     * 示例：
+       ```java
+       File file = new File(configFilePath);
+       FileWriter fileWriter = new FileWriter(file);
+       fileWriter.write("key=value");
+       fileWriter.close();
+       ```
+
+总结：
+
+- 在Spring Boot项目中，资源路径可能是类路径资源、Web应用上下文资源、文件系统资源或外部配置文件路径。
+- 这些路径的读写方式取决于它们的类型和位置。
+- 类路径资源和Web应用上下文资源通常只用于读取。如果需要写入资源文件，推荐使用文件系统路径或外部配置文件路径。
+- 当处理资源路径时，注意区分绝对路径和相对路径。绝对路径通常是相对于服务器文件系统的根目录，而相对路径是相对于类路径、Web应用根目录或其他基准路径。
