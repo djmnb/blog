@@ -1,6 +1,11 @@
 ---
 title: spring系列学习
 data: 2023-4-28
+tags:	
+  - java
+  - spring
+categories:
+  - 框架学习
 ---
 
 # 前言
@@ -1096,6 +1101,77 @@ public class test {
 
 
 
+### Mapper文件
+
+在Spring Boot应用中，`@MapperScan`注解和配置文件中的`mybatis.mapper-locations`配置都可以用于指定MyBatis的mapper接口和XML映射文件的位置。**这两者是互补的，它们会合并而不是替换**。这意味着，如果您在`@MapperScan`注解中指定了一个包路径，并且在配置文件中也指定了一个或多个文件路径，那么MyBatis将会扫描这些路径，加载所有符合条件的mapper接口和XML映射文件。
+
+
+
+### 配置项
+
+```java
+    private String configLocation;  //MyBatis 配置文件（如：mybatis-config.xml）的位置
+    private String[] mapperLocations = new String[]{"classpath*:/mapper/**/*.xml"}; //XML 映射文件的位置，可以使用通配符来指定多个文件
+    private String typeAliasesPackage; // 别名包，用于为实体类自动创建别名
+    private Class<?> typeAliasesSuperType; //为继承自某个类的子类创建别名
+    private String typeHandlersPackage;  // 类型处理器包，用于指定自定义类型处理器所在的包
+    private boolean checkConfigLocation = false; // 是否检查配置文件的存在。如果设置为 true，则会在找不到配置文件时抛出异常。
+    private ExecutorType executorType;  // MyBatis 的执行器类型（如：SIMPLE、REUSE、BATCH）
+    private Class<? extends LanguageDriver> defaultScriptingLanguageDriver;  // 默认的脚本语言驱动
+    private Properties configurationProperties; // 自定义配置项。
+    @NestedConfigurationProperty
+    private MybatisConfiguration configuration;  //MyBatis 的配置，可以用来配置一些 MyBatis 原生的特性。
+		   protected final MybatisMapperRegistry mybatisMapperRegistry; // MyBatis 映射器注册表
+            protected final Map<String, Cache> caches; //MyBatis 缓存对象的映射
+            protected final Map<String, ResultMap> resultMaps; // 结果映射的映射
+            protected final Map<String, ParameterMap> parameterMaps; 
+            protected final Map<String, KeyGenerator> keyGenerators;
+            protected final Map<String, XNode> sqlFragments;
+            protected final Map<String, MappedStatement> mappedStatements; //映射语句的映射
+            private boolean useGeneratedShortKey; //是否使用自动生成的短键名
+    /** @deprecated */
+    @Deprecated
+    private String typeEnumsPackage; // 枚举类型的包名（已弃用）
+    @NestedConfigurationProperty
+    private GlobalConfig globalConfig = GlobalConfigUtils.defaults()
+        private boolean banner = true;  //是否在启动时显示 MyBatis-Plus 的 Banner 信息，默认为 true
+        private boolean enableSqlRunner = false; //是否启用 SQL 运行器，它允许在项目启动后直接运行 SQL，而无需编写映射器和服务类，默认为 false
+        private GlobalConfig.DbConfig dbConfig;  //MyBatis-Plus 的数据库配置，用于配置数据库相关的参数
+			   private IdType idType; //主键类型，用于配置实体类的主键生成策略（如：AUTO、INPUT、UUID 等）。
+                private String tablePrefix; // 表前缀，用于自动映射实体类和数据库表之间的关系
+                private String schema; // 数据库 schema，用于指定查询时的默认 schema
+                private String columnFormat; //列名格式化，用于自定义数据库列名的格式
+                private String propertyFormat; // 属性名格式化，用于自定义实体类属性名的格式
+                private boolean replacePlaceholder; // 是否替换占位符，默认为 false。
+                private String escapeSymbol; // 转义符，用于在 SQL 中转义特殊字符。
+                private boolean tableUnderline; //是否使用表名下划线分隔，默认为 true。
+                private boolean capitalMode;  // 是否使用大写命名，默认为 false。
+                private List<IKeyGenerator> keyGenerators; 
+                private String logicDeleteField;
+                private String logicDeleteValue;
+                private String logicNotDeleteValue;
+                private FieldStrategy insertStrategy;
+                private FieldStrategy updateStrategy;
+                /** @deprecated */
+                @Deprecated
+                private FieldStrategy selectStrategy;
+                private FieldStrategy whereStrategy;
+			
+        private ISqlInjector sqlInjector = new DefaultSqlInjector(); //SQL 注入器，用于向 MyBatis-Plus 添加自定义的 SQL 方法，默认为 DefaultSqlInjector
+        private Class<?> superMapperClass = Mapper.class; // Mapper 接口的超类，所有的 Mapper 接口都应继承这个超类，默认为 Mapper.class。
+        private SqlSessionFactory sqlSessionFactory; //MyBatis 的 SqlSessionFactory 实例，用于创建 SqlSession。
+        private Set<String> mapperRegistryCache = new ConcurrentSkipListSet(); //映射器注册缓存，存储已注册的 Mapper 接口。
+        private MetaObjectHandler metaObjectHandler; // 元对象处理器，用于自动填充实体类中的字段。
+        private PostInitTableInfoHandler postInitTableInfoHandler = new PostInitTableInfoHandler() {
+        }; //表信息初始化后的处理器，允许您在表信息初始化后自定义一些操作。
+        private IdentifierGenerator identifierGenerator; //标识符生成器，用于自定义实体类的主键生成策略
+        
+```
+
+
+
+
+
 ## jwt认证
 
 JWT是指JSON Web Token（JSON网络令牌），是一种用于在网络应用之间传递信息的开放标准（RFC 7519）。它可以作为一种轻量级的安全性传输方式，用于在发送方和接收方之间传递声明。这些声明可以被验证和信任，因此可以用来实现单点登录、用户认证等功能。
@@ -1876,7 +1952,21 @@ public class MyFactoryBean implements FactoryBean<MyObject> {
 
 在这个例子中，`MyFactoryBean` 实现了 `FactoryBean` 接口，并负责创建和初始化 `MyObject` 类的实例。当 Spring 容器需要获取 `MyObject` 类的实例时，会调用 `MyFactoryBean` 的 `getObject()` 方法。
 
-## 
+## classpath
+
+在 Spring Boot 中，`classpath` 是一个特殊的前缀，用于表示类路径。以下是关于 Spring Boot 中 `classpath` 路径的用法和注意点的总结：
+
+1. 用法：
+   - 在配置文件中，您可以使用 `classpath` 前缀来指定资源文件的路径。例如，`classpath:/templates/` 用于表示类路径下的 `/templates/` 目录。
+   - 在 Java 代码中，您可以使用 `ResourceUtils.CLASSPATH_URL_PREFIX` 或直接使用字符串 "classpath:" 来加载类路径下的资源。
+
+2. 注意点：
+   - 当使用 `classpath` 前缀时，需要确保资源文件被正确打包到 JAR 或 WAR 文件中，以便在运行时可以被找到。
+   - `classpath` 可以和通配符 `*` 一起使用，例如 `classpath*:/mapper/**/*.xml`，表示加载类路径下 `/mapper/` 目录及其子目录中所有的 `.xml` 文件。注意，`classpath*` 和 `classpath` 的行为略有不同：**classpath*会扫描所有类路径，而 classpath 只会扫描第一个匹配的类路径。**
+   - 当使用 `classpath` 加载资源时，需要注意文件名的大小写，因为在某些操作系统（如 Linux）上，文件名是大小写敏感的。
+   - 使用 `classpath` 加载资源时，还需要注意文件编码问题。如果资源文件包含特殊字符，需要确保文件的编码与读取时的编码一致。
+
+了解这些用法和注意点有助于您在 Spring Boot 项目中更加高效地使用 `classpath` 路径。
 
 
 
