@@ -138,6 +138,8 @@ A --> C --> D --> X(1.0)   // dist(A->X) = 3
 
 ```
 
+这里优先使用x(1.1)版本
+
 ### 第一声明优先
 
 如果路径最先解决不了的话,就谁先声明谁使用 (**这个是针对间接依赖**),直接依赖的话就谁后声明谁优先
@@ -227,31 +229,44 @@ mvn clean install -U
 
 在Maven中，生命周期是指一系列有序的阶段，用于构建、测试、部署和发布项目。Maven的核心原则是约定优于配置，因此它为各种类型的项目提供了一些预定义的项目周期。这些预定义的周期涵盖了项目从源代码到可部署产物的整个过程。
 
+> 生命周期只是一个概念,真正做事情的是插件
+
 Maven 有以下三个标准的生命周期:
 
-1. clean：项目清理。主要用于清理上一次构建产生的文件，可以理解为删除 target 目录。
-
+1. clean：项目清理。主要用于清理上一次构建产生的文件，可以理解为删除 target 目录,它包含以下阶段:
+   - pre-clean：在实际清理之前执行必要的操作。
+   - clean：删除构建产物（例如，删除 target 目录）。
+   - post-clean：完成清理后，进行后续操作。
 2. default(或 build)：项目构建。主要阶段包含：
-
-> process-resources 默认处理src/test/resources/下的文件，将其输出到测试的classpath目录中
->
-> compile 编译src/main/java下的java文件，产生对应的class
->
-> process-test-resources 默认处理src/test/resources/下的文件，将其输出到测试的classpath目录中
->
-> test-compile 编译src/test/java下的java文件，产生对应的class
->
-> test 运行测试用例
->
-> package 打包构件，即生成对应的jar、war等
->
-> install将构件部署到本地仓库
->
-> deploy 部署构件到远程仓库
+   - validate：验证项目是否正确，所有必需的信息是否可用。
+   - initialize：初始化构建状态，例如设置属性或创建目录。
+   - generate-sources：生成项目所需的任何源代码。
+   - process-sources：处理源代码，例如过滤文件。
+   - generate-resources：生成项目所需的任何资源。
+   - process-resources：将资源复制到目标目录，以便在打包时包含它们。
+   - compile：编译项目的源代码。
+   - process-classes：处理编译后的文件，例如优化字节码。
+   - generate-test-sources：生成项目的测试源代码。
+   - process-test-sources：处理测试源代码，例如过滤文件。
+   - generate-test-resources：生成项目的测试资源。
+   - process-test-resources：将测试资源复制到目标目录，以便在测试时使用。
+   - test-compile：编译项目的测试源代码。
+   - process-test-classes：处理编译后的测试文件。
+   - test：使用合适的测试框架运行测试。
+   - prepare-package：执行任何在打包之前需要完成的操作。
+   - **package**：将编译后的代码和资源打包成指定格式的文件，如 JAR、WAR 或 EAR。
+   - pre-integration-test：在集成测试之前执行必要的操作。
+   - integration-test：处理和部署项目以便进行集成测试。
+   - post-integration-test：完成集成测试后，进行后续操作。
+   - verify：检查包是否有效，满足质量标准。
+   - install：将包安装到本地仓库，以便在其他项目中使用。
+   - deploy：将最终的包复制到远程仓库，以便与其他开发人员和项目共享。
 
 ![img](../../img/mavenassets/maven-build.png)
 
 3. site：项目站点文档创建。
+
+**如果我们执行了某个生命周期的命令,那么它之前的生命周期对应的插件都会被执行**,比如我们使用了 mvn compile 那么validate就会执行
 
 # 插件
 
@@ -273,7 +288,7 @@ mvn 生命周期
 mvn compile
 ```
 
-
+方式一执行的是一个插件, 而方式二一般是执行一堆插件
 
 ## 插件与生命周期的绑定
 
@@ -446,13 +461,51 @@ public class ParamterMojo extends AbstractMojo {
 </plugin>
 ```
 
+## plugin的子标签
 
+在 Maven 的 `pom.xml` 文件中，`<plugin>` 标签用于定义插件及其配置。插件用于扩展或定制 Maven 构建过程中的某些任务。`<plugin>` 标签可以包含以下子标签：
 
-# 常用配置项
+1. `<groupId>`：插件的 groupId，它用于唯一标识插件所属的项目或组织。例如：`org.apache.maven.plugins`。
+
+2. `<artifactId>`：插件的 artifactId，它用于唯一标识插件。例如：`maven-compiler-plugin`。
+
+3. `<version>`：插件的版本号。例如：`3.8.0`。
+
+4. `<extensions>`：布尔值，用于指示插件是否提供扩展点。扩展点允许插件修改 Maven 的核心行为。大多数插件不需要使用扩展点，因此此标签通常为 `false` 或省略。
+
+5. `<executions>`：定义插件在构建过程中的多个执行。`<executions>` 标签可以包含多个 `<execution>` 标签。每个 `<execution>` 标签可以包含以下子标签：
+
+   - `<id>`：执行的唯一标识符，用于区分不同的执行。
+   - `<phase>`：与此执行关联的生命周期阶段。在指定的阶段，将执行这个插件。
+   - `<goals>`：定义与此执行关联的插件目标（任务）。`<goals>` 标签可以包含多个 `<goal>` 标签，每个 `<goal>` 标签表示一个要执行的插件目标。
+
+6. `<configuration>`：插件的配置信息。**这些配置参数用于定制插件的行为**。`<configuration>` 标签中的子标签取决于插件本身，因为每个插件可能有不同的配置参数。例如，对于 `maven-compiler-plugin`，`<configuration>` 可能包含 `<source>` 和 `<target>` 标签，用于指定 Java 源代码和目标字节码的版本。
+
+下面是一个配置示例，它使用 `maven-compiler-plugin` 设置 Java 源代码和目标字节码的版本：
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.0</version>
+            <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+这个示例中，我们定义了一个插件（`maven-compiler-plugin`），并通过 `<configuration>` 标签设置了 Java 源代码和目标字节码的版本为 1.8。
+
+# POM常用配置项
 
 `pom.xml` 是 Maven 项目的核心配置文件，它定义了项目的基本信息、依赖关系、插件、构建配置等。以下是 `pom.xml` 中的一些主要配置项及其用途：
 
-1. `<modelVersion>`：POM 文件的模型版本，通常是 "4.0.0"。这是一个必需的元素。
+1. `<modelVersion>`：POM 文件的模型版本，通常是 "4.0.0"。**这是一个必需的元素**。
 
 2. `<groupId>`：项目的组织或公司名称，通常是一个反向的域名，例如 "org.example"。它是 Maven 项目坐标的一部分。
 
@@ -480,7 +533,34 @@ public class ParamterMojo extends AbstractMojo {
 </dependencies>
 ```
 
-10. **`<dependencyManagement>`：用于在多模块项目中管理依赖关系的版本**。在此元素中，可以使用 `<dependencies>` 标签声明依赖关系，**但这些依赖关系不会直接添加到项目中，而是作为版本管理的参考。子模块可以继承这些依赖关系，并在需要时覆盖版本。**
+10. **`<dependencyManagement>`：用于在多模块项目中管理依赖关系的版本**。在此元素中，可以使用 `<dependencies>` 标签声明依赖关系，**但这些依赖关系不会直接添加到项目中，而是作为版本管理的参考。子模块可以继承这些依赖关系，并在需要时覆盖版本。**子项目只需要引入就行而不用指定版本,当然也可以指定版本进行覆盖
+
+    父模块
+
+    ```xml
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjweaver</artifactId>
+                <version>${aop.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    ```
+
+    子模块
+
+    ```xml
+    <dependencies>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+        </dependency>
+    </dependencies>
+    ```
+
+    **这么做的的好处是,可以让一套项目中可能用到的版本都适配,  因为使用者并不知道哪些包需要使用哪些版本,但是他知道要这个包**
 
 11. `<build>`：项目的构建配置。在此元素中，可以配置构建输出目录、源代码目录、资源文件目录等。还可以配置插件及其执行阶段、目标和参数。例如：
 
@@ -555,4 +635,10 @@ public class ParamterMojo extends AbstractMojo {
 </project>
 
 ```
+
+# 多模块
+
+子模块会继承父模块的插件和依赖
+
+# maven配置
 
