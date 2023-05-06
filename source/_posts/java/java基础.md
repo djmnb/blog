@@ -1,9 +1,10 @@
 ---
 title: java基础
 date: 2022/12/19
-tags: java
+tags: 
+  - java
 categories:
-  - java基础
+  - 语言学习
 ---
 
 ## Math

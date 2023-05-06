@@ -1,6 +1,12 @@
 ---
 title: java爬虫
 date: 2023-2-16
+categories:
+  - 爬虫
+tags:
+  - java
+  - jsoup
+  - HttpClient
 ---
 
 ## 前言
