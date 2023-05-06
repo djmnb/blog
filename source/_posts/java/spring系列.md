@@ -398,6 +398,10 @@ Spring Boot 的自动配置是它的一个核心功能，它通过预先定义�
 
 通过这个自动配置原理，Spring Boot 能够在适当的时机为应用程序提供合适的默认配置，从而简化开发过程。当然，也可以覆盖这些默认配置，以满足特定的需求。
 
+## 自定义starter
+
+
+
 ## 配置文件
 
 Spring Boot中的配置文件是用于配置应用程序的属性和参数的文件。Spring Boot支持多种类型的配置文件，包括属性文件、**YAML文件**、JSON文件等. 配置文件可以包含应用程序的所有配置参数，例如数据库连接信息、日志配置、服务器端口等。这些参数可以通过@ConfigurationProperties注解和@Value注解在应用程序中访问。
@@ -757,198 +761,6 @@ public class MyHttpSessionEventListener implements HttpSessionListener {
 
 
 
-## 日志
-
-### 日志门面和日志实现
-
-![image-20230430143718193](../../img/spring系列assets/image-20230430143718193.png)
-
-
-
-JUL是jdk自带，在java.util.logging包下的Logger类
-
-Log4j是Apache下的一款开源的日志框架
-
-**Logback是由log4j创始人设计的另一个开源日志组件，性能比log4j要好**
-
-Log4j 2是对Log4j的升级版，参考了logback的一些优秀的设计
-
-Log4j2主要有以下特色:
-
-性能提升：Log4j 2包含基于LMAX Disruptor库的下一代**异步记录器**。在多线程方案中，与Log4j 1.x和Logback相比，异步Logger的吞吐量高18倍，延迟降低了几个数量级
-
-自动重载配置：与Logback一样，Log4j 2可以在修改后自动重新加载其配置。与Logback不同，它在进行重新配置时不会丢失日志事件
-
-无垃圾机制：在稳态日志记录期间，Log4j 2 在独立应用程序中是无垃圾的，而在Web应用程序中是低垃圾的。这样可以减少垃圾收集器上的压力，并可以提供更好的响应时间性能
-
-### 使用日志框架
-
-Spring Boot内置了对日志的支持，它为开发者提供了一个统一、易于配置的日志框架。默认情况下，**Spring Boot使用Logback作为其日志实现**。然而，它也提供了对其他日志框架（如Log4j2）的支持，可以通过简单的配置进行切换。
-
-日志级别：
-Spring Boot支持以下日志级别，按照日志输出的详细程度递减排列：
-
-1. ERROR：错误级别，仅记录错误信息。
-2. WARN：警告级别，记录警告和错误信息。
-3. INFO：信息级别，记录信息、警告和错误信息。**这是Spring Boot的默认日志级别**。
-4. DEBUG：调试级别，记录调试、信息、警告和错误信息。比INFO级别的日志更详细。
-5. TRACE：追踪级别，记录所有日志信息，包括追踪、调试、信息、警告和错误信息。这是最详细的日志级别。
-
-#### 方式一
-
-为了在你的应用程序中使用日志，你需要导入适当的日志API。对于Spring Boot，默认情况下，**你应该使用SLF4J（Simple Logging Facade for Java）API**。首先，在你的Java类中导入以下包：
-
-```java
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-```
-
-然后，创建一个`Logger`实例：
-
-```java
-private static final Logger logger = LoggerFactory.getLogger(YourClassName.class);
-```
-
-现在，你可以使用`logger`实例记录不同级别的日志：
-
-```java
-logger.error("这是一条错误日志");
-logger.warn("这是一条警告日志");
-logger.info("这是一条信息日志");
-logger.debug("这是一条调试日志");
-logger.trace("这是一条追踪日志");
-```
-
-#### 方式二
-
-使用lombok注解,自动帮我们生成一个log对象
-
-```java
-@Component
-@Log
-@Slf4j
-public class MyHttpSessionEventListener implements HttpSessionListener {
-
-    @Override
-    public void sessionCreated(HttpSessionEvent se) {
-
-        log.info("session创建: " + se.getSession().getId());
-        System.out.println("session创建: " + se.getSession().getId());
-    }
-
-    @Override
-    public void sessionDestroyed(HttpSessionEvent se) {
-        System.out.println("session销毁: " + se.getSession().getId());
-    }
-}
-
-```
-
-
-
-### 日志配置
-
-Spring Boot允许你通过`application.properties`或`application.yml`文件轻松地配置日志。以下是一些常见的日志配置选项：
-
-- 日志级别配置：通过`logging.level`属性设置包或类的日志级别。例如：
-  ```properties
-  logging.level.root=WARN
-  logging.level.com.example.demo=DEBUG
-  ```
-
-- 日志文件配置：通过`logging.file.name`或`logging.file.path`属性设置日志输出文件。例如：
-  ```properties
-  logging.file.name=myapp.log
-  logging.file.path=logs
-  ```
-
-- 日志文件的滚动策略、最大文件大小等配置：在Logback或Log4j2的配置文件中设置。例如，在`src/main/resources`目录下创建一个名为`logback-spring.xml`的文件，然后自定义相关配置。
-
-### 配置文件
-
-Spring Boot 在启动时会自动检测项目 `src/main/resources` 目录下的一些特定命名的配置文件，并根据这些文件的名称来确定它们的用途。对于日志配置，Spring Boot 会检查以下文件名：
-
-- Logback：`logback-spring.xml`、`logback.xml`
-- Log4j2：`log4j2-spring.xml`、`log4j2.xml`
-
-当 Spring Boot 找到这些文件中的一个时，它会自动将其用作日志系统的配置。在这些文件中，你可以使用相应日志框架的语法和配置元素来定制日志系统的行为。
-
-请注意，对于 Logback，推荐使用 `logback-spring.xml` 而不是 `logback.xml`。使用 `logback-spring.xml` 文件名，你可以利用 Spring Boot 提供的一些额外特性，例如使用 Spring Profile 进行条件化配置。而使用 `logback.xml`，这些特性将不可用。
-
-总之，Spring Boot 通过检测特定的文件名来识别日志配置文件，并在启动过程中自动应用这些配置。
-
-
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-    <include resource="org/springframework/boot/logging/logback/base.xml" />
-
-    <!-- 设置日志级别 -->
-    <logger name="com.example.demo" level="DEBUG" />
-
-    <!-- 控制台日志输出 -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <!-- 文件日志输出 -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/app.log</file>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 设置滚动策略 -->
-            <fileNamePattern>logs/app-%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-    </appender>
-
-    <!-- 将输出引用到控制台和文件日志 -->
-    <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </root>
-</configuration>
-
-```
-
-滚动策略是用于管理日志文件的生成和清理的一种策略。当日志文件的大小或时间达到一定阈值时，滚动策略会自动将当前日志文件“滚动”为一个新的日志文件。这样可以避免日志文件无限增长，同时使得日志易于查找和管理。
-
-以下是一些常见的滚动策略：
-
-1. 基于大小的滚动策略（Size-Based Rolling Policy）：当日志文件大小达到指定值时，创建一个新的日志文件。例如，在 Logback 中，可以使用 `ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy` 来实现这种策略。
-
-2. 基于时间的滚动策略（Time-Based Rolling Policy）：根据时间间隔（如每天、每小时等）创建新的日志文件。例如，在 Logback 中，可以使用 `ch.qos.logback.core.rolling.TimeBasedRollingPolicy` 来实现这种策略。
-
-3. 混合滚动策略：结合基于大小和基于时间的滚动策略，当满足其中任一条件时，创建新的日志文件。例如，在 Logback 中，可以将 `SizeBasedTriggeringPolicy` 和 `TimeBasedRollingPolicy` 一起使用。
-
-此外，滚动策略还可以包含日志文件的清理策略，如最大日志文件数量、最长日志保留期限等。在达到这些限制时，最早的日志文件将被自动删除。
-
-以 Logback 的 `TimeBasedRollingPolicy` 为例，以下是一个配置示例：
-
-```xml
-<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>logs/app.log</file>
-    <encoder>
-        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-        <!-- 每天滚动日志文件 -->
-        <fileNamePattern>logs/app-%d{yyyy-MM-dd}.log</fileNamePattern>
-        <!-- 保留最近30天的日志 -->
-        <maxHistory>30</maxHistory>
-    </rollingPolicy>
-</appender>
-```
-
-在这个示例中，滚动策略被设置为每天创建一个新的日志文件，同时保留最近 30 天的日志。当超过 30 天时，最早的日志文件将被自动删除。
-
-滚动策略在日志管理中起着重要作用，有助于防止日志文件过大，提高日志文件的可读性和可维护性。要了解更多关于滚动策略的详细信息，请参阅相应日志框架的官方文档。
-
 
 
 ## actuator
@@ -960,343 +772,6 @@ Spring Boot 在启动时会自动检测项目 `src/main/resources` 目录下的�
 
 
 
-
-## jwt认证
-
-JWT是指JSON Web Token（JSON网络令牌），是一种用于在网络应用之间传递信息的开放标准（RFC 7519）。它可以作为一种轻量级的安全性传输方式，用于在发送方和接收方之间传递声明。这些声明可以被验证和信任，因此可以用来实现单点登录、用户认证等功能。
-
-JWT由三部分组成，分别是头部（Header）、载荷（Payload）和签名（Signature）。头部包含关于JWT的元数据，如加密算法和类型。载荷包含声明，即要传输的信息，例如用户的ID、过期时间等。签名则是用于验证消息的完整性和认证信息发送方的值。
-
-JWT具有无状态、可扩展、易于传输等特点，因此广泛应用于Web应用程序、移动应用程序和IoT设备等场景。
-
-下面是生成 JWT 的详细流程：
-
-1. 创建 header（头部）：JWT 的 header 包含两部分：token 类型（typ）和使用的哈希算法（alg）。通常，header 是一个 JSON 对象，例如：
-   ```
-   {
-     "alg": "HS256",
-     "typ": "JWT"
-   }
-   ```
-   其中，alg 指定了用于签名的算法，常见的有 HS256、HS384、HS512、RS256 等。typ 用于声明数据结构类型，这里是 JWT。
-
-2. 创建 payload（负载）：payload 包含实际需要传递的数据。它通常是一个 JSON 对象，可以包含多个键值对。这些键值对被称为 claims（声明）。有三种类型的 claims：registered（注册）、public（公共）和 private（私有）声明。示例：
-   ```
-   {
-     "sub": "1234567890",
-     "name": "John Doe",
-     "iat": 1516239022
-   }
-   ```
-   其中，sub 是主题，name 是用户名称，iat 是 token 发布时间。
-
-3. **对 header 和 payload 进行 Base64Url 编码**：将 header 和 payload 分别进行 Base64Url 编码。Base64Url 是一种对 URL 安全的编码方式。编码后的 header 和 payload 称为 JWT 的第一部分和第二部分。
-
-   > 这个Base64Url 编码只是对数据进行了格式化,并没有加密,所以客户端是可以通过这两个东西拿到数据的
-
-4. 连接编码后的 header 和 payload：将编码后的 header 和 payload 用英文句号（.）连接起来，形成一个字符串，如下所示：
-   ```
-   base64UrlEncodedHeader.base64UrlEncodedPayload
-   ```
-
-5. 生成签名：使用指定的哈希算法（如 HS256）对连接后的字符串进行哈希计算，同时用一个密钥（secret）对哈希值进行签名。这将生成一个签名，确保 JWT 在传输过程中没有被篡改。
-
-   > 这里才是加密过程
-
-6. 连接签名：将签名进行 Base64Url 编码后，再与前面生成的字符串用英文句号（.）连接，得到完整的 JWT：
-   ```
-   base64UrlEncodedHeader.base64UrlEncodedPayload.base64UrlEncodedSignature
-   ```
-   这个 JWT 可以在需要的场景下传递给其他服务进行认证和授权。
-
-在生成 JWT 后，接收方可以对其进行解码和验证。验证的过程包括解码 header 和 payload，然后使用相同的哈希算法和密钥重新生成签名，如果新生成的签名与接收到的 JWT 中的签名相同，则说明该 JWT 是有效且未被篡改的。
-
-> 在认证的过程中,我们只需要进行同样的前五步,得到前面然后和token的前面进行对比,如果相同就认证成功,不同就说明比篡改了
-
-
-
-## 好用的工具类
-
-### jackson
-
-Jackson是一个Java语言的JSON库，用于在Java对象和JSON数据之间进行转换。它可以将Java对象序列化为JSON字符串，也可以将JSON字符串反序列化为Java对象。Jackson可以处理任意复杂度的Java对象，包括对象的继承关系、嵌套关系、集合和映射等。同时，Jackson还支持各种常见的JSON数据格式，包括JSON对象、JSON数组、JSON字符串、JSON数值、JSON布尔值和JSON null值等。
-
-Jackson是一个功能强大、高效稳定的JSON库，在Java开发中被广泛使用。Jackson的主要优点包括：
-
-1. 速度快：Jackson采用了高效的JSON处理算法，可以快速地将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象。
-2. 易于使用：Jackson提供了简单易用的API，开发者可以快速地上手并进行相关操作。
-3. 可扩展性强：Jackson提供了丰富的注解和接口，可以方便地扩展和定制自己的序列化和反序列化处理逻辑。
-4. 配置灵活：Jackson支持各种配置选项，可以控制序列化和反序列化的行为，满足不同应用场景的需求。
-5. 开源免费：Jackson是一款开源的JSON库，可以免费使用，并且有一个活跃的社区在维护和更新它的功能。
-
-#### 导入依赖
-
-```xml
-<dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>2.13.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.13.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>2.13.0</version>
-        </dependency>
-```
-
-> 当然springboot已经帮我们导入好了
-
-#### 常用方法
-
-Jackson提供了很多实用的方法，以下是一些常用的方法：
-
-1. `ObjectMapper.writeValueAsString(Object obj)`
-
-该方法将Java对象序列化为JSON字符串，并返回字符串表示。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-Person person = new Person("张三", 25);
-String json = objectMapper.writeValueAsString(person);
-System.out.println(json); // 输出：{"name":"张三","age":25}
-```
-
-2. `ObjectMapper.writeValue(File file, Object obj)`
-
-该方法将Java对象序列化为JSON字符串，并将结果写入指定的文件。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-Person person = new Person("张三", 25);
-File file = new File("person.json");
-objectMapper.writeValue(file, person);
-```
-
-3. `ObjectMapper.readValue(String json, Class<T> valueType)`
-
-该方法将JSON字符串反序列化为Java对象，并返回Java对象的实例。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-String json = "{\"name\":\"张三\",\"age\":25}";
-Person person = objectMapper.readValue(json, Person.class);
-System.out.println(person.getName()); // 输出：张三
-```
-
-4. `ObjectMapper.readValue(File file, Class<T> valueType)`
-
-该方法将JSON文件反序列化为Java对象，并返回Java对象的实例。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-File file = new File("person.json");
-Person person = objectMapper.readValue(file, Person.class);
-```
-
-5. `JsonNode.get(String fieldName)`
-
-该方法获取JSON节点中指定字段名对应的节点。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-String json = "{\"name\":\"张三\",\"age\":25}";
-JsonNode jsonNode = objectMapper.readTree(json);
-String name = jsonNode.get("name").asText();
-int age = jsonNode.get("age").asInt();
-```
-
-6. `JsonNode.iterator()`
-
-该方法返回JSON节点的所有子节点的迭代器。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-String json = "{\"name\":\"张三\",\"friends\":[{\"name\":\"李四\",\"age\":28},{\"name\":\"王五\",\"age\":30}]}";
-JsonNode jsonNode = objectMapper.readTree(json);
-Iterator<JsonNode> iterator = jsonNode.get("friends").iterator();
-while (iterator.hasNext()) {
-    JsonNode friend = iterator.next();
-    String name = friend.get("name").asText();
-    int age = friend.get("age").asInt();
-}
-```
-
-7. `JsonNode.isArray()`
-
-该方法判断JSON节点是否为数组类型。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-String json = "{\"name\":\"张三\",\"friends\":[{\"name\":\"李四\",\"age\":28},{\"name\":\"王五\",\"age\":30}]}";
-JsonNode jsonNode = objectMapper.readTree(json);
-if (jsonNode.get("friends").isArray()) {
-    // ...
-}
-```
-
-8. `JsonNode.isObject()`
-
-该方法判断JSON节点是否为对象类型。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-String json = "{\"name\":\"张三\",\"friends\":[{\"name\":\"李四\",\"age\":28},{\"name\":\"王五\",\"age\":30}]}";
-JsonNode jsonNode = objectMapper.readTree(json);
-if (jsonNode.isObject()) {
-    // ...
-}
-```
-
-9. `ObjectNode.put(String fieldName, JsonNode value)`
-
-该方法向JSON对象节点中添加一个字段，并设置字段值。例如
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-ObjectNode objectNode = objectMapper.createObjectNode();
-objectNode.put("name", "张三");
-objectNode.put("age", 25);
-JsonNode friendsNode = objectMapper.createArrayNode()
-        .add(objectMapper.createObjectNode().put("name", "李四").put("age", 28))
-        .add(objectMapper.createObjectNode().put("name", "王五").put("age", 30));
-objectNode.set("friends", friendsNode);
-```
-
-10. `ArrayNode.add(JsonNode value)`
-
-该方法向JSON数组节点中添加一个子节点。例如：
-
-```java
-ObjectMapper objectMapper = new ObjectMapper();
-ArrayNode arrayNode = objectMapper.createArrayNode();
-arrayNode.add(objectMapper.createObjectNode().put("name", "李四").put("age", 28));
-arrayNode.add(objectMapper.createObjectNode().put("name", "王五").put("age", 30));
-```
-
-以上是Jackson库中一些常用的方法，可以满足大部分的需求。当然，Jackson还提供了很多其他的方法，开发者可以根据自己的需要进行查阅和使用。
-
-#### 常用注解
-
-Jackson提供了许多注解，用于控制Java对象和JSON数据之间的转换。以下是一些常用的Jackson注解：
-
-1. `@JsonAnyGetter`和`@JsonAnySetter`
-
-**`@JsonAnyGetter`和`@JsonAnySetter`注解可以用于处理一些未知的属性**。`@JsonAnyGetter`注解标注在任意属性的获取方法上，`@JsonAnySetter`注解标注在任意属性的设置方法上。使用这两个注解可以让Jackson在序列化和反序列化时忽略一些不确定的属性。
-
-2. `@JsonProperty`
-
-`@JsonProperty`**注解可以用于指定Java对象字段和JSON属性之间的映射关系**。可以在Java对象字段上使用`@JsonProperty`注解指定JSON属性的名称，例如：
-
-```java
-public class Person {
-    @JsonProperty("fullName")
-    private String name;
-    private int age;
-    // ...
-}
-```
-
-在这个例子中，`@JsonProperty("fullName")`注解将Java对象字段`name`与JSON属性`fullName`建立了映射关系。在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，Jackson都会使用这个映射关系来确定Java对象字段和JSON属性之间的对应关系。
-
-3. `@JsonIgnore`
-
-`@JsonIgnore`注解可以用于标注Java对象字段，**指定在序列化和反序列化时忽略该字段**。例如：
-
-```java
-public class Person {
-    private String name;
-    @JsonIgnore
-    private int age;
-    // ...
-}
-```
-
-在这个例子中，`@JsonIgnore`注解标注在Java对象字段`age`上，表示在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，忽略`age`字段。
-
-4. `@JsonFormat`
-
-`@JsonFormat`**注解可以用于指定Java对象字段的日期格式和时区**。例如：
-
-```java
-public class Person {
-    private String name;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date birthDate;
-    // ...
-}
-```
-
-在这个例子中，`@JsonFormat`注解指定了Java对象字段`birthDate`的日期格式为`yyyy-MM-dd HH:mm:ss`，时区为`GMT+8`。在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，Jackson会根据这个注解来进行日期格式和时区的转换。
-
-5. `@JsonInclude`
-
-`@JsonInclude`**注解可以用于指定在序列化时忽略为空的Java对象字段**。例如：
-
-```java
-public class Person {
-    private String name;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private Integer age;
-    // ...
-}
-```
-
-在这个例子中，`@JsonInclude`注解指定了Java对象字段`age`在序列化时不包括空值。也就是说，如果`age`字段为`null`，在将Java对象序列化为JSON字符串时，Jackson会忽略这个字段。
-
-除了上面介绍的注解
-
-
-
-### Hutool
-
-一个Java基础工具类，对文件、流、加密解密、转码、正则、线程、XML等JDK方法进行封装，组成各种Util工具类，同时提供以下组件：
-
-| 模块               | 介绍                                                         |
-| ------------------ | ------------------------------------------------------------ |
-| hutool-aop         | JDK动态代理封装，提供非IOC下的切面支持                       |
-| hutool-bloomFilter | 布隆过滤，提供一些Hash算法的布隆过滤                         |
-| hutool-cache       | 简单缓存实现                                                 |
-| hutool-core        | 核心，包括Bean操作、日期、各种Util等                         |
-| hutool-cron        | 定时任务模块，提供类Crontab表达式的定时任务                  |
-| hutool-crypto      | 加密解密模块，提供对称、非对称和摘要算法封装                 |
-| hutool-db          | JDBC封装后的数据操作，基于ActiveRecord思想                   |
-| hutool-dfa         | 基于DFA模型的多关键字查找                                    |
-| hutool-extra       | 扩展模块，对第三方封装（模板引擎、邮件、Servlet、二维码、Emoji、FTP、分词等） |
-| hutool-http        | 基于HttpUrlConnection的Http客户端封装                        |
-| hutool-log         | 自动识别日志实现的日志门面                                   |
-| hutool-script      | 脚本执行封装，例如Javascript                                 |
-| hutool-setting     | 功能更强大的Setting配置文件和Properties封装                  |
-| hutool-system      | 系统参数调用封装（JVM信息等）                                |
-| hutool-json        | JSON实现                                                     |
-| hutool-captcha     | 图片验证码实现                                               |
-| hutool-poi         | 针对POI中Excel和Word的封装                                   |
-| hutool-socket      | 基于Java的NIO和AIO的Socket封装                               |
-| hutool-jwt         | JSON Web Token (JWT)封装实现                                 |
-
-可以根据需求对每个模块单独引入，也可以通过引入`hutool-all`方式引入所有模块。
-
-```
-<dependency>
-    <groupId>cn.hutool</groupId>
-    <artifactId>hutool-all</artifactId>
-    <version>5.8.18</version>
-</dependency>
-```
-
-按需引入
-
-```
-<dependency>
-    <groupId>cn.hutool</groupId>
-    <artifactId>hutool-core</artifactId>
-    <version>5.8.18</version>
-</dependency>
-```
 
 
 
@@ -2247,6 +1722,592 @@ Spring Security 是一个用于为 Java 应用程序提供身份验证和授权�
 11. 自定义扩展：Spring Security 提供了许多扩展点，允许开发者根据需求定制安全功能。例如，你可以实现自定义的 `UserDetailsService`、`AuthenticationProvider`、`AccessDecisionVoter` 等，以支持特定的认证和授权策略。此外，Spring Security 支持 OAuth2、OpenID Connect、SAML 等多种身份验证和单点登录（SSO）协议，可以通过添加相应的依赖和配置来集成这些协议。
 
     
+
+## jwt认证
+
+JWT是指JSON Web Token（JSON网络令牌），是一种用于在网络应用之间传递信息的开放标准（RFC 7519）。它可以作为一种轻量级的安全性传输方式，用于在发送方和接收方之间传递声明。这些声明可以被验证和信任，因此可以用来实现单点登录、用户认证等功能。
+
+JWT由三部分组成，分别是头部（Header）、载荷（Payload）和签名（Signature）。头部包含关于JWT的元数据，如加密算法和类型。载荷包含声明，即要传输的信息，例如用户的ID、过期时间等。签名则是用于验证消息的完整性和认证信息发送方的值。
+
+JWT具有无状态、可扩展、易于传输等特点，因此广泛应用于Web应用程序、移动应用程序和IoT设备等场景。
+
+下面是生成 JWT 的详细流程：
+
+1. 创建 header（头部）：JWT 的 header 包含两部分：token 类型（typ）和使用的哈希算法（alg）。通常，header 是一个 JSON 对象，例如：
+
+   ```
+   {
+     "alg": "HS256",
+     "typ": "JWT"
+   }
+   ```
+
+   其中，alg 指定了用于签名的算法，常见的有 HS256、HS384、HS512、RS256 等。typ 用于声明数据结构类型，这里是 JWT。
+
+2. 创建 payload（负载）：payload 包含实际需要传递的数据。它通常是一个 JSON 对象，可以包含多个键值对。这些键值对被称为 claims（声明）。有三种类型的 claims：registered（注册）、public（公共）和 private（私有）声明。示例：
+
+   ```
+   {
+     "sub": "1234567890",
+     "name": "John Doe",
+     "iat": 1516239022
+   }
+   ```
+
+   其中，sub 是主题，name 是用户名称，iat 是 token 发布时间。
+
+3. **对 header 和 payload 进行 Base64Url 编码**：将 header 和 payload 分别进行 Base64Url 编码。Base64Url 是一种对 URL 安全的编码方式。编码后的 header 和 payload 称为 JWT 的第一部分和第二部分。
+
+   > 这个Base64Url 编码只是对数据进行了格式化,并没有加密,所以客户端是可以通过这两个东西拿到数据的
+
+4. 连接编码后的 header 和 payload：将编码后的 header 和 payload 用英文句号（.）连接起来，形成一个字符串，如下所示：
+
+   ```
+   base64UrlEncodedHeader.base64UrlEncodedPayload
+   ```
+
+5. 生成签名：使用指定的哈希算法（如 HS256）对连接后的字符串进行哈希计算，同时用一个密钥（secret）对哈希值进行签名。这将生成一个签名，确保 JWT 在传输过程中没有被篡改。
+
+   > 这里才是加密过程
+
+6. 连接签名：将签名进行 Base64Url 编码后，再与前面生成的字符串用英文句号（.）连接，得到完整的 JWT：
+
+   ```
+   base64UrlEncodedHeader.base64UrlEncodedPayload.base64UrlEncodedSignature
+   ```
+
+   这个 JWT 可以在需要的场景下传递给其他服务进行认证和授权。
+
+在生成 JWT 后，接收方可以对其进行解码和验证。验证的过程包括解码 header 和 payload，然后使用相同的哈希算法和密钥重新生成签名，如果新生成的签名与接收到的 JWT 中的签名相同，则说明该 JWT 是有效且未被篡改的。
+
+> 在认证的过程中,我们只需要进行同样的前五步,得到前面然后和token的前面进行对比,如果相同就认证成功,不同就说明比篡改了
+
+
+
+
+
+
+
+# 日志
+
+## 日志门面和日志实现
+
+![image-20230430143718193](../../img/spring系列assets/image-20230430143718193.png)
+
+
+
+JUL是jdk自带，在java.util.logging包下的Logger类
+
+Log4j是Apache下的一款开源的日志框架
+
+**Logback是由log4j创始人设计的另一个开源日志组件，性能比log4j要好**
+
+Log4j 2是对Log4j的升级版，参考了logback的一些优秀的设计
+
+Log4j2主要有以下特色:
+
+性能提升：Log4j 2包含基于LMAX Disruptor库的下一代**异步记录器**。在多线程方案中，与Log4j 1.x和Logback相比，异步Logger的吞吐量高18倍，延迟降低了几个数量级
+
+自动重载配置：与Logback一样，Log4j 2可以在修改后自动重新加载其配置。与Logback不同，它在进行重新配置时不会丢失日志事件
+
+无垃圾机制：在稳态日志记录期间，Log4j 2 在独立应用程序中是无垃圾的，而在Web应用程序中是低垃圾的。这样可以减少垃圾收集器上的压力，并可以提供更好的响应时间性能
+
+## 使用日志框架
+
+Spring Boot内置了对日志的支持，它为开发者提供了一个统一、易于配置的日志框架。默认情况下，**Spring Boot使用Logback作为其日志实现**。然而，它也提供了对其他日志框架（如Log4j2）的支持，可以通过简单的配置进行切换。
+
+日志级别：
+Spring Boot支持以下日志级别，按照日志输出的详细程度递减排列：
+
+1. ERROR：错误级别，仅记录错误信息。
+2. WARN：警告级别，记录警告和错误信息。
+3. INFO：信息级别，记录信息、警告和错误信息。**这是Spring Boot的默认日志级别**。
+4. DEBUG：调试级别，记录调试、信息、警告和错误信息。比INFO级别的日志更详细。
+5. TRACE：追踪级别，记录所有日志信息，包括追踪、调试、信息、警告和错误信息。这是最详细的日志级别。
+
+### 方式一
+
+为了在你的应用程序中使用日志，你需要导入适当的日志API。对于Spring Boot，默认情况下，**你应该使用SLF4J（Simple Logging Facade for Java）API**。首先，在你的Java类中导入以下包：
+
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+```
+
+然后，创建一个`Logger`实例：
+
+```java
+private static final Logger logger = LoggerFactory.getLogger(YourClassName.class);
+```
+
+现在，你可以使用`logger`实例记录不同级别的日志：
+
+```java
+logger.error("这是一条错误日志");
+logger.warn("这是一条警告日志");
+logger.info("这是一条信息日志");
+logger.debug("这是一条调试日志");
+logger.trace("这是一条追踪日志");
+```
+
+### 方式二
+
+使用lombok注解,自动帮我们生成一个log对象
+
+```java
+@Component
+@Log
+@Slf4j
+public class MyHttpSessionEventListener implements HttpSessionListener {
+
+    @Override
+    public void sessionCreated(HttpSessionEvent se) {
+
+        log.info("session创建: " + se.getSession().getId());
+        System.out.println("session创建: " + se.getSession().getId());
+    }
+
+    @Override
+    public void sessionDestroyed(HttpSessionEvent se) {
+        System.out.println("session销毁: " + se.getSession().getId());
+    }
+}
+
+```
+
+
+
+## 日志配置
+
+Spring Boot允许你通过`application.properties`或`application.yml`文件轻松地配置日志。以下是一些常见的日志配置选项：
+
+- 日志级别配置：通过`logging.level`属性设置包或类的日志级别。例如：
+
+  ```properties
+  logging.level.root=WARN
+  logging.level.com.example.demo=DEBUG
+  ```
+
+- 日志文件配置：通过`logging.file.name`或`logging.file.path`属性设置日志输出文件。例如：
+
+  ```properties
+  logging.file.name=myapp.log
+  logging.file.path=logs
+  ```
+
+- 日志文件的滚动策略、最大文件大小等配置：在Logback或Log4j2的配置文件中设置。例如，在`src/main/resources`目录下创建一个名为`logback-spring.xml`的文件，然后自定义相关配置。
+
+### 配置文件
+
+Spring Boot 在启动时会自动检测项目 `src/main/resources` 目录下的一些特定命名的配置文件，并根据这些文件的名称来确定它们的用途。对于日志配置，Spring Boot 会检查以下文件名：
+
+- Logback：`logback-spring.xml`、`logback.xml`
+- Log4j2：`log4j2-spring.xml`、`log4j2.xml`
+
+当 Spring Boot 找到这些文件中的一个时，它会自动将其用作日志系统的配置。在这些文件中，你可以使用相应日志框架的语法和配置元素来定制日志系统的行为。
+
+请注意，对于 Logback，推荐使用 `logback-spring.xml` 而不是 `logback.xml`。使用 `logback-spring.xml` 文件名，你可以利用 Spring Boot 提供的一些额外特性，例如使用 Spring Profile 进行条件化配置。而使用 `logback.xml`，这些特性将不可用。
+
+总之，Spring Boot 通过检测特定的文件名来识别日志配置文件，并在启动过程中自动应用这些配置。
+
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+
+    <!-- 设置日志级别 -->
+    <logger name="com.example.demo" level="DEBUG" />
+
+    <!-- 控制台日志输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 文件日志输出 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 设置滚动策略 -->
+            <fileNamePattern>logs/app-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 将输出引用到控制台和文件日志 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
+
+```
+
+滚动策略是用于管理日志文件的生成和清理的一种策略。当日志文件的大小或时间达到一定阈值时，滚动策略会自动将当前日志文件“滚动”为一个新的日志文件。这样可以避免日志文件无限增长，同时使得日志易于查找和管理。
+
+以下是一些常见的滚动策略：
+
+1. 基于大小的滚动策略（Size-Based Rolling Policy）：当日志文件大小达到指定值时，创建一个新的日志文件。例如，在 Logback 中，可以使用 `ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy` 来实现这种策略。
+
+2. 基于时间的滚动策略（Time-Based Rolling Policy）：根据时间间隔（如每天、每小时等）创建新的日志文件。例如，在 Logback 中，可以使用 `ch.qos.logback.core.rolling.TimeBasedRollingPolicy` 来实现这种策略。
+
+3. 混合滚动策略：结合基于大小和基于时间的滚动策略，当满足其中任一条件时，创建新的日志文件。例如，在 Logback 中，可以将 `SizeBasedTriggeringPolicy` 和 `TimeBasedRollingPolicy` 一起使用。
+
+此外，滚动策略还可以包含日志文件的清理策略，如最大日志文件数量、最长日志保留期限等。在达到这些限制时，最早的日志文件将被自动删除。
+
+以 Logback 的 `TimeBasedRollingPolicy` 为例，以下是一个配置示例：
+
+```xml
+<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/app.log</file>
+    <encoder>
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <!-- 每天滚动日志文件 -->
+        <fileNamePattern>logs/app-%d{yyyy-MM-dd}.log</fileNamePattern>
+        <!-- 保留最近30天的日志 -->
+        <maxHistory>30</maxHistory>
+    </rollingPolicy>
+</appender>
+```
+
+在这个示例中，滚动策略被设置为每天创建一个新的日志文件，同时保留最近 30 天的日志。当超过 30 天时，最早的日志文件将被自动删除。
+
+滚动策略在日志管理中起着重要作用，有助于防止日志文件过大，提高日志文件的可读性和可维护性。要了解更多关于滚动策略的详细信息，请参阅相应日志框架的官方文档。
+
+
+
+# 好用的工具类
+
+## jackson
+
+Jackson是一个Java语言的JSON库，用于在Java对象和JSON数据之间进行转换。它可以将Java对象序列化为JSON字符串，也可以将JSON字符串反序列化为Java对象。Jackson可以处理任意复杂度的Java对象，包括对象的继承关系、嵌套关系、集合和映射等。同时，Jackson还支持各种常见的JSON数据格式，包括JSON对象、JSON数组、JSON字符串、JSON数值、JSON布尔值和JSON null值等。
+
+Jackson是一个功能强大、高效稳定的JSON库，在Java开发中被广泛使用。Jackson的主要优点包括：
+
+1. 速度快：Jackson采用了高效的JSON处理算法，可以快速地将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象。
+2. 易于使用：Jackson提供了简单易用的API，开发者可以快速地上手并进行相关操作。
+3. 可扩展性强：Jackson提供了丰富的注解和接口，可以方便地扩展和定制自己的序列化和反序列化处理逻辑。
+4. 配置灵活：Jackson支持各种配置选项，可以控制序列化和反序列化的行为，满足不同应用场景的需求。
+5. 开源免费：Jackson是一款开源的JSON库，可以免费使用，并且有一个活跃的社区在维护和更新它的功能。
+
+### 导入依赖
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-core</artifactId>
+    <version>2.13.0</version>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.13.0</version>
+</dependency>
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-annotations</artifactId>
+    <version>2.13.0</version>
+</dependency>
+```
+
+> 如果导入了springboot web模块的话,这个包已经帮我们导入好了
+
+### 常用方法
+
+Jackson提供了很多实用的方法，以下是一些常用的方法：
+
+1. `ObjectMapper.writeValueAsString(Object obj)`
+
+该方法将Java对象序列化为JSON字符串，并返回字符串表示。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+Person person = new Person("张三", 25);
+String json = objectMapper.writeValueAsString(person);
+System.out.println(json); // 输出：{"name":"张三","age":25}
+```
+
+2. `ObjectMapper.writeValue(File file, Object obj)`
+
+该方法将Java对象序列化为JSON字符串，并将结果写入指定的文件。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+Person person = new Person("张三", 25);
+File file = new File("person.json");
+objectMapper.writeValue(file, person);
+```
+
+3. `ObjectMapper.readValue(String json, Class<T> valueType)`
+
+该方法将JSON字符串反序列化为Java对象，并返回Java对象的实例。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+String json = "{\"name\":\"张三\",\"age\":25}";
+Person person = objectMapper.readValue(json, Person.class);
+System.out.println(person.getName()); // 输出：张三
+```
+
+4. `ObjectMapper.readValue(File file, Class<T> valueType)`
+
+该方法将JSON文件反序列化为Java对象，并返回Java对象的实例。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+File file = new File("person.json");
+Person person = objectMapper.readValue(file, Person.class);
+```
+
+5. `JsonNode.get(String fieldName)`
+
+该方法获取JSON节点中指定字段名对应的节点。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+String json = "{\"name\":\"张三\",\"age\":25}";
+JsonNode jsonNode = objectMapper.readTree(json);
+String name = jsonNode.get("name").asText();
+int age = jsonNode.get("age").asInt();
+```
+
+6. `JsonNode.iterator()`
+
+该方法返回JSON节点的所有子节点的迭代器。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+String json = "{\"name\":\"张三\",\"friends\":[{\"name\":\"李四\",\"age\":28},{\"name\":\"王五\",\"age\":30}]}";
+JsonNode jsonNode = objectMapper.readTree(json);
+Iterator<JsonNode> iterator = jsonNode.get("friends").iterator();
+while (iterator.hasNext()) {
+    JsonNode friend = iterator.next();
+    String name = friend.get("name").asText();
+    int age = friend.get("age").asInt();
+}
+```
+
+7. `JsonNode.isArray()`
+
+该方法判断JSON节点是否为数组类型。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+String json = "{\"name\":\"张三\",\"friends\":[{\"name\":\"李四\",\"age\":28},{\"name\":\"王五\",\"age\":30}]}";
+JsonNode jsonNode = objectMapper.readTree(json);
+if (jsonNode.get("friends").isArray()) {
+    // ...
+}
+```
+
+8. `JsonNode.isObject()`
+
+该方法判断JSON节点是否为对象类型。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+String json = "{\"name\":\"张三\",\"friends\":[{\"name\":\"李四\",\"age\":28},{\"name\":\"王五\",\"age\":30}]}";
+JsonNode jsonNode = objectMapper.readTree(json);
+if (jsonNode.isObject()) {
+    // ...
+}
+```
+
+9. `ObjectNode.put(String fieldName, JsonNode value)`
+
+该方法向JSON对象节点中添加一个字段，并设置字段值。例如
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+ObjectNode objectNode = objectMapper.createObjectNode();
+objectNode.put("name", "张三");
+objectNode.put("age", 25);
+JsonNode friendsNode = objectMapper.createArrayNode()
+        .add(objectMapper.createObjectNode().put("name", "李四").put("age", 28))
+        .add(objectMapper.createObjectNode().put("name", "王五").put("age", 30));
+objectNode.set("friends", friendsNode);
+```
+
+10. `ArrayNode.add(JsonNode value)`
+
+该方法向JSON数组节点中添加一个子节点。例如：
+
+```java
+ObjectMapper objectMapper = new ObjectMapper();
+ArrayNode arrayNode = objectMapper.createArrayNode();
+arrayNode.add(objectMapper.createObjectNode().put("name", "李四").put("age", 28));
+arrayNode.add(objectMapper.createObjectNode().put("name", "王五").put("age", 30));
+```
+
+以上是Jackson库中一些常用的方法，可以满足大部分的需求。当然，Jackson还提供了很多其他的方法，开发者可以根据自己的需要进行查阅和使用。
+
+### 常用注解
+
+Jackson提供了许多注解，用于控制Java对象和JSON数据之间的转换。以下是一些常用的Jackson注解：
+
+1. `@JsonAnyGetter`和`@JsonAnySetter`
+
+**`@JsonAnyGetter`和`@JsonAnySetter`注解可以用于处理一些未知的属性**。`@JsonAnyGetter`注解标注在任意属性的获取方法上，`@JsonAnySetter`注解标注在任意属性的设置方法上。使用这两个注解可以让Jackson在序列化和反序列化时忽略一些不确定的属性。举个例子:
+
+```java
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Person {
+    private String name;
+    private int age;
+    private Map<String, Object> properties = new HashMap<>();
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    @JsonAnyGetter
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    @JsonAnySetter
+    public void setProperty(String key, Object value) {
+        properties.put(key, value);
+    }
+}
+
+```
+
+在这个 `Person` 类中，我们有 `name` 和 `age` 两个属性，以及一个名为 `properties` 的 `Map`。我们使用 `@JsonAnyGetter` 注解 `getProperties()` 方法，使得在序列化时，`properties` 中的键值对会被平铺到最外层 JSON 对象。我们使用 `@JsonAnySetter` 注解 `setProperty()` 方法，使得在反序列化时，**JSON 对象中未知的属性**可以被添加到 `properties` 中。
+
+2. `@JsonProperty`
+
+`@JsonProperty`**注解可以用于指定Java对象字段和JSON属性之间的映射关系**。可以在Java对象字段上使用`@JsonProperty`注解指定JSON属性的名称，例如：
+
+```java
+public class Person {
+    @JsonProperty("fullName")
+    private String name;
+    private int age;
+    // ...
+}
+```
+
+在这个例子中，`@JsonProperty("fullName")`注解将Java对象字段`name`与JSON属性`fullName`建立了映射关系。在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，Jackson都会使用这个映射关系来确定Java对象字段和JSON属性之间的对应关系。
+
+3. `@JsonIgnore`
+
+`@JsonIgnore`注解可以用于标注Java对象字段，**指定在序列化和反序列化时忽略该字段**。例如：
+
+```java
+public class Person {
+    private String name;
+    @JsonIgnore
+    private int age;
+    // ...
+}
+```
+
+在这个例子中，`@JsonIgnore`注解标注在Java对象字段`age`上，表示在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，忽略`age`字段。
+
+4. `@JsonFormat`
+
+`@JsonFormat`**注解可以用于指定Java对象字段的日期格式和时区**。例如：
+
+```java
+public class Person {
+    private String name;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date birthDate;
+    // ...
+}
+```
+
+在这个例子中，`@JsonFormat`注解指定了Java对象字段`birthDate`的日期格式为`yyyy-MM-dd HH:mm:ss`，时区为`GMT+8`。在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，Jackson会根据这个注解来进行日期格式和时区的转换。
+
+5. `@JsonInclude`
+
+`@JsonInclude`**注解可以用于指定在序列化时忽略为空的Java对象字段**。例如：
+
+```java
+public class Person {
+    private String name;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer age;
+    // ...
+}
+```
+
+在这个例子中，`@JsonInclude`注解指定了Java对象字段`age`在序列化时不包括空值。也就是说，如果`age`字段为`null`，在将Java对象序列化为JSON字符串时，Jackson会忽略这个字段。
+
+
+
+## Hutool
+
+一个Java基础工具类，对文件、流、加密解密、转码、正则、线程、XML等JDK方法进行封装，组成各种Util工具类，同时提供以下组件：
+
+| 模块               | 介绍                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| hutool-aop         | JDK动态代理封装，提供非IOC下的切面支持                       |
+| hutool-bloomFilter | 布隆过滤，提供一些Hash算法的布隆过滤                         |
+| hutool-cache       | 简单缓存实现                                                 |
+| hutool-core        | 核心，包括Bean操作、日期、各种Util等                         |
+| hutool-cron        | 定时任务模块，提供类Crontab表达式的定时任务                  |
+| hutool-crypto      | 加密解密模块，提供对称、非对称和摘要算法封装                 |
+| hutool-db          | JDBC封装后的数据操作，基于ActiveRecord思想                   |
+| hutool-dfa         | 基于DFA模型的多关键字查找                                    |
+| hutool-extra       | 扩展模块，对第三方封装（模板引擎、邮件、Servlet、二维码、Emoji、FTP、分词等） |
+| hutool-http        | 基于HttpUrlConnection的Http客户端封装                        |
+| hutool-log         | 自动识别日志实现的日志门面                                   |
+| hutool-script      | 脚本执行封装，例如Javascript                                 |
+| hutool-setting     | 功能更强大的Setting配置文件和Properties封装                  |
+| hutool-system      | 系统参数调用封装（JVM信息等）                                |
+| hutool-json        | JSON实现                                                     |
+| hutool-captcha     | 图片验证码实现                                               |
+| hutool-poi         | 针对POI中Excel和Word的封装                                   |
+| hutool-socket      | 基于Java的NIO和AIO的Socket封装                               |
+| hutool-jwt         | JSON Web Token (JWT)封装实现                                 |
+
+可以根据需求对每个模块单独引入，也可以通过引入`hutool-all`方式引入所有模块。
+
+```
+<dependency>
+    <groupId>cn.hutool</groupId>
+    <artifactId>hutool-all</artifactId>
+    <version>5.8.18</version>
+</dependency>
+```
+
+按需引入
+
+```
+<dependency>
+    <groupId>cn.hutool</groupId>
+    <artifactId>hutool-core</artifactId>
+    <version>5.8.18</version>
+</dependency>
+```
+
+
 
 # 补充
 
