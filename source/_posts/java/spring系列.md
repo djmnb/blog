@@ -330,7 +330,7 @@ Spring中有一些后置处理器，它们可以在Bean的生命周期中的不�
 作用时机：在Bean实例化之前调用postProcessBeforeInstantiation()方法，实例化之后调用postProcessAfterInstantiation()方法，然后在设置属性前调用postProcessProperties()方法。
 
 4. BeanPostProcessor：
-用途：它允许在Bean初始化之后执行一些自定义逻辑，例如修改Bean的属性或执行其他配置。对所有的Bean都生效。
+用途：它允许在Bean初始化的时候执行一些自定义逻辑，例如修改Bean的属性或执行其他配置。对所有的Bean都生效。
 作用时机：**在Bean的初始化方法（如afterPropertiesSet()或自定义的init-method）之前和之后**，分别调用postProcessBeforeInitialization()和postProcessAfterInitialization()方法。
 
 5. DestructionAwareBeanPostProcessor：
