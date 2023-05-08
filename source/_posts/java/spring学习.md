@@ -20,6 +20,231 @@ categories:
 
 从 Spring Boot 2.4.0 和 Spring Framework 5.3.0 开始，`ApplicationStartup` 接口被引入。它允许开发者为 Spring 应用提供自定义的启动跟踪策略
 
+我们可以自定义这个东西,然后检测整个过程干了什么
+
+```java
+
+public class MyBeanFactory extends AnnotationConfigApplicationContext {
+    public MyBeanFactory(Class<?>... componentClasses){
+        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) this.getBeanFactory();
+        beanFactory.setApplicationStartup(MyApplicationStartup.DEFAULT);
+        this.register(componentClasses);
+        this.refresh();
+
+        // super(componentClasses);
+    }
+
+
+
+    static class MyApplicationStartup implements ApplicationStartup{
+
+        static class MyStartupStep implements StartupStep{
+
+            static MyStartupStep DEFAULE = new MyStartupStep();
+
+            @Override
+            public String getName() {
+                return null;
+            }
+
+            @Override
+            public long getId() {
+                return 0;
+            }
+
+            @Override
+            public Long getParentId() {
+                return null;
+            }
+
+            @Override
+            public StartupStep tag(String key, String value) {
+                System.out.println(key+":"+value);
+                return this;
+            }
+
+            @Override
+            public StartupStep tag(String key, Supplier<String> value) {
+                System.out.println(key+":"+value.get());
+                return this;
+            }
+
+            @Override
+            public Tags getTags() {
+                return null;
+            }
+
+            @Override
+            public void end() {
+                System.out.println("结束");
+            }
+        }
+        static MyApplicationStartup DEFAULT = new MyApplicationStartup();
+        @Override
+        public StartupStep start(String name) {
+            System.out.println("开始\n"+name);
+            return MyStartupStep.DEFAULE;
+        }
+    }
+    @Override
+    public ApplicationStartup getApplicationStartup() {
+        return MyApplicationStartup.DEFAULT;
+    }
+
+}
+```
+
+
+
+我们启动一下看一下这个过程吧
+
+```java
+开始
+spring.context.annotated-bean-reader.create  // reader属性被创建
+结束
+开始
+spring.context.component-classes.register  // 开始配置类定义的注册
+classes:[class com.djm.Main]               // Main定义被注册
+结束
+开始
+spring.beans.instantiate  // 实例化spring 提供的一个bean
+beanName:org.springframework.context.annotation.internalConfigurationAnnotationProcessor 
+beanType:interface org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor // 这是一个bean定义后置处理器
+结束
+开始
+spring.context.beandef-registry.post-process  // 上面这个bean定义后置处理器开始干活
+postProcessor:org.springframework.context.annotation.ConfigurationClassPostProcessor@6950e31
+开始
+spring.context.config-classes.parse  //  开始通过一开始的配置类拿到其他配置类, 然后通过其他配置类拿到bean定义信息
+classCount:11  // 这个过程总共拿到的bean定义信息
+结束
+结束
+开始
+spring.beans.instantiate   // 开始实例化所有后置处理器
+beanName:customBeanDefinitionRegistryPostProcessor
+beanType:interface org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
+结束
+开始
+spring.beans.instantiate  
+beanName:myBeanDefinitionRegistryPostProcessor
+beanType:interface org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
+结束
+开始
+spring.context.beandef-registry.post-process  // 由于我们刚刚实例化了一个后置处理器,所以这个后置处理器初始化会调用这个上一个后置处理器的方法
+postProcessor:com.djm.processor.CustomBeanDefinitionRegistryPostProcessor@7ff95560
+结束
+开始
+spring.context.beandef-registry.post-process
+postProcessor:com.djm.processor.MyBeanDefinitionRegistryPostProcessor@add0edd
+我的bean定义注册后置处理器被执行 // 自己也是一个后置处理器, 也会执行
+结束
+开始
+spring.context.bean-factory.post-process
+postProcessor:org.springframework.context.annotation.ConfigurationClassPostProcessor@6950e31
+开始
+spring.context.config-classes.enhance
+classCount:1
+结束
+结束
+开始
+spring.context.bean-factory.post-process //刚刚是bean定义后置处理器,现在是beanfactory后置处理器
+postProcessor:com.djm.processor.CustomBeanDefinitionRegistryPostProcessor@7ff95560
+结束
+开始
+spring.context.bean-factory.post-process
+postProcessor:com.djm.processor.MyBeanDefinitionRegistryPostProcessor@add0edd
+结束
+开始
+spring.beans.instantiate
+beanName:org.springframework.context.event.internalEventListenerProcessor
+beanType:interface org.springframework.beans.factory.config.BeanFactoryPostProcessor
+结束
+开始
+spring.beans.instantiate
+beanName:myBeanFactoryPostProcessor
+beanType:interface org.springframework.beans.factory.config.BeanFactoryPostProcessor
+结束
+开始
+spring.context.bean-factory.post-process
+postProcessor:org.springframework.context.event.EventListenerMethodProcessor@55b699ef
+开始
+spring.beans.instantiate
+beanName:org.springframework.context.event.internalEventListenerFactory
+结束
+结束
+开始
+spring.context.bean-factory.post-process
+postProcessor:com.djm.processor.MyBeanFactoryPostProcessor@18078bef
+我的beanFactoryPostProcessor被执行
+结束
+开始
+spring.beans.instantiate
+beanName:org.springframework.context.annotation.internalAutowiredAnnotationProcessor
+beanType:interface org.springframework.beans.factory.config.BeanPostProcessor
+结束
+开始
+spring.beans.instantiate
+beanName:myBeanPostProcessor
+beanType:interface org.springframework.beans.factory.config.BeanPostProcessor
+结束
+开始
+spring.beans.instantiate
+beanName:main
+开始
+spring.beans.instantiate
+beanName:myListener
+我的bean后置处理器被执行
+结束
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.instantiate
+beanName:myConponent
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.instantiate
+beanName:&myfactory
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.instantiate
+beanName:myListener1
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.instantiate
+beanName:com.djm.configuration.MyConfiguration
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.instantiate
+beanName:setObject1
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.instantiate
+beanName:setobject
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.instantiate
+beanName:com.djm.configuration.MyConfiguration1
+我的bean后置处理器被执行
+结束
+开始
+spring.beans.smart-initialize
+beanName:org.springframework.context.event.internalEventListenerProcessor
+结束
+hello world
+MyListener1 run
+hello world
+MyListener1 run
+
+进程已结束,退出代码0
+
+```
+
 
 
 # AnnotationConfigApplicationContext 类
@@ -60,6 +285,26 @@ void scan(String... basePackages);
 
 ## 0. AnnotationConfigApplicationContext(Class<?>... componentClasses)重点执行函数
 
+1. this()  初始化beanfactory, 加入一些后置处理器的bean定义信息
+
+2. this.register(componentClasses)   把给定的配置类定义信息加载到beanfactory中
+   3. this.reader.register(componentClasses); 
+
+4. this.refresh(); 更新容器,扫描bean定义信息,注册bean单例对象
+
+   5. this.prepareBeanFactory(beanFactory)  设置启动时间,状态,初始化一些存放事件和监听器的集合
+   6. this.invokeBeanFactoryPostProcessors(beanFactory)  **首先根据优先级执行所有的BeanDefinitionRegistryPostProcessor,然后再根据优先级执行所有的BeanFactoryPostProcessor, 至此所有的bean定义信息都会在factory中, 而且所有的BeanFactoryPostProcessor已经被注册了,生成了对应的单实例bean了**
+      7. PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, this.getBeanFactoryPostProcessors());   这个方法执行完毕后,所有定义好的bean定义信息都会被加载到beanfactory中
+         8. invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry, beanFactory.getApplicationStartup());  执行spring提供的configurationpostprocessor 后置处理器
+            9. postProcessor.postProcessBeanDefinitionRegistry(registry); 做一些验证
+               10. this.processConfigBeanDefinitions(registry); 处理现在beanfactory中已经有了的配置类,找到他们会往容器中注入的bean定义信息
+                   11. ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory) 这份方法会往配置类的定义信息上加一些东西,比如是否排序, 是完整配置类还是简单配置类
+                   12. parser.parse(candidates); 找到所有的配置类的定义信息
+                   13. this.reader.loadBeanDefinitions(configClasses); 加载所有配置类里面所有涉及到的bean定义信息
+
+   14. this.registerBeanPostProcessors(beanFactory); 注册所有的BeanPostProcessor到beanfactory中存起来,方便后面使用
+   15. this.finishBeanFactoryInitialization(beanFactory); 实例化所有的单实例bean,后置处理器相应的做事情
+
 ```
 // 初始化
 1. this() 
@@ -70,17 +315,17 @@ void scan(String... basePackages);
   
 // 更新容器
 4.this.refresh();
-  //
+  // 放入一些
   5. this.prepareBeanFactory(beanFactory)  
   //
   6. this.invokeBeanFactoryPostProcessors(beanFactory)  
     7. PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors
    	  
-      8. invokeBeanDefinitionRegistryPostProcessors  
+      8. invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry, beanFactory.getApplicationStartup()); 
         9. postProcessor.postProcessBeanDefinitionRegistry(registry);
-          10. this.processConfigBeanDefinitions(registry);
+          10. this.processConfigBeanDefinitions(registry); 
             11. ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)
-      12.      
+            12. parser.parse(candidates);
 
 ```
 
@@ -344,7 +589,7 @@ protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory b
     }
 ```
 
-## 7. PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors
+## 7. PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, this.getBeanFactoryPostProcessors());
 
 ```java
 public static void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) { 
@@ -382,7 +627,7 @@ public static void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFacto
             for(var10 = 0; var10 < var9; ++var10) {  // 循环得到这些单实例后置处理器bean
                 ppName = var16[var10];
                 if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) { // 必须是实现了这个接口
-                    currentRegistryProcessors.add((BeanDefinitionRegistryPostProcessor)beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
+                    currentRegistryProcessors.add((BeanDefinitionRegistryPostProcessor)beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class)); // 注意这里会将这个后置处理器实例化了
                     processedBeans.add(ppName);
                 }
             }
@@ -702,9 +947,13 @@ static boolean checkConfigurationClassCandidate(BeanDefinition beanDef, Metadata
     }
 ```
 
+## 12.parser.parse(candidates);
 
+这里就不看源码了,知道他把所有的配置类全部找出来了就行
 
+## 13 this.reader.loadBeanDefinitions(configClasses);
 
+加载配置类中定义的所有bean
 
 # 小技巧
 
@@ -787,4 +1036,176 @@ public @interface ComponentC {
 ```
 
 比如这个样, 我们使用ComponentC注解也能将这个组件注入进去
+
+
+
+## doGetBean
+
+```java
+ protected <T> T doGetBean(String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly) throws BeansException {
+        String beanName = this.transformedBeanName(name);
+        Object sharedInstance = this.getSingleton(beanName);
+        Object beanInstance;
+        if (sharedInstance != null && args == null) {  // 如果已经存在了而且参数为空
+            if (this.logger.isTraceEnabled()) {
+                if (this.isSingletonCurrentlyInCreation(beanName)) {
+                    this.logger.trace("Returning eagerly cached instance of singleton bean '" + beanName + "' that is not fully initialized yet - a consequence of a circular reference");
+                } else {
+                    this.logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
+                }
+            }
+			// 这里是shareedInstance可能会做一些别的操作,比如如果是个工厂类,可能执行他的方法得到bean
+            beanInstance = this.getObjectForBeanInstance(sharedInstance, name, beanName, (RootBeanDefinition)null);
+        } else {
+            if (this.isPrototypeCurrentlyInCreation(beanName)) {
+                throw new BeanCurrentlyInCreationException(beanName);
+            }
+
+            BeanFactory parentBeanFactory = this.getParentBeanFactory();
+            if (parentBeanFactory != null && !this.containsBeanDefinition(beanName)) {
+                String nameToLookup = this.originalBeanName(name);
+                if (parentBeanFactory instanceof AbstractBeanFactory) {
+                    AbstractBeanFactory abf = (AbstractBeanFactory)parentBeanFactory;
+                    return abf.doGetBean(nameToLookup, requiredType, args, typeCheckOnly);
+                }
+
+                if (args != null) {
+                    return parentBeanFactory.getBean(nameToLookup, args);
+                }
+
+                if (requiredType != null) {
+                    return parentBeanFactory.getBean(nameToLookup, requiredType);
+                }
+
+                return parentBeanFactory.getBean(nameToLookup);
+            }
+
+            if (!typeCheckOnly) {
+                this.markBeanAsCreated(beanName);
+            }
+
+            StartupStep beanCreation = this.applicationStartup.start("spring.beans.instantiate").tag("beanName", name);
+
+            try {
+                if (requiredType != null) {
+                    Objects.requireNonNull(requiredType);
+                    beanCreation.tag("beanType", requiredType::toString);
+                }
+
+                RootBeanDefinition mbd = this.getMergedLocalBeanDefinition(beanName);
+                this.checkMergedBeanDefinition(mbd, beanName, args);
+                String[] dependsOn = mbd.getDependsOn();
+                String[] var12;
+                if (dependsOn != null) {
+                    var12 = dependsOn;
+                    int var13 = dependsOn.length;
+
+                    for(int var14 = 0; var14 < var13; ++var14) {
+                        String dep = var12[var14];
+                        if (this.isDependent(beanName, dep)) {
+                            throw new BeanCreationException(mbd.getResourceDescription(), beanName, "Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
+                        }
+
+                        this.registerDependentBean(dep, beanName);
+
+                        try {
+                            this.getBean(dep);
+                        } catch (NoSuchBeanDefinitionException var31) {
+                            throw new BeanCreationException(mbd.getResourceDescription(), beanName, "'" + beanName + "' depends on missing bean '" + dep + "'", var31);
+                        }
+                    }
+                }
+
+                if (mbd.isSingleton()) {
+                    sharedInstance = this.getSingleton(beanName, () -> {
+                        try {
+                            return this.createBean(beanName, mbd, args);
+                        } catch (BeansException var5) {
+                            this.destroySingleton(beanName);
+                            throw var5;
+                        }
+                    });
+                    beanInstance = this.getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
+                } else if (mbd.isPrototype()) {
+                    var12 = null;
+
+                    Object prototypeInstance;
+                    try {
+                        this.beforePrototypeCreation(beanName);
+                        prototypeInstance = this.createBean(beanName, mbd, args);
+                    } finally {
+                        this.afterPrototypeCreation(beanName);
+                    }
+
+                    beanInstance = this.getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
+                } else {
+                    String scopeName = mbd.getScope();
+                    if (!StringUtils.hasLength(scopeName)) {
+                        throw new IllegalStateException("No scope name defined for bean '" + beanName + "'");
+                    }
+
+                    Scope scope = (Scope)this.scopes.get(scopeName);
+                    if (scope == null) {
+                        throw new IllegalStateException("No Scope registered for scope name '" + scopeName + "'");
+                    }
+
+                    try {
+                        Object scopedInstance = scope.get(beanName, () -> {
+                            this.beforePrototypeCreation(beanName);
+
+                            Object var4;
+                            try {
+                                var4 = this.createBean(beanName, mbd, args);
+                            } finally {
+                                this.afterPrototypeCreation(beanName);
+                            }
+
+                            return var4;
+                        });
+                        beanInstance = this.getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
+                    } catch (IllegalStateException var30) {
+                        throw new ScopeNotActiveException(beanName, scopeName, var30);
+                    }
+                }
+            } catch (BeansException var32) {
+                beanCreation.tag("exception", var32.getClass().toString());
+                beanCreation.tag("message", String.valueOf(var32.getMessage()));
+                this.cleanupAfterBeanCreationFailure(beanName);
+                throw var32;
+            } finally {
+                beanCreation.end();
+            }
+        }
+		// adaptBeanInstance方法会检查传入的beanInstance是否与requiredType兼容。如果不兼容，它会尝试进行类型转换，例如通过调用AOPProxyUtils.ultimateTargetClass方法来获取代理对象的最终目标类，然后将其与requiredType进行比较。如果最终仍然不兼容，adaptBeanInstance方法将抛出一个BeanNotOfRequiredTypeException异常。
+        return this.adaptBeanInstance(name, beanInstance, requiredType);
+    }
+```
+
+
+
+
+
+```java
+  @Nullable
+    protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
+        Object bean = null;
+        if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
+            if (!mbd.isSynthetic() && this.hasInstantiationAwareBeanPostProcessors()) {
+                Class<?> targetType = this.determineTargetType(beanName, mbd);
+                if (targetType != null) {
+                    //在bean实例化前做一些事情,有可能需要代理啊啥的
+                    bean = this.applyBeanPostProcessorsBeforeInstantiation(targetType, beanName); 
+                    if (bean != null) {
+                        // 如果被代理了直接执行实例化后的方法
+                        bean = this.applyBeanPostProcessorsAfterInitialization(bean, beanName);
+                    }
+                }
+            }
+
+            mbd.beforeInstantiationResolved = bean != null;
+        }
+
+        return bean;
+    }
+```
 

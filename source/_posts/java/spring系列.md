@@ -318,24 +318,64 @@ public void logBefore(JoinPoint joinPoint, MyAnnotation myAnnotation) {
 Spring中有一些后置处理器，它们可以在Bean的生命周期中的不同阶段进行拦截，从而扩展或自定义Bean的行为。按照B**ean在Spring容器中被加载的顺序**，下面是一些常见的后置处理器及其用途和作用时机：
 
 1. BeanDefinitionRegistryPostProcessor：
-用途：它允许在**Bean定义被加载到容器之前，修改或添加Bean定义**。可以用于动态注册Bean或修改Bean的元数据。
-作用时机：在所有Bean定义被加载到容器之前，调用postProcessBeanDefinitionRegistry()方法。
+  用途：它允许在**Bean定义被加载到容器之前，修改或添加Bean定义**。可以用于动态注册Bean或修改Bean的元数据。
+  作用时机：在所有Bean定义被加载到容器之前，调用postProcessBeanDefinitionRegistry()方法。举个例子
+
+  ```java
+  @Configuration
+  public class AppConfig implements BeanDefinitionRegistryPostProcessor {
+  
+      @Override
+      public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+          // 创建一个新的 GenericBeanDefinition 实例
+          GenericBeanDefinition beanDefinition = new GenericBeanDefinition();
+  
+          // 设置 bean 定义的属性
+          beanDefinition.setBeanClassName("com.example.MyService");
+          beanDefinition.setScope(BeanDefinition.SCOPE_SINGLETON);
+  
+          // 将 bean 定义注册到 BeanDefinitionRegistry
+          String beanName = "myService";
+          registry.registerBeanDefinition(beanName, beanDefinition);
+      }
+  
+      @Override
+      public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+          // 不需要在这里做任何操作
+      }
+  }
+  
+  ```
+
+  
 
 2. BeanFactoryPostProcessor：
-用途：**它允许在Bean定义被加载且尚未实例化Bean之前修改Bean的定义**。主要用于修改Bean的配置元数据。
-作用时机：在所有Bean定义都已加载到容器且还未实例化Bean时，调用postProcessBeanFactory()方法。
+  用途：**它允许在Bean定义被加载且尚未实例化Bean之前修改Bean的定义**。主要用于修改Bean的配置元数据。
+  作用时机：在所有Bean定义都已加载到容器且还未实例化Bean时，调用postProcessBeanFactory()方法。
+
+  ```java
+  @Component
+  public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+      @Override
+      public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+          System.out.println("我的beanFactoryPostProcessor被执行");
+      }
+  }
+  ```
+
+  
 
 3. InstantiationAwareBeanPostProcessor：
-用途：**它允许在Bean实例化之前和之后进行自定义处理**，例如替换Bean的实例、改变属性值等。
-作用时机：在Bean实例化之前调用postProcessBeforeInstantiation()方法，实例化之后调用postProcessAfterInstantiation()方法，然后在设置属性前调用postProcessProperties()方法。
+  用途：**它允许在Bean实例化之前和之后进行自定义处理**，例如替换Bean的实例、改变属性值等。
+  作用时机：在Bean实例化之前调用postProcessBeforeInstantiation()方法，实例化之后调用postProcessAfterInstantiation()方法，然后在设置属性前调用postProcessProperties()方法。
 
 4. BeanPostProcessor：
-用途：它允许在Bean初始化的时候执行一些自定义逻辑，例如修改Bean的属性或执行其他配置。对所有的Bean都生效。
-作用时机：**在Bean的初始化方法（如afterPropertiesSet()或自定义的init-method）之前和之后**，分别调用postProcessBeforeInitialization()和postProcessAfterInitialization()方法。
+  用途：它允许在Bean初始化的时候执行一些自定义逻辑，例如修改Bean的属性或执行其他配置。对所有的Bean都生效。
+  作用时机：**在Bean的初始化方法（如afterPropertiesSet()或自定义的init-method）之前和之后**，分别调用postProcessBeforeInitialization()和postProcessAfterInitialization()方法。
 
 5. DestructionAwareBeanPostProcessor：
-用途：**它允许在Bean销毁之前执行一些自定义逻辑，例如释放资源、清理缓存等**。
-作用时机：在Bean销毁之前调用postProcessBeforeDestruction()方法。
+  用途：**它允许在Bean销毁之前执行一些自定义逻辑，例如释放资源、清理缓存等**。
+  作用时机：在Bean销毁之前调用postProcessBeforeDestruction()方法。
 
 按照Bean的加载顺序，这些后置处理器都在Bean的生命周期中的不同阶段起作用。通过实现相应的接口并注册到Spring容器，可以灵活地扩展Bean的行为。
 
@@ -1199,10 +1239,15 @@ public class Message {
 
 ## 代码生成
 
-导入依赖
+导入依赖,这两个搭配才能生效
 
 ```
  <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+<dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generator</artifactId>
             <version>3.4.1</version>
