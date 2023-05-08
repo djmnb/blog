@@ -318,8 +318,8 @@ public void logBefore(JoinPoint joinPoint, MyAnnotation myAnnotation) {
 Spring中有一些后置处理器，它们可以在Bean的生命周期中的不同阶段进行拦截，从而扩展或自定义Bean的行为。按照B**ean在Spring容器中被加载的顺序**，下面是一些常见的后置处理器及其用途和作用时机：
 
 1. BeanDefinitionRegistryPostProcessor：
-  用途：它允许在**Bean定义被加载到容器之前，修改或添加Bean定义**。可以用于动态注册Bean或修改Bean的元数据。
-  作用时机：在所有Bean定义被加载到容器之前，调用postProcessBeanDefinitionRegistry()方法。举个例子
+    用途：它允许在**Bean定义被加载到容器之前，修改或添加Bean定义**。可以用于动态注册Bean或修改Bean的元数据。
+    作用时机：在所有Bean定义被加载到容器之前，调用postProcessBeanDefinitionRegistry()方法。举个例子
 
   ```java
   @Configuration
@@ -350,8 +350,8 @@ Spring中有一些后置处理器，它们可以在Bean的生命周期中的不�
   
 
 2. BeanFactoryPostProcessor：
-  用途：**它允许在Bean定义被加载且尚未实例化Bean之前修改Bean的定义**。主要用于修改Bean的配置元数据。
-  作用时机：在所有Bean定义都已加载到容器且还未实例化Bean时，调用postProcessBeanFactory()方法。
+    用途：**它允许在Bean定义被加载且尚未实例化Bean之前修改Bean的定义**。主要用于修改Bean的配置元数据。
+    作用时机：在所有Bean定义都已加载到容器且还未实例化Bean时，调用postProcessBeanFactory()方法。
 
   ```java
   @Component
@@ -366,16 +366,16 @@ Spring中有一些后置处理器，它们可以在Bean的生命周期中的不�
   
 
 3. InstantiationAwareBeanPostProcessor：
-  用途：**它允许在Bean实例化之前和之后进行自定义处理**，例如替换Bean的实例、改变属性值等。
-  作用时机：在Bean实例化之前调用postProcessBeforeInstantiation()方法，实例化之后调用postProcessAfterInstantiation()方法，然后在设置属性前调用postProcessProperties()方法。
+    用途：**它允许在Bean实例化之前和之后进行自定义处理**，例如替换Bean的实例、改变属性值等。
+    作用时机：在Bean实例化之前调用postProcessBeforeInstantiation()方法，实例化之后调用postProcessAfterInstantiation()方法，然后在设置属性前调用postProcessProperties()方法。
 
 4. BeanPostProcessor：
-  用途：它允许在Bean初始化的时候执行一些自定义逻辑，例如修改Bean的属性或执行其他配置。对所有的Bean都生效。
-  作用时机：**在Bean的初始化方法（如afterPropertiesSet()或自定义的init-method）之前和之后**，分别调用postProcessBeforeInitialization()和postProcessAfterInitialization()方法。
+    用途：它允许在Bean初始化的时候执行一些自定义逻辑，例如修改Bean的属性或执行其他配置。对所有的Bean都生效。
+    作用时机：**在Bean的初始化方法（如afterPropertiesSet()或自定义的init-method）之前和之后**，分别调用postProcessBeforeInitialization()和postProcessAfterInitialization()方法。
 
 5. DestructionAwareBeanPostProcessor：
-  用途：**它允许在Bean销毁之前执行一些自定义逻辑，例如释放资源、清理缓存等**。
-  作用时机：在Bean销毁之前调用postProcessBeforeDestruction()方法。
+    用途：**它允许在Bean销毁之前执行一些自定义逻辑，例如释放资源、清理缓存等**。
+    作用时机：在Bean销毁之前调用postProcessBeforeDestruction()方法。
 
 按照Bean的加载顺序，这些后置处理器都在Bean的生命周期中的不同阶段起作用。通过实现相应的接口并注册到Spring容器，可以灵活地扩展Bean的行为。
 
@@ -411,6 +411,34 @@ Spring框架默认提供了一些内置的后置处理器，这些后置处理�
 用途：处理带有@Scheduled注解的方法，将它们注册为计划任务。
 
 这些内置后置处理器由Spring框架自动注册，并在不同的生命周期阶段处理各种功能和任务。它们使得开发人员能够更加便捷地使用Spring框架的功能。
+
+# 配置类与简化配置类
+
+在阅读源码的过程中看到了这么两条语句
+
+```
+beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, "full");
+beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, "lite");
+```
+
+经过查询后得到 一个是完整配置类,一个是简化配置类,  完整配置类是使用了@Configuration注解的类  而简化配置类是使用了 哪些组件注解的 比如 :
+
+- `@Component`
+- `@Service`
+- `@Repository`
+- `@Controller`
+
+完整配置类和简化配置类都可以在 Spring 中用于配置和创建 bean，但它们之间有一些关键区别：
+
+1. 注解：完整配置类使用 `@Configuration` 注解，而简化配置类没有使用 `@Configuration` 注解。简化配置类通常使用 `@Component`、`@Service`、`@Repository` 或 `@Controller` 注解。
+
+2. Bean 方法调用：在完整配置类中，`@Bean` 方法之间的调用会遵循 Spring 容器的单例规则，即调用 `@Bean` 方法时，容器会返回已经创建的 bean 实例（如果存在的话）。在简化配置类中，`@Bean` 方法之间的调用不会遵循单例规则，而是直接创建新的实例。这意味着在简化配置类中，如果一个 `@Bean` 方法调用另一个 `@Bean` 方法，它将会创建一个新的实例，而不是返回容器中已经存在的 bean 实例。
+
+3. CGLIB 代理：**完整配置类会被 CGLIB 代理，以确保 `@Bean` 方法之间的调用遵循 Spring 容器的单例规则**。简化配置类不会被 CGLIB 代理，因此它们的 `@Bean` 方法之间的调用行为与普通的 Java 方法调用相同。
+
+4. 适用场景：完整配置类主要用于集中管理和配置应用程序的 bean，通常会包含多个 `@Bean` 方法。简化配置类适用于将 bean 的定义散布在整个应用程序中，使其更接近使用 bean 的地方。这有助于保持代码的模块化和易于理解。
+
+总之，完整配置类和简化配置类的主要区别在于它们处理 `@Bean` 方法之间调用以及代理方式的不同。完整配置类提供了更严格的管理和控制，而简化配置类提供了更轻量级和灵活的方式来配置和定义 bean。在实际应用中，可以根据需求和场景选择使用哪种配置类。
 
 # spring boot 
 

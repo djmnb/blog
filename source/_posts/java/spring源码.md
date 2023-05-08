@@ -1037,6 +1037,38 @@ public @interface ComponentC {
 
 比如这个样, 我们使用ComponentC注解也能将这个组件注入进去
 
+```java
+@Component
+public class CustomBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegistryPostProcessor {
+
+    @Override
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+        // 获取所有的bean名称
+        String[] beanNames = registry.getBeanDefinitionNames();
+
+        for (String beanName : beanNames) {
+            // 获取bean定义
+            BeanDefinition beanDefinition = registry.getBeanDefinition(beanName);
+            if(!(beanDefinition instanceof AnnotatedBeanDefinition beanDefinition1)){
+                continue;
+            }
+
+            AnnotationMetadata metadata = beanDefinition1.getMetadata();
+            if(metadata.isAnnotated(ComponentC.class.getName())){ 
+                System.out.println(beanName+"有这个注解");
+            }
+
+        }
+    }
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        // 无需在此方法中执行任何操作
+    }
+}
+
+```
+
 
 
 ## doGetBean
@@ -1208,4 +1240,6 @@ public @interface ComponentC {
         return bean;
     }
 ```
+
+
 
