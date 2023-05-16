@@ -247,50 +247,18 @@ MyListener1 run
 
 
 
-# AnnotationConfigApplicationContext 类
-
-## 属性
-
-### AnnotatedBeanDefinitionReader  reader
-
-用于获取bean的定义信息
-
-
-
-### ClassPathBeanDefinitionScanner scanner
-
-
-
-
-
-
-
-
-
-# AnnotationConfigRegistry  接口
-
-## 方法:
-
-```
-void register(Class<?>... componentClasses); 
-
-void scan(String... basePackages);
-```
-
-
-
 # 执行流程
 
 
 
-## 0. AnnotationConfigApplicationContext(Class<?>... componentClasses)重点执行函数
+## 0. AnnotationConfigApplicationContext(Class<?>... componentClasses)里面的重点执行函数
 
 1. this()  初始化beanfactory, 加入一些后置处理器的bean定义信息
 
 2. this.register(componentClasses)   把给定的配置类定义信息加载到beanfactory中
    3. this.reader.register(componentClasses); 
 
-4. this.refresh(); 更新容器,扫描bean定义信息,注册bean单例对象
+4. this.refresh(); 更新容器,扫描bean定义信息,实例bean单例对象
 
    5. this.prepareBeanFactory(beanFactory)  设置启动时间,状态,初始化一些存放事件和监听器的集合
    6. this.invokeBeanFactoryPostProcessors(beanFactory)  **首先根据优先级执行所有的BeanDefinitionRegistryPostProcessor,然后再根据优先级执行所有的BeanFactoryPostProcessor, 至此所有的bean定义信息都会在factory中, 而且所有的BeanFactoryPostProcessor已经被注册了,生成了对应的单实例bean了**
@@ -1071,7 +1039,7 @@ public class CustomBeanDefinitionRegistryPostProcessor implements BeanDefinition
 
 
 
-## doGetBean
+# doGetBean
 
 ```java
  protected <T> T doGetBean(String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly) throws BeansException {
@@ -1243,3 +1211,16 @@ public class CustomBeanDefinitionRegistryPostProcessor implements BeanDefinition
 
 
 
+# 总结
+
+spring容器启动流程如下:
+
+* 初始化容器, **往里面放入一个BeanDefinitionRegistryPostProcessor**,(这个东西很厉害,就是靠他去扫描我们定义的bean的定义信息)  和 几个Beanfactroy
+* 把我们给的配置类的信息放入到容器中, 然后开始设置一些初始状态,放入一些环境
+* 首先执行BeanDefinitionRegistryPostProcessor和BeanPostProcessor里面的方法, 拿到所有的bean定义信息, 拿到bean定义信息的流程如下: 首先加载所有配置类,包括简化配置类, 比如configuration,component等,还有一个**特别重要的import**, 如果我们import进来的类不是ImportSelector和ImportBeanDefinitionRegistrar的话,就会把它的定义信息加载到容器中,如果是ImportSelector那就会执行接口里面的方法拿到bean定义信息到容器中, 如果是ImportBeanDefinitionRegistrar就会保留它的信息,**最终加载配置类定义bean的时候就会执行这个方法**， 不过他们的信息此时都是看不见的,也就是说debug去查看是看不到的. **加载完配置类后开始把配置类里面的bean定义信息全部找出来放入容器**
+* 拿到了所有的bean定义信息, 开始把里面所有的**后置处理器实例化**,  如果是BeanDefinitionRegistryPostProcessor和BeanPostProcessor就会执行里面的方法再次拿到bean定义信息放入容器. 一直循环,直到所有的后置处理器被实例化
+* 接下来就是一些国际化,监听器的处理
+* 然后就是spring的重头戏,开始bean的实例化,看bean是不是factorybean, 如果是就获取它里面的bean实例化,如果不是就直接实例化,实例化的过程大概是**执行实例化后置处理器的前置方法开始执行,这里就能实现对对象的代理了,如果有返回值就不执行接下来的实例化后置处理器**,  接下来就是普通的后置处理器了,初始化前后做一些操作,比如一些自动化注入的注解,属性注解等等
+* 接下来就是一些其他的事情了,发布完成刷新的事件啊,清除缓存啊等等
+
+补充一点就是,如果有@Conditional这类的注解的话, 如果不满足是不会加载bean的定义信息的
