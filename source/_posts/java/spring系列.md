@@ -4,6 +4,7 @@ data: 2023-4-28
 tags:	
   - java
   - spring
+  - 需要复习
 categories:
   - 框架学习
 ---
@@ -124,7 +125,7 @@ Spring Framework 是一个开源的 Java 应用框架，由 Rod Johnson 创立�
 
 ### @Autowired
 
-可以使用@Autowired注解在字段、构造函数或方法上进行依赖注入。Spring会自动寻找与目标类型匹配的Bean并注入。
+可以使用@Autowired注解在**字段、构造函数或方法上进行依赖注入**。Spring会自动寻找与目标类型匹配的Bean并注入。
 
 优点：
 
@@ -138,7 +139,7 @@ Spring Framework 是一个开源的 Java 应用框架，由 Rod Johnson 创立�
 注意事项：
 
 - 如果没有找到与目标类型匹配的Bean，**Spring将抛出一个异常。为了避免这种情况，可以将@Autowired注解的required属性设置为false。**
-- 当存在多个匹配的Bean时，**可以使用@Qualifier注解指定Bean的名称来消除歧义。**
+- 当存在多个匹配的Bean时，**可以使用@Qualifier注解指定Bean的名称来消除歧义。**又或者说如果Bean有@Primary注解也可以优先被使用
 
 ### @Resource
 
@@ -201,23 +202,103 @@ Spring Framework 是一个开源的 Java 应用框架，由 Rod Johnson 创立�
 
 ## @Import注解
 
-`@Import`注解是Spring框架中用于导入其他配置类的注解。当您需要将多个Java配置类组合在一起时，可以使用`@Import`注解将其他配置类导入到当前配置类中。这样可以实现配置类之间的模块化，提高代码的可维护性和可读性。
+在Spring框架中，`@Import`注解用于导入其他的配置类。这个注解提供了一种方式来导入另一个或多个`@Configuration`类。以下是一些使用`@Import`注解的例子：
 
-例如，假设您有两个配置类`AppConfig1`和`AppConfig2`，您可以在主配置类中使用`@Import`注解将这两个配置类导入：
+1. **导入配置类**：如果你有一些定义在其他配置类中的bean，你可以使用`@Import`注解来导入这些配置类。
 
 ```java
 @Configuration
-@Import({AppConfig1.class, AppConfig2.class})
-public class MainConfig {
-    // ...
+public class DatabaseConfig {
+    @Bean
+    public DataSource dataSource() {
+        // 创建并返回数据源
+    }
+}
+
+@Configuration
+@Import(DatabaseConfig.class)
+public class AppConfig {
+    // 这个类现在可以使用DatabaseConfig类中定义的bean
 }
 ```
 
-在这个例子中，`MainConfig`类导入了`AppConfig1`和`AppConfig2`两个配置类。当`MainConfig`被加载时，`AppConfig1`和`AppConfig2`中定义的所有Bean也将被注册到Spring应用程序上下文中。
+2. **导入ImportSelector接口的实现**：`ImportSelector`是一个接口，它返回要导入的配置类的全类名。这个特性主要用于基于条件的配置。
 
-使用`@Import`注解可以将配置类进行分组和模块化，以便于管理和组织。这有助于将不同功能或模块的配置分离，使得代码更加清晰和易于维护。
+```java
+public class MyImportSelector implements ImportSelector {
+    @Override
+    public String[] selectImports(AnnotationMetadata importingClassMetadata) {
+        // 返回要导入的类的全类名
+        return new String[] {"com.example.DatabaseConfig"};
+    }
+}
+
+@Configuration
+@Import(MyImportSelector.class)
+public class AppConfig {
+    // 依据MyImportSelector的selectImports方法返回的类被导入
+}
+```
+
+3. **导入ImportBeanDefinitionRegistrar接口的实现**：如果你想编程地注册bean，你可以实现`ImportBeanDefinitionRegistrar`接口，并使用`@Import`注解来导入它。
+
+```java
+public class MyBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar {
+    @Override
+    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+        // 在这里编程地注册bean
+    }
+}
+
+@Configuration
+@Import(MyBeanDefinitionRegistrar.class)
+public class AppConfig {
+    // MyBeanDefinitionRegistrar将会被调用，以便在运行时注册bean
+}
+```
+
+总的来说，`@Import`注解在Spring中提供了一个强大的机制，可以用来导入配置类、普通类，或者基于`ImportSelector`和`ImportBeanDefinitionRegistrar`的更复杂的配置。
+
+> 如果 @Import导入的是一个普通类的话,就仅仅是加载它的bean定义信息,还有他本身,如果是其他两种情况的话, 会加载它指定的配置类信息或者bean信息,但是本身都不会被注册为bean
 
 
+
+## @Conditional注解
+
+`@Conditional` 是 Spring Framework 4.0 引入的一个核心注解，用于基于满足某个特定条件来决定一个配置类、配置方法或者 Bean 是否需要被注册到 Spring 容器。
+
+`@Conditional` 注解的主要作用是条件化地注册 Bean。在实际开发中，我们可能会遇到这样的需求：只有在满足特定条件（比如某个类在类路径上、某个系统属性存在等）的情况下，才需要注册某个 Bean。`@Conditional` 就是解决这种问题的。
+
+使用 `@Conditional` 注解需要提供一个实现了 `Condition` 接口的类，这个类定义了条件逻辑。例如：
+
+```java
+@Conditional(MyCondition.class)
+@Configuration
+public class MyConfiguration {
+
+    @Bean
+    public MyBean myBean() {
+        return new MyBean();
+    }
+}
+```
+
+在这个例子中，只有当 `MyCondition` 的 `matches` 方法返回 `true` 时，`MyConfiguration` 配置类才会被加载，`myBean` Bean 才会被创建。
+
+下面是 `Condition` 接口的一个简单实现：
+
+```java
+public class MyCondition implements Condition {
+
+    @Override
+    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        // 这里可以定义复杂的条件逻辑
+        return true; // 如果返回 true，那么带有 @Conditional 注解的配置或 Bean 就会被加载
+    }
+}
+```
+
+Spring Boot 还提供了一系列的 `Condition` 实现，比如 `@ConditionalOnClass`、`@ConditionalOnProperty` 等，这些都可以用于实现复杂的条件逻辑。
 
 ## AOP
 
@@ -412,7 +493,7 @@ Spring框架默认提供了一些内置的后置处理器，这些后置处理�
 
 这些内置后置处理器由Spring框架自动注册，并在不同的生命周期阶段处理各种功能和任务。它们使得开发人员能够更加便捷地使用Spring框架的功能。
 
-# 配置类与简化配置类
+## 配置类与简化配置类
 
 在阅读源码的过程中看到了这么两条语句
 
@@ -427,6 +508,7 @@ beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, "lite");
 - `@Service`
 - `@Repository`
 - `@Controller`
+- 还有@import导入的类
 
 完整配置类和简化配置类都可以在 Spring 中用于配置和创建 bean，但它们之间有一些关键区别：
 
@@ -440,7 +522,35 @@ beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, "lite");
 
 总之，完整配置类和简化配置类的主要区别在于它们处理 `@Bean` 方法之间调用以及代理方式的不同。完整配置类提供了更严格的管理和控制，而简化配置类提供了更轻量级和灵活的方式来配置和定义 bean。在实际应用中，可以根据需求和场景选择使用哪种配置类。
 
+完整配置类可以转换成简单配置类
+
+```java
+@Configuration(
+    proxyBeanMethods = false   //这样就不会生成代理类,也不会维护里面方法的相互依赖关系,每次调用方法都是生成一个新的对象
+)
+```
+
+
+
 # spring boot 
+
+
+
+## 多余文件介绍
+
+从官网下过来的项目中会多处一部分跟maven相关的东西,我们来看看吧
+
+Spring Boot项目中的`.mvn`文件夹以及`mvnw`和`mvnw.cmd`文件是Maven Wrapper的一部分。Maven Wrapper是一个方便的工具，让开发者可以在没有预先安装Maven的情况下运行Maven项目。
+
+以下是这些文件的具体用途：
+
+1. `.mvn`：这是一个文件夹，通常包含`wrapper`子文件夹以及一个`maven-wrapper.properties`文件，这个文件包含了Maven分发包的URL，Maven Wrapper会从这个URL下载对应版本的Maven。
+
+2. `mvnw`：这是一个Unix shell脚本，用于在Linux或Mac操作系统上运行Maven命令。使用这个脚本，你可以不必在你的机器上预先安装Maven，而是直接运行Maven项目。
+
+3. `mvnw.cmd`：这是一个Windows批处理文件，用于在Windows操作系统上运行Maven命令。与`mvnw`脚本类似，使用这个批处理文件，你可以不必在你的机器上预先安装Maven，而是直接运行Maven项目。
+
+这些文件的主要优点是它们使项目能够自我包含，并且不需要开发者预先安装特定版本的Maven。而且，由于这些文件将Maven的版本和分发包的URL存储在源代码中，因此它们还确保了项目的构建过程的一致性，无论是在不同的开发环境还是在持续集成服务器上。
 
 
 
@@ -460,13 +570,11 @@ Spring Boot 的自动配置是它的一个核心功能，它通过预先定义�
 
 1. 当您的应用程序启动时，Spring Boot 会加载带有 `@SpringBootApplication` 注解的主类。
 2. `@SpringBootApplication` 注解包含了 `@EnableAutoConfiguration` 注解，这个注解会激活自动配置功能。
-3. Spring Boot 读取 `spring.factories` 文件，加载并实例化其中定义的自动配置类。
+3. Spring Boot 读取 `spring.factories` 文件，**加载并实例化其中定义的自动配置类**。
 4. 对于每个自动配置类，Spring Boot 根据条件注解的结果决定是否应用它们。
 5. 在满足条件的情况下，自动配置类会将默认配置和相关组件注册到应用程序上下文中。
 
 通过这个自动配置原理，Spring Boot 能够在适当的时机为应用程序提供合适的默认配置，从而简化开发过程。当然，也可以覆盖这些默认配置，以满足特定的需求。
-
-## 自定义starter
 
 
 
@@ -478,7 +586,7 @@ Spring Boot 提供了许多有用的特性，以简化配置文件的使用。�
 
 ### 配置文件的多环境支持：
 
-Spring Boot 支持使用不同的配置文件来区分不同的环境（如开发、测试和生产环境）。您可以在 `application.yml` 或 `application.properties` 文件中使用 `spring.profiles.active` 属性来激活特定的环境配置文件。例如，在 `application.yml` 文件中：
+Spring Boot **支持使用不同的配置文件来区分不同的环境**（如开发、测试和生产环境）。您可以在 `application.yml` 或 `application.properties` 文件中使用 `spring.profiles.active` 属性来激活特定的环境配置文件。例如，在 `application.yml` 文件中：
 
 ```yaml
 spring:
@@ -552,6 +660,8 @@ my.property.value=hello world
 需要注意的是，在配置文件中使用"@@"时，变量名需要与pom.xml文件中定义的属性名保持一致，否则无法正确地替换属性值。
 
 
+
+> 需要注意的是,配置文件里面的变量不区分大小写,环境变量也是
 
 ## 配置文件读取
 
@@ -636,11 +746,181 @@ public class AppConfig {
 
 这些方法可以应用于不同的配置文件格式（`.properties` 或 `.yml`）。您可以根据实际需求和偏好选择合适的方式来读取配置文件中的值。
 
+## 配置文件优先级
+
+Spring Boot 允许将配置文件放在多个位置，它们具有不同的优先级。配置文件可以是 `application.properties` 或 `application.yml` 格式。以下是 Spring Boot 在寻找配置文件时的默认搜索顺序：
+
+1. 当前目录下的 `/config` 子目录。
+2. 当前目录。
+3. 类路径下的 `/config` 包。
+4. 类路径的根目录。
+
+在这个顺序中，位于靠前位置的配置文件会优先加载，并且可能会覆盖后续位置的相同配置。例如，如果当前目录下的 `application.properties` 文件中有一个 `server.port` 配置，而类路径下的 `application.properties` 文件中也有一个 `server.port` 配置，那么当前目录下的配置会生效。
+
+在这些位置中，类路径下的配置文件通常是打包在 JAR 文件中的。在运行 JAR 文件时，Spring Boot 会自动加载 JAR 包内的配置文件。你可以将配置文件放在 `src/main/resources` 或 `src/main/resources/config` 目录下，Maven 或 Gradle 会在构建过程中将它们打包到 JAR 文件中。
+
+总之，是的，Spring Boot 会在运行时加载 JAR 包中的配置文件。
+
+## 配置源的优先级
+
+在Spring Boot中，配置文件的优先级是有明确规定的。Spring Boot将从多个位置读取配置，并根据特定的优先级对它们进行排序，高优先级的配置将覆盖低优先级的配置。
+
+以下是一些主要的配置源及其优先级，从高到低：
+
+1. 命令行参数
+2. `SPRING_APPLICATION_JSON`属性中的属性
+3. `ServletConfig`初始化参数
+4. `ServletContext`初始化参数
+5. 来自`java:comp/env`的JNDI属性
+6. Java系统属性（`System.getProperties()`）
+7. 操作系统环境变量
+8. 只包含随机属性的`random.*`属性文件
+9. 位于当前目录的`.env`文件
+10. 如果不是`jar`包运行，位于应用程序目录的`application-{profile}.properties`或`application-{profile}.yml`以及`application.properties`或`application.yml`
+11. 如果是`jar`包运行，位于应用程序`jar`包内部的`application-{profile}.properties`或`application-{profile}.yml`以及`application.properties`或`application.yml`
+12. 在`@Configuration`类中通过`@PropertySource`注解指定的属性源
+13. 默认属性（使用`SpringApplication.setDefaultProperties`指定）
+
+以上是一些主要的配置源，实际上Spring Boot还支持更多的配置源，包括云服务的配置等。
+
+## 自定义starter
+
+### 创建一个空maven项目
+
+修改配置文件如下:  分别配置坐标 和 引入依赖
+
+```xml
+ <groupId>com.djm</groupId>
+    <artifactId>socket-spring-boot-starter</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    
+        <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <version>2.7.11</version>
+        </dependency>
+    </dependencies>
+
+```
+
+### 创建自动配置类
+
+```java
+@Configuration
+@Import(MyServerSocket.class)  // 导入要配置的东西
+public class SocketAutoConfiguration {
+
+}
+
+// 要往容器中自动放入的bean
+public class MyServerSocket {
+    
+    // 后续做准备
+    String hello;
+    
+    public void sayHello(){
+        System.out.println(hello);
+        System.out.println("hello world");
+    }
+    
+    public void setHello(String hello){
+        this.hello = hello;
+    }
+}
+
+
+```
+
+### 创建META-INF/spring.factories文件
+
+springboot项目在启动的时候,有个注解导入了一个自动扫描所有jar包下面的 META-INF/spring.factories文件
+
+```
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.djm.SocketAutoConfiguration
+```
+
+这里是一对键值组合, 键通常是一个接口或者一个注解，值则是一组实现了该接口或被该注解标记的类，用逗号分隔。不同的键值对做不同的事情, 以下是一些常见的键：
+
+1. `org.springframework.boot.autoconfigure.EnableAutoConfiguration`：这是最常见的键，它用于指定应该由 Spring Boot 自动配置的类。当 Spring Boot 应用启动时，这些类将会被实例化，并且它们中定义的任何 bean 都会被添加到 Spring 应用上下文中。
+2. `org.springframework.context.ApplicationContextInitializer`：这个键用于指定应该在 Spring 应用上下文初始化期间执行的类。这些类可以用来进行一些自定义的初始化操作。
+3. `org.springframework.context.ApplicationListener`：这个键用于指定应该在 Spring 应用上下文中注册的 ApplicationListener 类，这些类可以用来监听和处理 Spring 发布的各种事件。
+4. `org.springframework.boot.SpringApplicationRunListener`：这个键用于指定在 Spring Boot 应用启动期间应该调用的监听器类。这些监听器可以用来自定义 Spring Boot 的启动过程。
+
+### 打包,安装,发布(如果有需要的话)
+
+```
+mvn package
+mvn install
+mvn deploy
+```
+
+### 使用这个starter
+
+新建一个springboot项目导入依赖
+
+```
+<dependency>
+			<groupId>com.djm</groupId>
+			<artifactId>socket-spring-boot-starter</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+```
+
+我们可以查看是否自动注册了这个bean
+
+```
+@SpringBootApplication
+public class SocketAutoConfiguration1 {
+
+    public static void main(String[] args) {
+        ConfigurableApplicationContext run = SpringApplication.run(SocketAutoConfiguration.class);
+        MyServerSocket bean = run.getBean(MyServerSocket.class);
+        bean.sayHello();  // 输出  null 和 hello world  代表配置成功
+    }
+
+}
+```
+
+**需要注意的是,如果我们项目里面有了application.properties文件的话,jar包里面的application.properties是不会生效的,  比如我们在starter里面想要使用starter里面定义的配置文件的话这样是不行的, 而且也不推荐啊,我们可以使用一个资源类,然后给默认值不就行了?**,比如:
+
+修改代码
+
+```java
+@ConfigurationProperties(prefix = "my")   //定义好资源类
+public class MyProperties {
+    public String hello = "我是jar包里面的hello"; // 定义好默认值, 如果用户配置文件里面有 my.hello 自然可以覆盖  
+
+    public String getHello() {
+        return hello;
+    }
+
+    public void setHello(String hello) {
+        this.hello = hello;
+    }
+}
+
+@Configuration
+@EnableConfigurationProperties(MyProperties.class)
+public class SocketAutoConfiguration {
+
+    @Bean
+    public MyServerSocket myServerSocket(MyProperties properties) {
+        MyServerSocket myServerSocket = new MyServerSocket();
+        myServerSocket.setHello(properties.hello);
+        return myServerSocket;
+    }
+}
+
+
+
+
+
+```
+
 
 
 ## 监听器
-
-
 
 ### 常用监听器与事件
 
@@ -847,11 +1127,11 @@ public class MyHttpSessionEventListener implements HttpSessionListener {
 
 
 
-### 异常类
+## 异常类
 
 
 
-#### HttpMessageNotReadableException
+### HttpMessageNotReadableException
 
 在 Spring Boot 应用程序中，HttpMessageNotReadableException 异常通常代表请求的消息无法读取或解析。这个异常通常是由于以下原因之一导致的：
 
@@ -861,13 +1141,49 @@ public class MyHttpSessionEventListener implements HttpSessionListener {
 
 当发生 HttpMessageNotReadableException 异常时，Spring Boot 会自动返回一个 HTTP 400 Bad Request 响应，提示客户端请求的消息无法读取或解析。
 
-### 过滤器
+## 异常处理
+
+通常使用controlleradvice来捕获异常
+
+```java
+@RestControllerAdvice
+public class MyExceptionHandler {
+
+    @ExceptionHandler(Exception.class)
+    public String handler(Exception exception){ 
+       return exception.getMessage();
+    }
+
+}
+```
+
+总结一下在`@ExceptionHandler`方法中可以使用的参数：
+
+1. 异常参数：您可以将处理的异常类或其基类（如`Exception`、`RuntimeException`等）作为参数传递。这是必须的，用于捕获异常信息。
+
+2. `HttpServletRequest`：您可以将`HttpServletRequest`对象作为参数，以便访问与请求相关的信息，例如获取请求参数、请求头等。
+
+3. `HttpServletResponse`：您可以将`HttpServletResponse`对象作为参数，以便操作响应对象，例如设置响应状态码、响应头等。
+
+4. `WebRequest`或`NativeWebRequest`：您可以使用这些对象以一种与底层技术无关的方式访问请求和响应的属性。
+
+5. `Locale`：可以使用`Locale`对象获取客户端的区域设置信息。
+
+6. `Model`：可以将`Model`对象作为参数，以便向视图添加属性。在返回`ModelAndView`对象时，这可能会派上用场。
+
+7. `@ModelAttribute`：虽然在异常处理器中使用`@ModelAttribute`的情况较少，但您可以在需要时将带有`@ModelAttribute`注解的参数添加到方法中。
+
+请注意，一些常见的参数，如`@RequestParam`、`@PathVariable`、`@RequestHeader`等，在异常处理器方法中是不支持的。需要使用`HttpServletRequest`对象来获取这些值。
+
+**如果有多个异常处理器,最终只有一个异常处理器会生效**,根据优先级来.
+
+
+
+## 过滤器
 
 下面是定义过滤器的几种方式
 
-
-
-#### FilterRegistrationBean
+### FilterRegistrationBean
 
 在 Spring Boot 中，你可以通过实现 `javax.servlet.Filter` 接口并注册一个 `Filter` Bean 来创建一个过滤器。下面是创建一个简单过滤器的步骤：
 
@@ -926,7 +1242,7 @@ public class FilterConfig {
 
 现在，每当有请求到达应用时，`MyFilter` 都会在请求进入控制器之前执行。你可以在 `doFilter` 方法中实现你的过滤逻辑，例如权限检查、日志记录等。
 
-#### @Component` 和 `@Order 注解
+### @Component` 和 `@Order 注解
 
 在过滤器类上添加 `@Component` 和 `@Order` 注解，将过滤器作为 Spring Bean 进行注册，同时指定执行顺序。这种方式适用于需要 Spring 执行自动扫描的情况。
 
@@ -953,6 +1269,8 @@ public class MyFilter implements Filter {
 
         // 如果符合过滤条件，继续执行后续过滤器和请求处理
         chain.doFilter(request, response);
+        
+        // 这里是是请求处理结束了的位置
     }
 
     @Override
@@ -962,7 +1280,9 @@ public class MyFilter implements Filter {
 }
 ```
 
-#### 使用 `@WebFilter` 注解：
+> 上面的方式适用于传统的springMVC,下面这两种可以用于springboot
+
+### 使用 `@WebFilter` 注解：
 
 在过滤器类上添加 `@WebFilter` 注解，指定要拦截的 URL 模式。同时，需要在启动类上添加 `@ServletComponentScan` 注解以启用自动扫描。这种方式主要用于 Servlet 容器的过滤器，而不是 Spring 的过滤器，因此在过滤器中无法自动注入其他 Spring Bean。
 
@@ -1013,19 +1333,87 @@ public class MyApplication {
 
 
 
+## 拦截器
+
+### 定义
+
+在 Spring MVC 中，`HandlerInterceptor` 接口定义了三个方法，用于在请求处理的不同阶段执行自定义操作。这些方法分别是：
+
+1. `preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)`：在处理器（即 Controller 方法）执行之前调用。如果该方法返回 `true`，则请求继续向下执行；如果返回 `false`，则请求处理停止，不会调用后续的拦截器和处理器。这个方法通常用于权限控制、身份验证和请求参数校验等。
+
+2. `postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView)`：在处理器执行之后、视图渲染之前调用。这个方法可以用来修改数据模型、处理异常等。注意，如果 `preHandle` 返回 `false`，则不会调用 `postHandle`。
+
+3. `afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)`：在请求处理完成后调用，即在视图渲染之后。这个方法通常用于清理资源、记录日志、监控性能等。**即使在请求处理过程中发生异常，这个方法也会被调用。注意，如果 `preHandle` 返回 `false`，则不会调用 `afterCompletion`。**
+
+实现 `HandlerInterceptor` 接口时，你可以根据需要重写这些方法以实现自定义的请求拦截和处理逻辑。在实际应用中，你通常会继承 `HandlerInterceptorAdapter` 类，它提供了默认的空实现，这样你只需要重写需要的方法即可。
+
+### 使用
+
+创建拦截器
+
+```java
+public class MyInterceptor implements HandlerInterceptor {
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        System.out.println("postHandle");
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        System.out.println("afterCompletion");
+    }
+}
+```
+
+注册
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new MyInterceptor()).addPathPatterns("/**");
+    }
+}
+```
+
+## 过滤器与拦截器的区别
+
+过滤器（Filter）和拦截器（Interceptor）都是用于处理Web应用程序中的请求和响应的。它们之间的主要区别在于作用范围、处理时机和功能。
+
+1. 作用范围：
+
+   - 过滤器（Filter）是基于Java Servlet规范的，适用于所有Java Web应用程序。它可以拦截所有进入Servlet容器的HTTP请求和响应，对它们进行预处理和后处理。
+   - 拦截器（Interceptor）是Spring MVC特有的，仅适用于使用Spring MVC框架的Web应用程序。它在Spring MVC处理请求的过程中起作用，主要拦截Controller方法的调用。
+
+2. 处理时机：
+
+   - 过滤器（Filter）在Servlet容器层面处理请求，所以它在请求进入Web应用程序之前和离开Web应用程序之后都起作用。因此，过滤器可以在请求被处理之前和响应被发送之前进行一些操作。
+   - 拦截器（Interceptor）在Spring MVC处理请求的过程中起作用，它在请求到达Controller方法之前、Controller方法处理完成后、视图渲染完成之后都可以执行相应的操作。
+
+3. 功能：
+
+   - 过滤器（Filter）可以用于对请求和响应进行通用处理，例如字符编码转换、安全检查、压缩响应等。
+   - 拦截器（Interceptor）更适用于处理与应用程序业务逻辑相关的操作，例如登录验证、权限控制、性能监控等。由于拦截器是Spring MVC特有的，所以它可以方便地访问Spring的依赖注入（DI）功能，以及其他Spring MVC组件。
+
+总之，过滤器（Filter）和拦截器（Interceptor）都可以实现类似的功能，但由于它们在不同的处理阶段和层次起作用，所以它们的使用场景和优缺点也有所不同。根据具体的需求和应用程序架构，可以选择使用过滤器、拦截器或者它们的组合来实现所需的功能。
+
+## 权限校验的几种方式
+
+### 过滤器
 
 
-### 权限校验的几种方式
 
-#### 过滤器
-
-
-
-#### 拦截器
+### 拦截器
 
 
 
-#### AOP + RestControllerAdvice
+### AOP + RestControllerAdvice
 
 AOP
 
@@ -1067,7 +1455,7 @@ RestControllerAdvice里面去检测这个异常就可以了
 
 
 
-### 请求响应流程
+## 请求响应流程
 
 1. 接收请求：客户端（如浏览器或其他应用）向服务器发起 HTTP 请求。请求首先到达服务器上的 Web 服务器，例如 Tomcat、Jetty 或 Undertow。
 2. 过滤器（Filter）链：在请求到达 Spring Boot 应用之前，它会经过一系列的过滤器。这些过滤器可以用于处理跨域请求、安全性、编码等问题。过滤器按照定义的顺序依次执行。
@@ -1084,119 +1472,255 @@ RestControllerAdvice里面去检测这个异常就可以了
 13. 响应过滤器链：在发送响应给客户端之前，响应会经过一系列的过滤器。这些过滤器可以用于处理响应头、响应体等。与请求过滤器链类似，响应过滤器链中的过滤器按照定义的顺序依次执行。
 14. 发送响应：最后，Web 服务器将 HTTP 响应发送回客户端。客户端收到响应后可以解析响应数据并采取相应的操作。
 
+上面这个步骤其实还少了拦截器
 
+## 自定义资源处理
 
-### 自定义404处理
-
-#### 方法一
-
-在Spring Boot中，如果你想在@ControllerAdvice类中捕获404异常（Not Found异常），你需要实现`ErrorController`接口并重写`getErrorPath`方法。这样，你可以在@ControllerAdvice类中处理404异常。
-
-首先，创建一个类实现`ErrorController`接口：
+springboot默认帮我们配置了不少的资源路径
 
 ```java
-import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+private static final String[] CLASSPATH_RESOURCE_LOCATIONS = new String[]{"classpath:/META-INF/resources/", "classpath:/resources/", "classpath:/static/", "classpath:/public/"};
+private String staticPathPattern = "/**"; 
+```
 
-@RestController
-public class CustomErrorController implements ErrorController {
+当然如果不想使用就直接禁用掉,这样就省去了一个资源处理器
 
-    @RequestMapping("/error")
-    public ResponseEntity<?> handleError(HttpServletRequest request) {
-        Integer statusCode = (Integer) request.getAttribute("javax.servlet.error.status_code");
-        if (statusCode == HttpStatus.NOT_FOUND.value()) {
-            throw new NotFoundException("资源未找到");
-        }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("内部服务器错误");
-    }
+```yaml
+spring:
+  web:
+    resources:
+      add-mappings: false
+```
 
+然后自定义
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class WebConfig implements WebMvcConfigurer {
     @Override
-    public String getErrorPath() {
-        return "/error";
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/"); // 这样的话,所有的/static请求都会去使用资源路径,也不一定,如果有controller的路径跟我们对上了,那肯定那个处理器优先,里面有一套排序规则的
     }
 }
+
 ```
 
-然后，在你的@ControllerAdvice类中处理`NotFoundException`：
+这里有个高级的用法就是addResourceLocations里面可以使用文件系统的路径,这就方便很多了啊,我们可以使用配置文件的方法很灵活的放置和取资源
 
 ```java
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.ModelAndView;
-
-@ControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler(NotFoundException.class)
-    public ModelAndView handleNotFoundException(NotFoundException ex) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.addObject("error", ex.getMessage());
-        modelAndView.setViewName("error/404");
-        return modelAndView;
+@Configuration(proxyBeanMethods = false)
+public class WebConfig implements WebMvcConfigurer {
+    
+    @Value("${filePath}")
+    String path;
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/static/**").addResourceLocations("file:"+path+"/"); 
     }
-
-    // 其他异常处理方法...
 }
 ```
 
-这样，当发生404异常时，将会触发`NotFoundException`，然后在`GlobalExceptionHandler`类中处理该异常。
 
-#### 方式二
 
-除了上述方法外，还有一种简单的方法可以在 `@ControllerAdvice` 类中捕获404异常，那就是通过捕获 `NoHandlerFoundException`。首先，你需要在 `application.properties` 或 `application.yml` 文件中启用此功能。
+### 注意点
 
-在 `application.properties` 中添加以下内容：
+* 如果有多个资源处理器能够处理这个路径, 那么会选择最符合的资源处理器去处理这个请求, 但是如果两个资源处理器的优先级一样,那就是谁先定义谁被使用,  而且在springboot中,永远有一个/**的默认处理器为我们兜底,前提是你没关闭它
 
-```properties
-spring.mvc.throw-exception-if-no-handler-found=true
-spring.resources.add-mappings=false
-```
+* **如果一个资源处理器被选择了, 即使它不能处理这个路径的资源,那么它就会抛出404,而不是交给下一个能处理这个资源的处理器**,比如你定义了两个/** 和 /static 路径的资源处理器,  当你处理/static路径的时候  会选择 /static路径的资源处理器, 如果它不能处理,也不会去选择/**处理器了,而是响应404回去
 
-或者在 `application.yml` 中添加以下内容：
+  
+
+
+
+## 自定义404异常处理
+
+404在springMVC中分为两种, 第一种是没有处理器对应, 第二种是资源处理器里面没有对应资源, 如果看过源码的话,就知道springboot默认给我们提供一个兜底的资源处理器,它能够处理任何路径, **因此就算开启找不到处理器抛出异常这个选项, ControllerAdvice也没有机会去捕获异常,因为无论如何都有资源处理器去处理,** 除非你放弃使用资源处理器,然后开启没有异常处理抛出异常
 
 ```yaml
 spring:
   mvc:
     throw-exception-if-no-handler-found: true
-  resources:
-    add-mappings: false
+  web:
+    resources:
+      add-mappings: false
 ```
 
-这样，Spring Boot会将404视为一个异常，并抛出`NoHandlerFoundException`。现在，在你的 `@ControllerAdvice` 类中处理这个异常：
+这样的话,能够使用ControllerAdvice去处理404异常
+
+但是我们一般要使用静态资源,所有我们**一般是重写一个ErrorController 去处理404异常**
 
 ```java
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.NoHandlerFoundException;
+@RestController
+public class MyErrorController implements ErrorController {
 
-@ControllerAdvice
-public class GlobalExceptionHandler {
+    @RequestMapping("/error")
+    public String notFound(HttpServletRequest httpServletRequest){
+        // 这里要注意,如果是springboot3.0的话 就是jakarta开头了
+      if(httpServletRequest.getAttribute("javax.servlet.error.status_code").equals(HttpStatus.NOT_FOUND.value()))
+        {
+            return "404 not found";
+        }
 
-    @ExceptionHandler(NoHandlerFoundException.class)
-    public ModelAndView handleNoHandlerFoundException(NoHandlerFoundException ex) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.addObject("error", "资源未找到");
-        modelAndView.setViewName("error/404");
-        return modelAndView;
+        return "500 error";
     }
 
-    // 其他异常处理方法...
 }
 ```
 
-现在，当发生404异常时，`NoHandlerFoundException` 会被捕获并在 `GlobalExceptionHandler` 类中处理。这种方法相对简单，不需要实现 `ErrorController` 接口。
-
-在Spring Boot中，将 `spring.resources.add-mappings` 设置为 `false` 是为了禁用默认的静态资源处理。当你使用 `spring.mvc.throw-exception-if-no-handler-found=true` 配置选项启用 `NoHandlerFoundException` 时，这一设置可以确保404异常被正确处理。
-
-Spring Boot默认配置了静态资源处理，如CSS、JS、图片等。如果没有禁用静态资源处理，当访问一个不存在的静态资源时，Spring Boot将不会抛出 `NoHandlerFoundException`，而是直接返回404状态码。这意味着你的 `@ControllerAdvice` 类将无法捕获到404异常。
-
-通过将 `spring.resources.add-mappings` 设置为 `false`，你可以关闭默认的静态资源处理。这样，无论是访问不存在的静态资源还是其他类型的资源，Spring Boot都会抛出 `NoHandlerFoundException`，使得你的 `@ControllerAdvice` 类能够捕获到所有的404异常。需要注意的是，**禁用默认的静态资源处理后，你需要自己配置静态资源处理规则。**
-
-如果你的应用程序没有使用静态资源，或者已经配置了自定义的静态资源处理规则，那么直接禁用默认的静态资源处理不会有任何问题。如果你需要使用默认的静态资源处理规则，可以考虑使用我在之前回答中提到的实现 `ErrorController` 接口的方法来捕获404异常。
 
 
+
+
+## 自定义数据转换
+
+### Converter和Formatter
+
+Converter
+
+```java
+import org.springframework.core.convert.converter.Converter;
+
+public class StringToPersonConverter implements Converter<String, Person> {
+
+    @Override
+    public Person convert(String source) {
+        int id = Integer.parseInt(source);
+        return new Person(id);
+    }
+}
+
+```
+
+formatter
+
+```java
+import org.springframework.format.Formatter;
+
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
+public class LocalDateFormatter implements Formatter<LocalDate> {
+
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    @Override
+    public LocalDate parse(String text, Locale locale) throws ParseException {
+        return LocalDate.parse(text, formatter);
+    }
+
+    @Override
+    public String print(LocalDate object, Locale locale) {
+        return formatter.format(object);
+    }
+}
+
+```
+
+注册他们
+
+```java
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        registry.addFormatter(new LocalDateFormatter());
+        registry.addConverter(new StringToPersonConverter());
+    }
+}
+
+```
+
+
+
+### HttpMessageConverter
+
+```java
+public class MyHttpMessageConvert extends AbstractHttpMessageConverter<User> {
+
+    public MyHttpMessageConvert(){
+        super(MediaType.APPLICATION_JSON);
+    }
+
+    @Override
+    protected boolean supports(Class<?> clazz) {
+        return User.class == clazz;
+    }
+
+    @Override
+    protected User readInternal(Class<? extends User> clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
+        System.out.println("我的httpMessage被执行");
+        return new ObjectMapper().readValue(inputMessage.getBody(),clazz);
+    }
+
+    @Override
+    protected void writeInternal(User user, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+        System.out.println("我的httpMessage被执行");
+        new ObjectMapper().writeValue(outputMessage.getBody(),user);
+    }
+}
+
+```
+
+
+
+注册
+
+```java
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    /*@Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        converters.add(new MyHttpMessageConvert());
+    }*/
+    @Override
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {  // 注意这里要使用这个,如果使用上面这个,那么就只会留下我们自己的
+        converters.add(0,new MyHttpMessageConvert());  // 这里我们把它放在最前面,增加优先级
+    }
+}
+```
+
+
+
+### 区别
+
+`Converter`：
+1. 它是Spring的一个核心接口，用于在类型之间进行转换，例如在**表单数据绑定到Java对象**时，或者在@PathVariable注解的参数转换时。
+2. 它主要用于将一种数据类型转换为另一种数据类型。例如，将一个字符串转换为一个日期对象或自定义类型。
+3. `Converter`通常在数据绑定或类型转换过程中使用。
+4. **它不关心HTTP请求或响应的内容，仅关注类型之间的转换。**
+
+`HttpMessageConverter`：
+1. 它是Spring MVC中的一个接口，**用于处理HTTP请求和响应中的内容**。
+2. 它主要用于将请求体中的数据转换为Java对象（反序列化），或者将Java对象转换为响应体中的数据（序列化）。
+3. `HttpMessageConverter`通常与`@RequestBody`和`@ResponseBody`注解一起使用，**以将请求和响应中的数据与Java对象进行转换。**
+4. 它关注HTTP请求和响应的内容，以及将数据与Java对象之间进行序列化和反序列化。
+
+总结一下：
+- `Converter`主要用于在类型之间进行转换，例如将字符串转换为自定义对象。它通常在数据绑定过程中使用，与HTTP请求和响应的内容无关。
+- `HttpMessageConverter`主要用于处理HTTP请求和响应中的数据。它负责将请求体中的数据转换为Java对象，以及将Java对象转换为响应体中的数据。它与`@RequestBody`和`@ResponseBody`注解一起使用。
+
+## 跨域问题
+
+```
+ @Configuration
+public class WebConfig implements WebMvcConfigurer {
+	@Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/file/**").allowedOrigins("*").allowedMethods("*");
+    }
+}
+```
+
+
+
+## 注意点
+
+1. springMVC中有很多的一次性注解,它会将输入流里面东西读出来,因此在使用的时候要特别注意,不要多次使用,比如@RequestBody这种
+2. 使用HttpMessageConverter 放入自己的转换器的时候,要注意extendMessageConverters() 和 configureMessageConverters() 的区别
 
 # Mybatis-Plus
 
@@ -1345,7 +1869,7 @@ public class test {
 
 **他就会帮我们生成好实体类与mapper还有service,还有controller**
 
-
+> 推荐使用插件而不是这种方式
 
 
 
@@ -1708,7 +2232,7 @@ resultMap里面的子配置项:
 ## 配置项
 
 ```java
-    private String configLocation;  //MyBatis 配置文件（如：mybatis-config.xml）的位置
+    private String configLocation;  //MyBatis 配置文件（如：mybatis-config.xml）的位置,一般不用
     private String[] mapperLocations = new String[]{"classpath*:/mapper/**/*.xml"}; //XML 映射文件的位置，可以使用通配符来指定多个文件
     private String typeAliasesPackage; // 别名包，用于为实体类自动创建别名
     private Class<?> typeAliasesSuperType; //为继承自某个类的子类创建别名
@@ -1769,6 +2293,38 @@ resultMap里面的子配置项:
 
 
 # Spring Security 
+
+## 理解基础的安全概念。
+
+在计算机安全中，主要涉及到两个基本概念：身份验证(Authentication)和授权(Authorization)。
+
+1. **身份验证(Authentication)**：身份验证是确认用户身份的过程，通常涉及用户名和密码，但也可能包括更复杂的过程，如两步验证和数字证书。当用户首次访问系统时，他们会被要求提供凭证，如用户名和密码，系统将根据这些凭证确认用户的身份。在 Spring Security 中，身份验证过程由 AuthenticationManager 接口管理。
+
+2. **授权(Authorization)**：一旦用户的身份得到确认，下一步就是确定他们可以访问系统的哪些资源，以及他们可以执行哪些操作，这就是授权过程。例如，一个用户可能被授权读取一个文件，但不能删除它。另一个用户可能被授权修改该文件，但不能查看它。在 Spring Security 中，授权过程由 AccessDecisionManager 接口管理。
+
+理解这两个概念是学习 Spring Security 的基础。在应用程序中，我们需要根据用户的角色和权限对资源进行保护，只有经过正确的身份验证和授权的用户才能访问这些资源。在接下来的学习中，我们将更深入地探讨这两个概念，并学习如何在 Spring Security 中实现身份验证和授权。
+
+## 核心组件
+
+1. **SecurityContextHolder**：这是Spring Security用来存储安全上下文（SecurityContext）的地方，默认情况下，它使用ThreadLocal来存储这些信息，这意味着我们可以在同一个线程中的任何地方访问它，无论我们是在什么层（服务层，DAO层，控制器层等）。**servlet默认是一个请求对应一个线程,所以所所有的操作都在一个线程里面**
+2. **SecurityContext**：它是当前登录用户的详细信息，包括其权限等。最重要的是它持有一个Authentication对象。
+3. **Authentication**：它是一个接口，提供了大量关于主体的信息，如他们的名字，他们所拥有的权限，以及他们的凭据。在用户已经认证后，我们可以从任何地方获取到Authentication对象（只要是在同一个线程中），只需要使用`SecurityContextHolder.getContext().getAuthentication()`。
+4. **Principal**：这个是Authentication对象中的一个属性，表示当前的主体或者说是用户。这可以是一个用户实例，或者是一个用户名。
+5. **Credentials**：这也是Authentication对象中的一个属性，表示主体的凭证，比如密码。
+
+## 基本使用
+
+为了方便学习现在先使用被弃用了的WebSecurityConfigurerAdapter来写代码
+
+```
+
+```
+
+
+
+
+
+
 
 Spring Security 是一个用于为 Java 应用程序提供身份验证和授权功能的安全框架。在 Spring Boot 中，Spring Security 可以轻松集成，提供自动配置和默认安全设置。以下是 Spring Security 在 Spring Boot 应用中的工作机制和工作流程：
 
@@ -2013,7 +2569,7 @@ Spring Boot 在启动时会自动检测项目 `src/main/resources` 目录下的�
         </rollingPolicy>
     </appender>
 
-    <!-- 将输出引用到控制台和文件日志 -->
+    <!-- 将输出引用到控制台和文件日志,这个是兜底的,如果前面设置了其他的级别,会使用那个级别 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
@@ -2097,7 +2653,7 @@ Jackson是一个功能强大、高效稳定的JSON库，在Java开发中被广�
 
 Jackson提供了很多实用的方法，以下是一些常用的方法：
 
-1. `ObjectMapper.writeValueAsString(Object obj)`
+#### ObjectMapper.writeValueAsString(Object obj)
 
 该方法将Java对象序列化为JSON字符串，并返回字符串表示。例如：
 
@@ -2108,7 +2664,7 @@ String json = objectMapper.writeValueAsString(person);
 System.out.println(json); // 输出：{"name":"张三","age":25}
 ```
 
-2. `ObjectMapper.writeValue(File file, Object obj)`
+#### ObjectMapper.writeValue(File file, Object obj)
 
 该方法将Java对象序列化为JSON字符串，并将结果写入指定的文件。例如：
 
@@ -2119,7 +2675,7 @@ File file = new File("person.json");
 objectMapper.writeValue(file, person);
 ```
 
-3. `ObjectMapper.readValue(String json, Class<T> valueType)`
+#### `ObjectMapper.readValue(String json, Class<T> valueType)`
 
 该方法将JSON字符串反序列化为Java对象，并返回Java对象的实例。例如：
 
@@ -2130,7 +2686,7 @@ Person person = objectMapper.readValue(json, Person.class);
 System.out.println(person.getName()); // 输出：张三
 ```
 
-4. `ObjectMapper.readValue(File file, Class<T> valueType)`
+#### `ObjectMapper.readValue(File file, Class<T> valueType)`
 
 该方法将JSON文件反序列化为Java对象，并返回Java对象的实例。例如：
 
@@ -2140,7 +2696,7 @@ File file = new File("person.json");
 Person person = objectMapper.readValue(file, Person.class);
 ```
 
-5. `JsonNode.get(String fieldName)`
+#### `JsonNode.get(String fieldName)`
 
 该方法获取JSON节点中指定字段名对应的节点。例如：
 
@@ -2152,7 +2708,7 @@ String name = jsonNode.get("name").asText();
 int age = jsonNode.get("age").asInt();
 ```
 
-6. `JsonNode.iterator()`
+#### `JsonNode.iterator()`
 
 该方法返回JSON节点的所有子节点的迭代器。例如：
 
@@ -2168,7 +2724,7 @@ while (iterator.hasNext()) {
 }
 ```
 
-7. `JsonNode.isArray()`
+#### `JsonNode.isArray()`
 
 该方法判断JSON节点是否为数组类型。例如：
 
@@ -2181,7 +2737,7 @@ if (jsonNode.get("friends").isArray()) {
 }
 ```
 
-8. `JsonNode.isObject()`
+#### `JsonNode.isObject()`
 
 该方法判断JSON节点是否为对象类型。例如：
 
@@ -2194,7 +2750,7 @@ if (jsonNode.isObject()) {
 }
 ```
 
-9. `ObjectNode.put(String fieldName, JsonNode value)`
+#### `ObjectNode.put(String fieldName, JsonNode value)`
 
 该方法向JSON对象节点中添加一个字段，并设置字段值。例如
 
@@ -2209,7 +2765,7 @@ JsonNode friendsNode = objectMapper.createArrayNode()
 objectNode.set("friends", friendsNode);
 ```
 
-10. `ArrayNode.add(JsonNode value)`
+#### `ArrayNode.add(JsonNode value)`
 
 该方法向JSON数组节点中添加一个子节点。例如：
 
@@ -2226,7 +2782,7 @@ arrayNode.add(objectMapper.createObjectNode().put("name", "王五").put("age", 3
 
 Jackson提供了许多注解，用于控制Java对象和JSON数据之间的转换。以下是一些常用的Jackson注解：
 
-1. `@JsonAnyGetter`和`@JsonAnySetter`
+#### `@JsonAnyGetter`和`@JsonAnySetter`
 
 **`@JsonAnyGetter`和`@JsonAnySetter`注解可以用于处理一些未知的属性**。`@JsonAnyGetter`注解标注在任意属性的获取方法上，`@JsonAnySetter`注解标注在任意属性的设置方法上。使用这两个注解可以让Jackson在序列化和反序列化时忽略一些不确定的属性。举个例子:
 
@@ -2263,16 +2819,16 @@ public class Person {
     }
 
     @JsonAnySetter
-    public void setProperty(String key, Object value) {
+    public void setProperty(String key, Object value) {  // 要注意这里的区别啊,不是直接设置整个对象
         properties.put(key, value);
     }
 }
 
 ```
 
-在这个 `Person` 类中，我们有 `name` 和 `age` 两个属性，以及一个名为 `properties` 的 `Map`。我们使用 `@JsonAnyGetter` 注解 `getProperties()` 方法，使得在序列化时，`properties` 中的键值对会被平铺到最外层 JSON 对象。我们使用 `@JsonAnySetter` 注解 `setProperty()` 方法，使得在反序列化时，**JSON 对象中未知的属性**可以被添加到 `properties` 中。
+在这个 `Person` 类中，我们有 `name` 和 `age` 两个属性，以及一个名为 `properties` 的 `Map`。我们使用 `@JsonAnyGetter` 注解 `getProperties()` 方法，使得在序列化时，`properties` 中的**键值对会被平铺到最外层 JSON 对象**。我们使用 `@JsonAnySetter` 注解 `setProperty()` 方法，使得在反序列化时，**JSON 对象中未知的属性**可以被添加到 `properties` 中。
 
-2. `@JsonProperty`
+#### `@JsonProperty`
 
 `@JsonProperty`**注解可以用于指定Java对象字段和JSON属性之间的映射关系**。可以在Java对象字段上使用`@JsonProperty`注解指定JSON属性的名称，例如：
 
@@ -2287,7 +2843,7 @@ public class Person {
 
 在这个例子中，`@JsonProperty("fullName")`注解将Java对象字段`name`与JSON属性`fullName`建立了映射关系。在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，Jackson都会使用这个映射关系来确定Java对象字段和JSON属性之间的对应关系。
 
-3. `@JsonIgnore`
+#### `@JsonIgnore`
 
 `@JsonIgnore`注解可以用于标注Java对象字段，**指定在序列化和反序列化时忽略该字段**。例如：
 
@@ -2302,7 +2858,7 @@ public class Person {
 
 在这个例子中，`@JsonIgnore`注解标注在Java对象字段`age`上，表示在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，忽略`age`字段。
 
-4. `@JsonFormat`
+#### `@JsonFormat`
 
 `@JsonFormat`**注解可以用于指定Java对象字段的日期格式和时区**。例如：
 
@@ -2317,7 +2873,7 @@ public class Person {
 
 在这个例子中，`@JsonFormat`注解指定了Java对象字段`birthDate`的日期格式为`yyyy-MM-dd HH:mm:ss`，时区为`GMT+8`。在将Java对象序列化为JSON字符串或者将JSON字符串反序列化为Java对象时，Jackson会根据这个注解来进行日期格式和时区的转换。
 
-5. `@JsonInclude`
+#### `@JsonInclude`
 
 `@JsonInclude`**注解可以用于指定在序列化时忽略为空的Java对象字段**。例如：
 
@@ -2331,6 +2887,31 @@ public class Person {
 ```
 
 在这个例子中，`@JsonInclude`注解指定了Java对象字段`age`在序列化时不包括空值。也就是说，如果`age`字段为`null`，在将Java对象序列化为JSON字符串时，Jackson会忽略这个字段。
+
+### 补充说明
+
+1. jackson 底层 通过反射拿到所有字段, 然后查看该字段的一些注解信息,然后查看该字段是否具有get,set方法,如果有,就调用,并根据规则序列化和反序列化数据,  如果没有, 就看是否有特定的注解,比如JsonProperty,如果有,也可以根据规则序列化和反序列化数据,如果没有,则查看它是public还是其他修饰符,如果是public就进行序列化与反序列化,如果没有的话就不对这个字段进行操作
+2. Jackson在序列化的过程中, 如果没有一个可以序列化的字段,那就会抛出异常, 反序列化的过程中, 如果字符串对应的数据,没有被解析到对象中,就会抛出异常
+
+当然,这个只是默认规则, 我们可以通过配置ObjectMapper 来指定这些规则
+
+`ObjectMapper`提供了一系列的配置选项，允许您自定义序列化和反序列化的行为。以下是一些常用的配置规则及其用途：
+
+1. `DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES`：控制反序列化时是否在遇到未知属性（不存在于目标Java对象中的属性）时抛出异常。默认为`true`。设置为`false`时，遇到未知属性将不会抛出异常，而是忽略它们。
+2. `DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES`：控制反序列化时是否在将JSON属性值设置为null时抛出异常。默认为`false`。设置为`true`时，如果尝试将原始类型字段设置为null，则会抛出异常。
+3. `DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY`：控制反序列化时是否允许将单个值作为数组处理。默认为`false`。设置为`true`时，允许将单个值作为数组处理，例如将`{"value": 1}`解析为`{"value": [1]}`。
+4. `SerializationFeature.WRAP_ROOT_VALUE`：控制序列化时是否在根元素外添加包装元素。默认为`false`。设置为`true`时，将在根元素外添加包装元素，例如将`{"name": "John"}`序列化为`{"Person": {"name": "John"}}`。
+5. `SerializationFeature.INDENT_OUTPUT`：控制序列化时是否对输出的JSON字符串进行缩进（格式化）。默认为`false`。设置为`true`时，输出的JSON字符串将被格式化，使其具有更好的可读性。
+6. `SerializationFeature.WRITE_DATES_AS_TIMESTAMPS`：控制序列化时是否将日期类型（如`java.util.Date`）转换为时间戳。默认为`true`。设置为`false`时，日期将被格式化为字符串，例如`"2023-05-09T10:00:00.000+0000"`。
+7. `SerializationFeature.FAIL_ON_EMPTY_BEANS`：控制序列化时是否在尝试序列化空对象（没有任何属性的对象）时抛出异常。默认为`true`。设置为`false`时，不会对空对象抛出异常，而是序列化为空JSON对象`{}`。
+
+```
+ // 序列化的时候,如果没有数据,也不报错
+ objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
+ 
+ // 如果反序列化的时候,遇到一个数据放不进去,也不报错
+ objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
+```
 
 
 
@@ -2378,6 +2959,62 @@ public class Person {
     <artifactId>hutool-core</artifactId>
     <version>5.8.18</version>
 </dependency>
+```
+
+
+
+# 常用方法
+
+## base64图片互转
+
+base64转图片
+
+```java
+public void change(String data){
+	    String[] parts = data.split(",");
+        String base64Image = parts[1];
+        String mimeType = parts[0].split(";")[0].split(":")[1];
+        String fileExtension = mimeType.split("/")[1];
+
+        byte[] decodedBytes = Base64.getDecoder().decode(base64Image);
+        ByteArrayInputStream bais = new ByteArrayInputStream(decodedBytes);
+        BufferedImage image;
+        try {
+            image = ImageIO.read(bais);
+            if(image == null){
+                System.out.println("image为空");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("无法将字节数组转换为 BufferedImage", e);
+        }
+
+        if(Objects.equals(fileExtension, "jpeg")){  // 对于jpeg的话,这个库貌似不够转化,我们直接变成png
+            fileExtension = "png";
+        }
+		
+    	String path = "D:\\img\\"
+        File ft = new FIle(path);
+        if(!ft.exists())ft.mkdirs();
+    
+        String name = UUID.randomUUID() +"." +fileExtension;
+
+
+        boolean png = ImageIO.write(image, fileExtension, new File(path + name));
+}
+```
+
+反过来
+
+```java
+public void ImgToBase64() throws IOException {
+        FileInputStream fileInputStream = new FileInputStream("D:\\img\\0a6dae19-7924-41c3-9edd-95aa659af5d1.png");
+
+        String s = Base64.getEncoder().encodeToString(fileInputStream.readAllBytes());
+
+        FileOutputStream fileOutputStream = new FileOutputStream("a.txt");
+        fileOutputStream.write(("data:image/jpeg;base64," + s).getBytes(StandardCharsets.UTF_8));
+        fileOutputStream.close();
+    }
 ```
 
 
@@ -2529,3 +3166,62 @@ public class MyFactoryBean implements FactoryBean<MyObject> {
 - 这些路径的读写方式取决于它们的类型和位置。
 - 类路径资源和Web应用上下文资源通常只用于读取。如果需要写入资源文件，推荐使用文件系统路径或外部配置文件路径。
 - 当处理资源路径时，注意区分绝对路径和相对路径。绝对路径通常是相对于服务器文件系统的根目录，而相对路径是相对于类路径、Web应用根目录或其他基准路径。
+
+## springboot打war包部署项目
+
+### 新增配置类
+
+继承SpringBootServletInitializer,然后重写configure方法
+
+```
+@SpringBootApplication
+public class Demo5Application extends SpringBootServletInitializer {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Demo5Application.class, args);
+    }
+
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+        return builder.sources(Demo5Application.class);
+    }
+}
+
+```
+
+### 更改pom.xml
+
+更改打包方式
+
+```
+<packaging>war</packaging>
+```
+
+更改依赖
+
+```
+		<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+         </dependency>
+```
+
+### 执行插件
+
+```
+mvn package
+```
+
+将war包放入webapps目录下
+
+注意点:
+
+* **配置文件里面的上下文路径是无效的,文件名字才是上下文路径**
+* 一定要注意Tomcat和springboot的版本, 对应springboot3.0的话, 是改了servlet的包名的
+
+
+
+## 新版本
+
+现在已经有了springboot 3.0 和 spring6.0 了,但是啊, Java EE 已经变更为 Jakarta EE，包名以 javax开头的需要相应地变更为jakarta
