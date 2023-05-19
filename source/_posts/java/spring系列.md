@@ -2190,7 +2190,7 @@ resultMap里面的子配置项:
 
 通过组合使用这些动态SQL元素，你可以根据不同的条件和参数值生成灵活、可维护的SQL语句。动态SQL在处理复杂查询、条件过滤和分页等场景时非常有用。
 
-### $ 与 #
+### $ 与# #
 
 在MyBatis中，`$`和`#`都用于在SQL语句中插入参数值，但它们的用途和行为有所不同。
 
@@ -2294,7 +2294,7 @@ resultMap里面的子配置项:
 
 # Spring Security 
 
-## 理解基础的安全概念。
+## 基础的安全概念
 
 在计算机安全中，主要涉及到两个基本概念：身份验证(Authentication)和授权(Authorization)。
 
@@ -2304,27 +2304,7 @@ resultMap里面的子配置项:
 
 理解这两个概念是学习 Spring Security 的基础。在应用程序中，我们需要根据用户的角色和权限对资源进行保护，只有经过正确的身份验证和授权的用户才能访问这些资源。在接下来的学习中，我们将更深入地探讨这两个概念，并学习如何在 Spring Security 中实现身份验证和授权。
 
-## 核心组件
-
-1. **SecurityContextHolder**：这是Spring Security用来存储安全上下文（SecurityContext）的地方，默认情况下，它使用ThreadLocal来存储这些信息，这意味着我们可以在同一个线程中的任何地方访问它，无论我们是在什么层（服务层，DAO层，控制器层等）。**servlet默认是一个请求对应一个线程,所以所所有的操作都在一个线程里面**
-2. **SecurityContext**：它是当前登录用户的详细信息，包括其权限等。最重要的是它持有一个Authentication对象。
-3. **Authentication**：它是一个接口，提供了大量关于主体的信息，如他们的名字，他们所拥有的权限，以及他们的凭据。在用户已经认证后，我们可以从任何地方获取到Authentication对象（只要是在同一个线程中），只需要使用`SecurityContextHolder.getContext().getAuthentication()`。
-4. **Principal**：这个是Authentication对象中的一个属性，表示当前的主体或者说是用户。这可以是一个用户实例，或者是一个用户名。
-5. **Credentials**：这也是Authentication对象中的一个属性，表示主体的凭证，比如密码。
-
-## 基本使用
-
-为了方便学习现在先使用被弃用了的WebSecurityConfigurerAdapter来写代码
-
-```
-
-```
-
-
-
-
-
-
+## 基本定义
 
 Spring Security 是一个用于为 Java 应用程序提供身份验证和授权功能的安全框架。在 Spring Boot 中，Spring Security 可以轻松集成，提供自动配置和默认安全设置。以下是 Spring Security 在 Spring Boot 应用中的工作机制和工作流程：
 
@@ -2350,9 +2330,423 @@ Spring Security 是一个用于为 Java 应用程序提供身份验证和授权�
 
 11. 自定义扩展：Spring Security 提供了许多扩展点，允许开发者根据需求定制安全功能。例如，你可以实现自定义的 `UserDetailsService`、`AuthenticationProvider`、`AccessDecisionVoter` 等，以支持特定的认证和授权策略。此外，Spring Security 支持 OAuth2、OpenID Connect、SAML 等多种身份验证和单点登录（SSO）协议，可以通过添加相应的依赖和配置来集成这些协议。
 
-    
 
-## jwt认证
+
+## 核心组件
+
+Spring Security 是一个功能强大且可高度自定义的身份验证和访问控制框架。以下是其主要的核心接口和组件：
+
+1. `Authentication`：这是一个接口，保存了主体的详细信息。当用户成功登录后，所有的详细信息都会被存储在这个对象中。
+
+2. `AuthenticationManager`：这是一个接口，它定义了一个方法 `authenticate()`，该方法可以从任何位置调用以进行身份验证。
+
+3. `ProviderManager`：这是 AuthenticationManager 的一个实现。它迭代通过 ProviderManager 配置的 AuthenticationProvider 列表。
+
+4. `AuthenticationProvider`：这是一个接口，它的实现提供了一个方式来获取用户详细信息。
+
+5. `UserDetailsService`：这是一个接口，它定义了一个方法 `loadUserByUsername()`。这个方法在任何位置都可以调用，以获取用户详细信息。
+
+6. `GrantedAuthority`：这是一个接口，代表应用程序的认证对象的授权，即角色和权限。
+
+7. `SecurityContextHolder`：这是一个类，它用于存储当前线程的安全上下文，包括当前用户的详细信息。
+
+8. `SecurityContext`：这是一个接口，用于保存 Authentication 和可能的任何其他需要的信息。
+
+9. `AccessDecisionManager`：这是一个接口，用于做访问控制决策。
+
+10. `FilterSecurityInterceptor`：这是一个类，它处理所有 HTTP 请求并检查安全性。它是 Spring Security Web 安全的核心组件。
+
+以上就是 Spring Security 中的一些主要接口和组件。要注意的是，Spring Security 的设计是可插拔的，这意味着这些接口和组件可以根据需要进行自定义和替换。
+
+## 核心过滤器
+
+在Spring Security 5中，有16个主要的过滤器，它们按照执行顺序如下：
+
+1. `ChannelProcessingFilter`：处理请求的安全通道，例如http与https。
+
+2. `SecurityContextPersistenceFilter`：在`HttpSession`中存储并提取`SecurityContext`，在每个请求上下文中保持用户身份。
+
+3. `ConcurrentSessionFilter`：在用户登录时检查并限制同时登录的会话数量。
+
+4. `HeaderWriterFilter`：向HTTP响应中添加安全头，如X-XSS-Protection，X-Content-Type-Options。
+
+5. `CsrfFilter`：**提供跨站请求伪造（CSRF）保护，验证请求中的CSRF token**。
+
+6. `LogoutFilter`：处理用户的注销，清除用户的认证信息和会话。
+
+7. `UsernamePasswordAuthenticationFilter`：处理基于表单的认证请求，即用户名和密码的认证。
+
+8. `DefaultLoginPageGeneratingFilter`：如果应用没有定义登录页面，这个过滤器将生成一个默认的登录页面。
+
+9. `DefaultLogoutPageGeneratingFilter`：如果应用没有定义注销页面，这个过滤器将生成一个默认的注销页面。
+
+10. `BasicAuthenticationFilter`：处理HTTP Basic认证请求。
+
+11. `RequestCacheAwareFilter`：检查并使用缓存的请求，例如在登录前访问的受保护资源。
+
+12. `SecurityContextHolderAwareRequestFilter`：向请求中添加安全上下文凭据，如用户身份。
+
+13. `AnonymousAuthenticationFilter`：为未认证的用户创建一个匿名的`Authentication`，使你能够对未认证的用户进行授权决策。
+
+14. `SessionManagementFilter`：处理会话管理，包括固定会话保护和并发会话控制。
+
+15. `ExceptionTranslationFilter`：捕获Spring Security引发的异常并启动认证流程或发送HTTP 403状态码。
+
+16. `FilterSecurityInterceptor`：最后的过滤器，它根据用户的认证信息和访问的URL，决定用户是否有权限访问该资源。
+
+这是Spring Security的默认过滤器链，但你可以根据你的需求对其进行定制和扩展。
+
+这样过滤器最终都会被执行他们就像函数递归一样, 先自己做一点事情  然后开始递归下去, 等到递归完毕后  自己再做一点事情, 这些过滤器最主要的就是做三件事,  认证, 授权, 保护 
+
+
+
+## 鉴权
+
+spring sercurity给我们提供了权限校验的功能, 对于那些需要权限的接口, 它会去检测用户的凭证信息, 查看它是否具有这个权限访问这个接口, 鉴权可以在配置类中声明,也可以在方法上声明
+
+配置类中声明
+
+```
+ httpSecurity.authorizeRequests()
+                .antMatchers("/hello").hasAuthority("admin") // 这个接口需要admin权限
+                .antMatchers("/test1").hasAuthority("p1") // 这个接口需要p1权限
+```
+
+方法上声明
+
+```
+// 开启方法注解支持
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig 
+```
+
+```
+   @RequestMapping("/hello")
+    @PreAuthorize("hasAuthority('admin')")
+    public String login() {
+        return "hello world";
+    }
+```
+
+## 失败处理
+
+### 认证失败处理
+
+```java
+public class MyUnauthorizedHandler implements AuthenticationEntryPoint {
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json");
+        response.getWriter().println("认证失败");
+        response.getWriter().flush();
+    }
+}
+
+```
+
+配置类里面修改
+
+```java
+ httpSecurity.exceptionHandling().authenticationEntryPoint(new MyUnauthorizedHandler()); // 添加自定义的未认证处理
+```
+
+### 鉴权失败处理
+
+```java
+public class MyAccessDeniedHandler implements AccessDeniedHandler {
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json");
+        response.getWriter().println("没有权限访问");
+        response.getWriter().flush();
+    }
+}
+```
+
+配置类里面修改
+
+```java
+ httpSecurity.exceptionHandling().accessDeniedHandler(new MyAccessDeniedHandler()); // 添加自定义的未授权处理器
+```
+
+## 自定义认证
+
+spring Security 的自定义实际上涵盖了三个主要的部分：
+
+1. **用户信息的获取**：这个部分是关于如何从请求中提取用户的身份信息。例如，这可能包含从请求头中提取一个token，或者从请求参数或体中提取用户名和密码。你需要自定义一个部分来告诉 Spring Security 如何获取这些信息。这一部分需要自定义过滤器去处理
+
+2. **认证过程**：这个部分描述了验证用户身份的过程。你需要自定义一个认证处理器，告诉 Spring Security 如何根据提供的信息判断用户的身份是否有效。这可能涉及到与数据库的交互，或者与第三方身份验证服务的交互。这一部分可以用AuthenticationProvider去处理,也可以在过滤器中处理
+
+3. **用户信息的加载与比对**：这个部分是指定如何从你的数据源（例如数据库或者其他服务）加载用户的详细信息，并与获取到的用户信息进行比对。你需要自定义一个“用户详情服务”，来告诉 Spring Security 如何加载用户数据并进行比对。可以用UserDetailsService,也可以自己用其他方法拿到用户存好的信息
+
+这三个步骤构成了自定义 Spring Security 的基础框架。通过这样的设计，Spring Security 能够在一个统一的框架内处理各种各样的身份验证方法，同时还能够保持很高的灵活性，适应各种复杂的需求场景。
+
+## 自定义token认证
+
+### 创建身份信息
+
+```
+public class JwtAuthenticationToken extends AbstractAuthenticationToken {
+
+
+    private String token;
+
+    public JwtAuthenticationToken(String token) {
+        super(null);
+        this.token = token;
+    }
+
+    public JwtAuthenticationToken(Collection<? extends GrantedAuthority> authorities) {
+        super(authorities);
+        setAuthenticated(true);
+    }
+
+
+    @Override
+    public Object getCredentials() {
+        return null;
+    }
+
+    @Override
+    public Object getPrincipal() {
+        return null;
+    }
+
+    public String getToken() {
+        return token;
+    }
+}
+```
+
+### 创建验证器
+
+```
+public class JwtAuthenticationProvider implements AuthenticationProvider {
+
+
+
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        JwtAuthenticationToken jwtAuthenticationToken = (JwtAuthenticationToken) authentication;
+
+        if(!TokenUtil.isOk(jwtAuthenticationToken.getToken())){
+            return jwtAuthenticationToken; // 验证失败,直接返回未验证的信息,如果后面还有过滤器的话,交给他们看他们能不能处理
+        }
+        
+        // 验证成功,设置为已验证
+        jwtAuthenticationToken.setAuthenticated(true);
+        JSONObject map =  TokenUtil.parseToken(jwtAuthenticationToken.getToken());
+
+        List<String> stringList = map.getBeanList("authorities", String.class);
+
+        stringList.forEach(System.out::println);
+
+        List<SimpleGrantedAuthority> authorities = new LinkedList<>();
+        stringList.forEach(s -> authorities.add(new SimpleGrantedAuthority(s)));
+        // 生成一个已验证的JwtAuthenticationToken,并把authorities和map设置进去
+        JwtAuthenticationToken jwtAuthenticationToken1 = new JwtAuthenticationToken(authorities);
+        jwtAuthenticationToken1.setDetails(map);
+        return jwtAuthenticationToken1;
+
+    }
+
+    @Override
+    public boolean supports(Class<?> authentication) {
+        // 判断传进来的authentication是不是JwtAuthenticationToken的子类,如果是就返回true,表示支持
+        return authentication.isAssignableFrom(JwtAuthenticationToken.class);
+    }
+}
+```
+
+#### 创建过滤器
+
+```
+public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
+
+    public static String HEADER = "Authorization";
+    public static String TYPE = "Bearer ";
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        String header = request.getHeader(HEADER);
+        if(header != null && header.startsWith(TYPE)){
+            String token = header.substring(TYPE.length());
+
+            JwtAuthenticationToken jwtAuthenticationToken = new JwtAuthenticationToken(token);
+            Authentication authenticate = authenticationManager.authenticate(jwtAuthenticationToken);
+            if(authenticate != null && authenticate.isAuthenticated()){
+                SecurityContextHolder.getContext().setAuthentication(authenticate);
+            }
+        }
+
+        filterChain.doFilter(request,response);
+    }
+
+
+}
+
+```
+
+### 自定义登录请求
+
+```
+@RestController
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/login")
+    public Map<String,Object> login(@RequestBody Map<String,Object> map){
+        String username = (String) map.get("username");
+        String password = (String) map.get("password");
+
+        User user = userService.getUserByUsername(username);
+
+        if(user == null) {
+            return Map.of("code",200,"msg","用户不存在");
+        }
+
+        if(!user.getPassword().equals(password)) {
+            return Map.of("code",200,"msg","密码错误");
+        }
+
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put("id", user.getId());
+        data.put("username", user.getUsername());
+
+        data.put("authorities", user.getRoles());
+
+        String token = "Bearer " + TokenUtil.getToken(data);
+
+
+
+        return Map.of("code",200,"msg","登录成功","token",token);
+
+    }
+
+    @RequestMapping("/logout")
+    public Map<String,Object> logout() {
+
+        // 拿到当前的SecurityContext
+        SecurityContext context = SecurityContextHolder.getContext();
+
+        // 拿到当前的Authentication
+        Authentication authentication = context.getAuthentication();
+
+        // 如果是匿名用户，就直接返回没有登录
+        if(authentication.getClass().isAssignableFrom(AnonymousAuthenticationToken.class)) {
+           return Map.of("code",200,"msg","用户未登录");
+        }
+
+        // 如果是已经登录的用户，就清空SecurityContextHolder中的信息
+        SecurityContextHolder.clearContext();
+        return Map.of("code",200,"msg","登出成功");
+    }
+
+}
+
+```
+
+### 配置类
+
+```
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Autowired
+    AuthenticationConfiguration authenticationConfiguration;
+
+    @Bean
+    public JwtAuthenticationProvider jwtAuthenticationProvider(){
+        return new JwtAuthenticationProvider();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager() throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+
+    @Bean
+    public JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter() throws Exception {
+        return new JwtAuthenticationTokenFilter();
+
+    }
+
+    @Bean
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+
+        httpSecurity.authorizeRequests()
+                .antMatchers("/hello").hasAuthority("admin") // 这个接口需要p1权限
+                .antMatchers("/login","/logout").permitAll() // 这两个接口不需要认证
+                .antMatchers("/test1").hasAuthority("p1") // 这个接口不需要认证，但是不能是已经认证的用户
+                .anyRequest().authenticated() // 其他接口都需要认证
+                .and()
+                .formLogin().disable()  // 禁用默认表单登录
+                .logout().disable() // 禁用默认退出登录
+                .csrf().disable() // 禁用csrf
+                .sessionManagement().disable(); // 禁用session
+        // 添加自定义的jwt认证器
+        httpSecurity.authenticationProvider(jwtAuthenticationProvider());
+
+        // 添加自定义的jwt过滤器
+        httpSecurity.addFilterBefore(jwtAuthenticationTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        httpSecurity.authenticationManager(authenticationConfiguration.getAuthenticationManager());
+        return httpSecurity.build();
+    }
+
+}
+
+```
+
+这个是按照标准的三步走, 但是我感觉有点麻烦, 我其实可以在filter里面全部弄完,不需要验证器, 这样多方便
+
+
+
+## 补充
+
+### 过滤链
+
+在Spring Security的过滤器链中，每个过滤器会依次处理请求。**一旦一个过滤器完成了身份验证，它会填充Security Context，后续的过滤器通常就会跳过身份验证步骤**。**如果一个过滤器没有完成身份验证，那么请求就会继续传递给后续的过滤器进行处理**。前提是这个过程没有抛出异常
+
+所以，如果 `UsernamePasswordAuthenticationFilter` 没有完成身份验证（例如，请求中没有包含用户名和密码），那么你的自定义过滤器就有机会处理这个请求。
+
+这就是为什么过滤器的顺序很重要。如果你希望自定义的过滤器能处理特定类型的身份验证，那么你需要确保它位于能处理这种类型身份验证的内置过滤器之前。这样，当内置过滤器不能处理请求时，你的自定义过滤器就可以接手处理。
+
+这种设计让Spring Security能够支持多种类型的身份验证，并且可以通过添加自定义过滤器来扩展其功能。
+
+### AuthenticationProvider优先级
+
+Spring Security 的 `ProviderManager`（`AuthenticationManager` 的一个实现）会遍历所有的 `AuthenticationProvider` 实例，按照它们在配置中的顺序，依次尝试对提供的 `Authentication` 对象进行认证。
+
+当 `ProviderManager` 找到一个能够处理当前 `Authentication` 对象的 `AuthenticationProvider` 时，它会调用这个 `AuthenticationProvider` 的 `authenticate` 方法。如果该 `AuthenticationProvider` **认证成功，则认证过程结束**，否则，`ProviderManager` 会继续尝试下一个 `AuthenticationProvider`。
+
+如果所有的 `AuthenticationProvider` 都无法认证成功，`ProviderManager` 会抛出一个 `AuthenticationException`。
+
+因此，你可以根据你的需求配置多个 `AuthenticationProvider`，Spring Security 会按照它们在配置中的顺序，依次尝试每个 `AuthenticationProvider`。并且，你可以为每种 `Authentication` 类型（如用户名密码、OAuth 2.0 token、LDAP 等）配置不同的 `AuthenticationProvider`。
+
+### hasRole 和 hasAuthority的区别
+
+在 Spring Security 中，`hasAuthority()` 和 `hasRole()` 都是方法级别的安全性注解，用于决定某个用户是否拥有访问特定方法的权限。但是它们之间存在一些细微的差别：
+
+1. **hasAuthority()**: 这个方法会检查 `Authentication` 对象中的 `GrantedAuthority` 列表，看用户是否具有指定的权限。你可以使用任意的字符串来作为权限，例如 `hasAuthority('READ')`。
+
+2. **hasRole()**: 这个方法也会检查 `Authentication` 对象中的 `GrantedAuthority` 列表，但它假定你的权限是以 `ROLE_` 前缀开头的。所以，如果你有一个名为 `ROLE_ADMIN` 的权限，你可以使用 `hasRole('ADMIN')` 来检查用户是否拥有这个权限。也就是说，`hasRole()` 会自动在你给定的角色名前加上 `ROLE_` 前缀。
+
+总的来说，`hasAuthority()` 和 `hasRole()` 的功能基本相同，但是 `hasRole()` 更适用于检查以 `ROLE_` 前缀命名的权限，而 `hasAuthority()` 可以用来检查任何名称的权限。你可以根据你的实际需求来选择使用哪个方法。
+
+### jwt认证
 
 JWT是指JSON Web Token（JSON网络令牌），是一种用于在网络应用之间传递信息的开放标准（RFC 7519）。它可以作为一种轻量级的安全性传输方式，用于在发送方和接收方之间传递声明。这些声明可以被验证和信任，因此可以用来实现单点登录、用户认证等功能。
 

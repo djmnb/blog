@@ -1855,6 +1855,12 @@ scp -r root@192.168.183.128:路径 ./
 * -i 可以实现批量下载 wget -i test.txt  test.txt里面写上要下载的url路径
 * -c 适合下载大文件,如果网路被中断,就会暂停之前的下载,如果我们不使用这个参数就会从头下载,所以这个参数可以继续之前的下载
 
+```
+wget -c https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.75/bin/apache-tomcat-9.0.75.zip
+```
+
+
+
 ### curl
 
 这个命令的功能可以充当一个http客户端,可以发起http请求,所以也可以下载文件

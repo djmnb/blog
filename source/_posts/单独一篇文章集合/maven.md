@@ -686,3 +686,75 @@ Maven 配置文件的优先级如下：
 ## 注意点
 
 如果我们有多个镜像,  maven会根据顺序 和 规则 去 连接这些镜像对应的仓库, **如果连接成功了, 就不会再去连接其他仓库, 即使其他仓库里面有我们需要的依赖,而这个仓库没有** ,这样的话就会报出依赖找不到的错误,因此我们要注意这些镜像能够匹配哪些仓库
+
+# 多环境配置
+
+在开发的时候,我们通常需要多套环境切换,  比如springboot 中,  如果我们通过spring.profiles.active 去切换的话,这样有点太麻烦了, 每次都要修改,  我觉得使用maven自带的这个多环境配置会更方便,  接下来讲一下springboot中如何使用maven配置多环境
+
+在springboot 中的 配置文件中引入maven变量
+
+```properties
+spring.profiles.active=@activatedProperties@
+```
+
+然后在pom.xml中配置, 这个千万不能少,不然的话,maven不会替换掉springboot中的变量值的
+
+```xml
+  <build>
+    <finalName>ROOT</finalName>  <!-- 打包后的名称 -->
+   <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>  <!-- 启用过滤 即该资源中的变量将会被过滤器中的值替换 --> 
+        <includes>  <!-- 指定需要过滤的文件,不要全部指定,比如如果有些静态资源里面也有@@或者${}这样的变量,会出现问题的 -->
+          <include>**/*.properties</include>
+          <include>**/*.xml</include>
+        </includes>
+      </resource>
+       
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>  <!-- 关闭资源文件过滤 -->
+        <excludes>  <!-- 指定不需要过滤的文件 -->
+          <exclude>**/*.properties</exclude>
+          <exclude>**/*.xml</exclude>
+        </excludes>
+      </resource>
+    </resources>
+  </build>
+```
+
+接下来在pom.xml创建多个配置环境激活变量
+
+```xml
+<profiles>
+
+    <profile>
+      <id>devlop</id>
+      <properties>
+        <activatedProperties>devlop,devlopallow</activatedProperties>
+      </properties>
+    </profile>
+    <profile>
+      <id>devlop-not-allow</id>
+      <properties>
+        <activatedProperties>devlop</activatedProperties>
+      </properties>
+    </profile>
+    <profile>
+      <id>local</id>
+      <properties>
+        <activatedProperties>local</activatedProperties>
+      </properties>
+      <activation>
+        <activeByDefault>true</activeByDefault> <!-- 默认激活该profile -->
+      </activation>
+    </profile>
+  </profiles>
+```
+
+这样之后我们就只需要在maven中选择哪个配置文件就行了,不用修改代码
+
+![image-20230519094122926](../../img/mavenassets/image-20230519094122926.png)
+
+默认情况下, 在 Maven 的 pom.xml 文件中定义的变量只在 Maven 构建过程中有效。**并不会影响我们的配置文件和环境变量**,  然而，可以使用 Maven 的资源过滤功能来将 Maven 变量的值插入到 Java 属性文件（如 .properties 或 .yml 文件）中
