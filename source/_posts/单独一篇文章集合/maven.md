@@ -605,10 +605,6 @@ public class ParamterMojo extends AbstractMojo {
 <project>
     <!-- ... 其他配置 ... -->
 
-    <properties>
-        <!-- 默认激活的 profile -->
-        <activeProfile>development</activeProfile>
-    </properties>
 
     <profiles>
         <profile>
@@ -618,6 +614,7 @@ public class ParamterMojo extends AbstractMojo {
                     <name>activeProfile</name>
                     <value>development</value>
                 </property>
+                <activeByDefault>true</activeByDefault> <!-- 默认激活该profile -->
             </activation>
             <properties>
                 <db.url>jdbc:mysql://localhost:3306/dev_db</db.url>
@@ -715,7 +712,7 @@ spring.profiles.active=@activatedProperties@
       <resource>
         <directory>src/main/resources</directory>
         <filtering>false</filtering>  <!-- 关闭资源文件过滤 -->
-        <excludes>  <!-- 指定不需要过滤的文件 -->
+        <excludes>  <!-- 指定不需要关闭过滤的文件 -->
           <exclude>**/*.properties</exclude>
           <exclude>**/*.xml</exclude>
         </excludes>
@@ -757,4 +754,4 @@ spring.profiles.active=@activatedProperties@
 
 ![image-20230519094122926](../../img/mavenassets/image-20230519094122926.png)
 
-默认情况下, 在 Maven 的 pom.xml 文件中定义的变量只在 Maven 构建过程中有效。**并不会影响我们的配置文件和环境变量**,  然而，可以使用 Maven 的资源过滤功能来将 Maven 变量的值插入到 Java 属性文件（如 .properties 或 .yml 文件）中
+默认情况下, 在 Maven 的 pom.xml 文件中定义的变量只在 Maven 构建过程中有效。**并不会影响我们的配置文件和环境变量**,  然而，可以使用 Maven 的资源过滤功能来将 **Maven 变量的值插入到 Java 属性文件**（如 .properties 或 .yml 文件）中, **但是要注意哪些需要替换,哪些不需要替换**

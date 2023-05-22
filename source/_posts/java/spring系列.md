@@ -57,9 +57,9 @@ Spring 全家桶（Spring Ecosystem）包括许多项目和模块，以支持各
 
 Spring Framework 是一个开源的 Java 应用框架，由 Rod Johnson 创立于 2003 年。它旨在简化企业级 Java 开发，提供了一套完整的解决方案，用于创建各种类型的 Java 应用程序，包括 Web、桌面和分布式应用。Spring Framework 的主要特性如下：
 
-1. Inversion of Control（IoC，控制反转）：Spring Framework 提供了一个 IoC 容器，负责管理对象之间的依赖关系。通过使用控制反转，开发者可以将关注点集中在业务逻辑上，而不是依赖关系的管理和实例化过程。
-2. Dependency Injection（DI，依赖注入）：依赖注入是实现 IoC 的一种方法。Spring Framework 支持构造器注入和属性注入，使得对象之间的依赖关系可以在配置文件或注解中声明，从而提高代码的可测试性和可维护性。
-3. Aspect-Oriented Programming（AOP，面向切面编程）：Spring Framework 提供了 AOP 支持，允许开发者将横切关注点（如日志记录、事务管理等）从核心业务逻辑中分离出来。这有助于提高代码的模块化程度和可读性。
+1. Inversion of Control（IoC，控制反转）：Spring Framework 提供了一个 IoC 容器，**负责管理对象之间的依赖关系。通过使用控制反转，开发者可以将关注点集中在业务逻辑上，而不是依赖关系的管理和实例化过程**。
+2. Dependency Injection（DI，依赖注入）：依赖注入是实现 IoC 的一种方法。Spring Framework **支持构造器注入和属性注入，使得对象之间的依赖关系可以在配置文件或注解中声明**，从而提高代码的可测试性和可维护性。
+3. Aspect-Oriented Programming（AOP，面向切面编程）：Spring Framework 提供了 AOP 支持，允许开发者将横切关注点（如日志记录、事务管理等）**从核心业务逻辑中分离出来。这有助于提高代码的模块化程度和可读性。**
 
 
 
@@ -396,7 +396,7 @@ public void logBefore(JoinPoint joinPoint, MyAnnotation myAnnotation) {
 
 ### 定义
 
-Spring中有一些后置处理器，它们可以在Bean的生命周期中的不同阶段进行拦截，从而扩展或自定义Bean的行为。按照B**ean在Spring容器中被加载的顺序**，下面是一些常见的后置处理器及其用途和作用时机：
+Spring中有一些后置处理器，它们可以在Bean的生命周期中的不同阶段进行拦截，从而扩展或自定义Bean的行为。按照**Bean在Spring容器中被加载的顺序**，下面是一些常见的后置处理器及其用途和作用时机：
 
 1. BeanDefinitionRegistryPostProcessor：
     用途：它允许在**Bean定义被加载到容器之前，修改或添加Bean定义**。可以用于动态注册Bean或修改Bean的元数据。

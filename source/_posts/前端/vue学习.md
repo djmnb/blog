@@ -1,6 +1,9 @@
 ---
 title: vue学习总结
 date: 2023-4-1
+categories:
+  - 前端
+tags:
 ---
 
 # 前言
@@ -3415,7 +3418,74 @@ const myDirective = {
 
 ## 组件名字
 
-使用语法糖的格式是无法定义组件
+使用语法糖的格式是无法定义组件名字的,我们可以另起一个script标签来定义名字
+
+```
+<script>
+export default {
+  name: "search",
+};
+</script>
+<script setup>
+</script>
+```
+
+## 异步setup
+
+如果我们希望我们的setup里面能够调用其他的异步函数并且等待他的话, 我们必须将我们的组件声明为一个异步组件, 异步组件分为两种,一种就是异步普通组件,一种是异步路由组件
+
+### 异步路由组件
+
+在router.js中
+
+```
+const Index = () => import("../pages/Index.vue")
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes: [
+    { path: '/index', component: Index }
+  ]
+})
+
+```
+
+然后需要父组件中加入Suspense让用户体验更好
+
+```
+  <Suspense>
+    <template #default>
+      <router-view></router-view>
+    </template>
+    <template #fallback>
+      <div>Loading...</div> <!-- 这里可以替换成你的加载状态组件 -->
+    </template>
+  </Suspense>
+```
+
+## 普通组件
+
+在父组件的setup函数中
+
+```
+const Index = () => import("../pages/Index.vue")
+```
+
+引入该组件
+
+```
+<template>
+  <Suspense>
+    <template #default>
+      <Index />
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+</template>
+```
+
+
 
 ## 动态组件
 
