@@ -10,11 +10,7 @@ categories:
 
 
 
-# AbstractApplicationContext抽象类
-
-## 属性
-
-### private ApplicationStartup applicationStartup
+# ApplicationStartup
 
 `ApplicationStartup` 接口是 Spring 框架提供的一个扩展点，允许开发者在 Spring 应用启动期间收集性能指标和监控数据。通过实现这个接口，你可以自定义收集和处理这些数据的方式，以便更好地理解和优化你的应用程序。
 
@@ -119,8 +115,8 @@ spring.context.config-classes.parse  //  开始通过一开始的配置类拿到
 classCount:11  // 这个过程总共拿到的bean定义信息
 结束
 结束
-开始
-spring.beans.instantiate   // 开始实例化所有后置处理器
+开始 // 开始实例化所有后置处理器,优先实列化所有的bean定义后置处理器,执行里面的的方法,然后就是beanfactory后置处理器,然后就是bean后置处理器
+spring.beans.instantiate   
 beanName:customBeanDefinitionRegistryPostProcessor
 beanType:interface org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
 结束
@@ -130,15 +126,15 @@ beanName:myBeanDefinitionRegistryPostProcessor
 beanType:interface org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
 结束
 开始
-spring.context.beandef-registry.post-process  // 由于我们刚刚实例化了一个后置处理器,所以这个后置处理器初始化会调用这个上一个后置处理器的方法
+spring.context.beandef-registry.post-process  // 由于我们刚刚实例化了一个bean定义后置处理器,所以这个后置处理器初始化会调用里面的方法往容器中注入bean
 postProcessor:com.djm.processor.CustomBeanDefinitionRegistryPostProcessor@7ff95560
 结束
 开始
 spring.context.beandef-registry.post-process
-postProcessor:com.djm.processor.MyBeanDefinitionRegistryPostProcessor@add0edd
-我的bean定义注册后置处理器被执行 // 自己也是一个后置处理器, 也会执行
+postProcessor:com.djm.processor.MyBeanDefinitionRegistryPostProcessor@add0edd 
+我的bean定义注册后置处理器被执行 
 结束
-开始
+开始  // //刚刚是bean定义后置处理器,现在是beanfactory后置处理器
 spring.context.bean-factory.post-process
 postProcessor:org.springframework.context.annotation.ConfigurationClassPostProcessor@6950e31
 开始
@@ -147,7 +143,7 @@ classCount:1
 结束
 结束
 开始
-spring.context.bean-factory.post-process //刚刚是bean定义后置处理器,现在是beanfactory后置处理器
+spring.context.bean-factory.post-process 
 postProcessor:com.djm.processor.CustomBeanDefinitionRegistryPostProcessor@7ff95560
 结束
 开始
@@ -178,7 +174,7 @@ postProcessor:com.djm.processor.MyBeanFactoryPostProcessor@18078bef
 我的beanFactoryPostProcessor被执行
 结束
 开始
-spring.beans.instantiate
+spring.beans.instantiate // 开始bean后置处理器的实例化, 这里实例化的时候并不会执行bean后置处理器的方法
 beanName:org.springframework.context.annotation.internalAutowiredAnnotationProcessor
 beanType:interface org.springframework.beans.factory.config.BeanPostProcessor
 结束
@@ -188,12 +184,12 @@ beanName:myBeanPostProcessor
 beanType:interface org.springframework.beans.factory.config.BeanPostProcessor
 结束
 开始
-spring.beans.instantiate
+spring.beans.instantiate // 实例化所有的bean, 然后会执行bean后置处理器中的方法
 beanName:main
 开始
 spring.beans.instantiate
 beanName:myListener
-我的bean后置处理器被执行
+我的bean后置处理器被执行  
 结束
 我的bean后置处理器被执行
 结束
@@ -204,7 +200,7 @@ beanName:myConponent
 结束
 开始
 spring.beans.instantiate
-beanName:&myfactory
+beanName:&myfactory  // 工厂类的名字
 我的bean后置处理器被执行
 结束
 开始
