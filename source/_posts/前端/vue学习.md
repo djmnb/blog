@@ -2,8 +2,11 @@
 title: vue学习总结
 date: 2023-4-1
 categories:
+  - 框架学习
   - 前端
 tags:
+  - vue
+  - 需要复习
 ---
 
 # 前言
@@ -2128,7 +2131,7 @@ export default {
 </script>
 ```
 
-这些示例展示了 Vue 2 中三种插槽的基本用法。在实际项目中，您可以根据需求灵
+
 
 ### 注意点
 
@@ -2556,6 +2559,8 @@ Vue-router 的路由匹配规则主要基于以下几个方面：
 
 4. 独享守卫:
 
+   **这个是在配置一个路由组件的时候,单独在配置项里面**
+
    ```js
    beforeEnter(to,from,next){
    	console.log('beforeEnter',to,from)
@@ -2572,15 +2577,49 @@ Vue-router 的路由匹配规则主要基于以下几个方面：
    }
    ```
 
+   像这种
+
+   ```js
+   import { createRouter, createWebHistory } from 'vue-router'
+   
+   const router = createRouter({
+     history: createWebHistory(),
+     routes: [
+       {
+         path: '/protected',
+         component: () => import('@/views/ProtectedView.vue'),
+         beforeEnter: (to, from, next) => {
+           // 这是一个独享守卫。你可以在这里放置任何你需要的逻辑，比如检查用户是否已经登录。
+           if (isLoggedIn()) {
+             next() // 允许导航
+           } else {
+             next('/login') // 重定向到登录页
+           }
+         },
+       },
+       // 其他路由...
+     ],
+   })
+   
+   export default router
+   
+   ```
+
+   
+
 5. 组件内守卫：
 
    ```js
    //进入守卫：通过路由规则，进入该组件时被调用
    beforeRouteEnter (to, from, next) {
    },
+   // 路由参数变化守卫:
+   beforeRouteUpdate (to, from, next) {
+   },
    //离开守卫：通过路由规则，离开该组件时被调用
    beforeRouteLeave (to, from, next) {
    }
+   
    ```
 
 ### 路由器的两种工作模式

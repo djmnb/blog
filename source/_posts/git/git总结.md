@@ -1,7 +1,12 @@
 ---
 title: git
 date: 2022/11/25
-tags: git
+tags: 
+  - git
+  - 需要复习
+categories:
+  - 工具
+  - git
 ---
 
 # 什么是git
@@ -375,7 +380,7 @@ git clone git@ip地址:/home/git/test.git
 
 ## 个人尝试删掉记录
 
-我们可能在工作的时候,心里不爽,骂了两句老板,在代码里面,然后我们还提交到了远程库,第二题,又怂了,想从远程库里面吧骂老板那句话给删掉
+我们可能在工作的时候,心里不爽,骂了两句老板,在代码里面,然后我们还提交到了远程库,第二天,又怂了,想从远程库里面吧骂老板那句话给删掉
 
 ### 方法一(不能删除,但是也难被发现)
 
@@ -386,6 +391,33 @@ git clone git@ip地址:/home/git/test.git
 直接本地修改,再进行强制推送,好像这个和方法一也没什么区别(我可真是个大聪明)
 
 总结:咱们还是不要乱骂老板,只要推送上去了,就会有记录,除非你直接删掉公司的仓库
+
+### 方法三
+
+使用下面这个命令  这里的target是相对本地git仓库的地址
+
+```
+git filter-branch --force --index-filter \
+  "git rm -r --cached --ignore-unmatch target" \
+  --prune-empty --tag-name-filter cat -- --all
+
+```
+
+强制推送
+
+```
+git push origin --force --all
+git push origin --force --tags
+```
+
+清理本地仓库
+
+```
+git push origin --force --all
+git push origin --force --tags
+```
+
+> 不过这里需要你对仓库有足够的权限,能够强制推送覆盖别人的代码
 
 ## 不在当前文件夹操作这个仓库
 

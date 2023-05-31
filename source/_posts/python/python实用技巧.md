@@ -1,6 +1,9 @@
 ---
 title: python实用技巧
 date: 2023-3-14
+tags:
+  - python
+  - 需要复习
 ---
 
 ## 基本数据结构
