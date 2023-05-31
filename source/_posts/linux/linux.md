@@ -579,10 +579,24 @@ unzip 压缩包名字 -d 解压路径
 
 ## whereis
 
-在指定目录下找文件  whereis filename  
+在预定义目录下找文件  whereis filename  
 
-* -l 查看查找的目录
+* -l 查看预定义的目录
 * -b 查找二进制文件
+
+`whereis` 命令默认搜索的路径在各种系统中可能有所不同，但通常，它会在下列路径中搜索：
+
+- `/bin`
+- `/sbin`
+- `/usr/bin`
+- `/usr/sbin`
+- `/usr/local/bin`
+- `/usr/local/sbin`
+- `/usr/include`
+- `/usr/share/man`
+- `/usr/share/info`
+
+这些路径通常包含了大部分的系统命令、库文件、头文件和文档
 
 # 文本三剑客
 
@@ -895,6 +909,20 @@ hostnamectl set-hostname name
 ```
 
 
+
+## sysctl
+
+`sysctl` 是一个在 Unix 和 Linux 操作系统中用于**读取和修改内核参数的命令**。这些内核参数存储在 `/proc/sys/` 目录下，可以影响操作系统的各种行为。
+
+**这些内核参数包括网络设置、内存使用、文件系统行为等等**。例如，`net.ipv4.ip_forward` 参数控制着是否开启 IPv4 转发（也就是是否允许作为路由器使用），而 `vm.swappiness` 参数控制着操作系统在什么情况下开始使用交换空间。
+
+`sysctl` 命令可以有以下形式：
+
+- `sysctl parameter_name`：显示指定参数的当前值。
+- `sysctl -w parameter_name=value`：修改指定参数的值。这个操作可能需要 root 权限**，并且只会对当前会话生效。在重启后，修改将失效。**
+- `sysctl -p file`：加载指定的配置文件，通常用于在系统启动时设置参数。如果没有指定文件，那么默认加载 `/etc/sysctl.conf` 文件。
+
+需要注意的是，不是所有的参数都可以修改，一些核心的参数可能是只读的。此外，修改内核参数可能会影响系统的稳定性和安全性，所以在没有明确的理由和了解可能的影响之前，不建议随便修改。
 
 ## 查看系统版本
 

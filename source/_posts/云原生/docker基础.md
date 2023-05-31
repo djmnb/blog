@@ -173,7 +173,36 @@ docker pull centos:7
 docker images
 ```
 
+## image
 
+`docker image` 是 Docker 中用来管理镜像的命令。以下是一些常用的子命令和参数：
+
+1. `docker image ls` 或 `docker images`：列出所有本地镜像。
+   - `-a`：显示所有镜像（默认隐藏中间镜像层）。
+   - `--digests`：显示摘要信息。
+   - `-f` 或 `--filter`：基于给定的条件过滤镜像。
+   - `--format`：以指定的格式输出镜像信息。
+   - `--no-trunc`：不截断输出。
+   - `-q` 或 `--quiet`：仅显示镜像ID。
+
+2. `docker image pull`：从远程仓库拉取镜像。
+   - `--all-tags` 或 `-a`：下载仓库中所有标记的镜像。
+   - `--disable-content-trust`：跳过镜像的验证。
+   - `--platform`：设置平台如果服务器是多平台的。
+
+3. `docker image push`：将本地镜像推送到远程仓库。
+
+4. `docker image rm` 或 `docker rmi`：删除一个或多个镜像。
+   - `-f` 或 `--force`：强制删除镜像。
+   - `-noprune`：不删除未被使用的父镜像。
+
+5. `docker image build`：构建一个新的镜像。
+
+6. `docker image inspect`：显示一个或多个镜像的详细信息。
+
+7. `docker image history`：显示镜像的历史记录。
+
+以上就是 `docker image` 的一些常用命令和参数，更详细的列表可以通过 `docker image --help` 命令查看。具体使用哪个参数会根据你的实际需求和使用的镜像而有所不同。
 
 ## rmi
 
@@ -319,7 +348,7 @@ docker diff centos7
 查看容器,网络,镜像,容器卷,网络的详细信息或者说元信息
 
 ```
-
+docker inspect 
 ```
 
 
@@ -527,8 +556,6 @@ docker tag nginx:latest mynginx:v1
 docker export nginx -o mynginx.tar
 ```
 
-
-
 ## import 
 
 将本地或者远程文件导入成镜像
@@ -544,6 +571,40 @@ docker import ./my-nginx.tar my-nginx:v2
 ```shell
 docker run -d --name mynginx nginx /docker-entrypoint.sh "nginx" "-g" "daemon off;" 
 ```
+
+## save 和 load
+
+`docker save` 和 `docker load` 是 Docker 中**用来进行镜像备份和恢复的命令**。
+
+1. `docker save` 命令可以将一个或多个镜像保存为一个 tar 文件，这个 tar 文件可以被传输到其他系统或作为备份存在。其基本的用法如下：
+
+    ```bash
+    docker save -o <path for generated tar file> <image name>
+    ```
+
+   例如，如果你想将名为 `my_image:latest` 的镜像保存到当前目录下的 `my_image.tar` 文件中，你可以运行以下命令：
+
+    ```bash
+    docker save -o my_image.tar my_image:latest
+    ```
+
+2. `docker load` 命令可以从一个 tar 文件中加载一个或多个镜像。其基本的用法如下：
+
+    ```bash
+    docker load -i <path to image tar file>
+    ```
+
+   例如，如果你想从 `my_image.tar` 文件中加载镜像，你可以运行以下命令：
+
+    ```bash
+    docker load -i my_image.tar
+    ```
+
+这样，你就可以很容易地将 Docker 镜像从一个系统传输到另一个系统，或者在需要时恢复备份的镜像了。如果需要打包容器的话,那还得先commit
+
+## tag
+
+`docker tag` 命令主要用于给 Docker 镜像添加标签。**每个 Docker 镜像可以有多个标签，这些标签用于识别镜像的不同版本或者不同用途。**, 比如如果要上传镜像到服务器, 有时候就要给镜像
 
 # 容器卷
 
@@ -593,7 +654,7 @@ Docker 中的容器卷（Volume）是一种用于**持久化和共享容器数�
 
    在这种情况下，Docker 将宿主机上的 `/host/path` 目录映射到容器的 `/container/path` 目录。这意味着在容器内对 `/container/path` 目录的任何更改都会直接反映到宿主机上的 `/host/path` 目录中，反之亦然。
 
-> 不论哪边路径不存在,默认都会创建一个这样的路径,而且宿主机的目录会挂载到容器上,所以,容器对应路径里面的内容是不可见的,不是覆盖了,如果我们没有挂在容器卷,它
+> 不论哪边路径不存在,默认都会创建一个这样的路径,而且宿主机的目录会挂载到容器上,所以,容器对应路径里面的内容是不可见的,不是覆盖了
 
 ## 挂在多个容器卷
 
@@ -679,7 +740,7 @@ docker run -v volume1:/data1:ro -v volume2:/data2:rw your_image
 
 ## commit
 
-当我们使用commit 之后,是将当前容器的存储层+原来的镜像打包成一个新的镜像,这样容器的存储层就会被保留下来,后面也无法再更改,如果我们使用了卷的话,这个东西并不属于存储层,自然不会被保存
+当我们使用commit 之后,是将**当前容器的存储层+原来的镜像打包成一个新的镜像**,这样容器的存储层就会被保留下来,后面也无法再更改,如果我们使用了卷的话,这个东西并不属于存储层,自然不会被保存
 
 启动一个nginx的容器,并且修改它的index页面,然后commit打包成一个镜像
 
@@ -705,6 +766,12 @@ docker run -d --name nginx1  -p 8081:80 mynginx:v1
 #尽量不要使用docker commit 来制作镜像,这样不利于我们使用分层镜像,而且也不利于修改镜像,每一次commit都要在原有的基础上新增,而如果使用build的话,可以充分利用以前的镜像分层, 还有就是commit的话是不知道我们在容器的基础上干了些什么的
 ```
 
+### 注意点
+
+- `docker commit` **不会保存容器的运行状态，只会保存文件系统状态和部分配置**，比如环境变量等。
+- 默认情况下，新镜像会保留原始镜像的 `CMD` 和 `ENTRYPOINT` 指令。如果需要，可以使用 `-c` 或 `--change` 选项来修改这些指令。
+- `docker commit` 不会保留镜像的构建历史和构建上下文。**也就是说看不到对容器执行了哪些命令,影响了哪些文件**
+
 ## dockerfile
 
 ### 常用配置项
@@ -716,13 +783,13 @@ docker run -d --name nginx1  -p 8081:80 mynginx:v1
 3. `RUN`: 执行命令，用于安装软件包、更新配置文件等。例如：`RUN apt-get update && apt-get install -y nginx`。
 4. `CMD`: 设置容器启动时运行的默认命令。如果在 `docker run` 时传递了参数，`CMD` 中的命令将被覆盖。例如：`CMD ["nginx", "-g", "daemon off;"]`。
 5. `ENTRYPOINT`: 设置容器启动时运行的命令，与 `CMD` 类似，但不会被 `docker run` 时传递的参数覆盖。例如：`ENTRYPOINT ["nginx", "-g", "daemon off;"]`。
-6. `COPY`: 将本地文件复制到镜像中。例如：`COPY index.html /var/www/html/`。
+6. `COPY`: 将本地文件复制到镜像中。例如：`COPY index.html /var/www/html/`。**这里本地文件可以使用相对路径,相对上下文路径来说**
 7. `ADD`: 与 `COPY` 类似，但可以在复制之前执行解压操作。例如：`ADD myapp.tar.gz /app/`。
 8. `WORKDIR`: 设置镜像中的工作目录。例如：`WORKDIR /app`。
 9. `ENV`: 设置环境变量。例如：`ENV MY_VAR=my_value`。
-10. `EXPOSE`: 声明容器需要监听的端口。例如：`EXPOSE 8080`。**仅仅做声明用,告诉别人我内部使用了什么端口,好让别人运行这个容器的时候做端口映射**
+10. `EXPOSE`: 声明容器需要监听的端口。例如：`EXPOSE 8080`。**告诉别人我内部使用了什么端口,好让别人运行这个容器的时候做端口映射**
 11. `USER`: 设置运行容器的用户。例如：`USER myuser`。
-12. `VOLUME`: 定义匿名卷，用于数据持久化和共享。例如：`VOLUME /var/lib/mysql`。
+12. `VOLUME`: 定义匿名卷，用于数据持久化和共享。例如：`VOLUME /var/lib/mysql`。**告诉别人我内部有哪里的数据是可以使用容器卷的,让别人指定容器卷,然后保留容器运行产生的数据**
 13. `ARG`: 定义构建时变量，可以在 `docker build` 命令中使用 `--build-arg` 参数设置。例如：`ARG MY_BUILD_ARG`。
 14. `ONBUILD`: 为基础镜像添加触发器，在其他镜像中使用该基础镜像时触发。例如：`ONBUILD RUN echo "Hello from base image"`。
 15. `STOPSIGNAL`: 设置停止容器时发送的信号。例如：`STOPSIGNAL SIGQUIT`。
@@ -856,9 +923,7 @@ RUN touch /data/file
 
 
 
-```shell
-docker rm -f `docker ps -aq` 快速删除所有容器  docker ps -aq 是列出所用容器id 
-```
+
 
 
 
@@ -874,15 +939,14 @@ docker rm -f `docker ps -aq` 快速删除所有容器  docker ps -aq 是列出�
 
 2. **可重复性和可维护性**：
 
-   - `docker commit`：手动执行更改和提交可能导致不一致和难以追踪的结果。当需要修改镜像时，您需要记住并手动执行所有更改和提交。
+   - `docker commit`：**手动执行更改和提交可能导致不一致和难以追踪的结果。当需要修改镜像时，您需要记住并手动执行所有更改和提交。**
 
-   - `docker build`：Dockerfile 提供了一种声明式的方式来描述镜像构建过程。这使得在不同环境中构建相同镜像变得简单，也有助于团队成员之间共享构建过程。此外，当需要修改镜像时，可以轻松地查看和编辑 Dockerfile。
+   - `docker build`：Dockerfile **提供了一种声明式的方式来描述镜像构建过程。这使得在不同环境中构建相同镜像变得简单，也有助于团队成员之间共享构建过程。此外，当需要修改镜像时，可以轻松地查看和编辑 Dockerfile。**
 
 3. **层次结构和缓存**：
-
-   - `docker commit`：当您使用 `docker commit` 创建镜像时，所有更改都会保存在单个镜像层中。这可能导致较大的镜像和较低的缓存效率。
-
-   - `docker build`：`docker build` 会为 Dockerfile 中的每个指令创建一个新的镜像层。这有助于更好地管理镜像的大小和缓存。例如，如果只更改了 Dockerfile 中的一个指令，那么 Docker 只需要重新构建该指令对应的层，而无需重新构建整个镜像。这有助于加速构建过程。
+- `docker commit`：当您使用 `docker commit` 创建镜像时，所有更改都会保存在单个镜像层中。这可能导致较大的镜像和较低的缓存效率。
+  
+- `docker build`：`docker build` 会为 Dockerfile 中的每个指令创建一个新的镜像层。这有助于更好地管理镜像的大小和缓存。例如，如果只更改了 Dockerfile 中的一个指令，那么 Docker 只需要重新构建该指令对应的层，而无需重新构建整个镜像。这有助于加速构建过程。
 
 总的来说，虽然 `docker commit` 可以用于从现有容器创建新镜像，但在大多数情况下，建议使用 `docker build` 和 Dockerfile 来构建镜像。这样可以确保镜像构建过程的可重复性、可维护性以及更高效的层次结构和缓存管理。
 
@@ -1070,10 +1134,6 @@ healthcheck:
 
 # 额外补充
 
-## 打标签
-
-如果我们虚拟机没有连接外网,但是我们本机可以连接外网,我们可以使用本地下载好后,上传到虚拟机,然后
-
 
 
 ## build使用缓存问题
@@ -1085,6 +1145,12 @@ Docker 使用镜像层的概念来构建和存储镜像。在构建过程中，D
 当您在 Dockerfile 中新增一条指令时，Docker 将从头开始执行 Dockerfile。在遇到新增指令之前，Docker 会尝试使用之前构建过程中产生的缓存。一旦到达新增指令，Docker 将根据该指令创建一个新的层。此时，Docker 会重新构建该指令之后的所有层，因为它们取决于新增指令所创建的层。
 
 简而言之，Docker 通过镜像层的唯一哈希值来记住缓存，这些哈希值取决于指令内容和上下文。当 Dockerfile 更改时，Docker 会尽可能使用现有的缓存，但在遇到更改点时，它将重新构建受影响的层。这样可以确保构建出的镜像始终是最新的。
+
+## export 和 import注意点
+
+首先，`export` 和 `import` 命令在 Docker 中的用途主要是将容器的文件系统导出到 tar 归档文件中，然后再将这个 tar 文件导入到 Docker 以创建一个新的镜像。它并不包含完整的镜像信息，例如环境变量，用户，工作目录，入口点等。**这些信息在 Dockerfile 中被定义，但并不会被保存到 tar 文件中。例如容器的元数据（如CMD，ENTRYPOINT，ENV等）并不会被导出和导入**, 因此，当你从导入的镜像启动一个新的容器时，可能需要手动指定这些参数。
+
+
 
 # 遇到的坑
 
@@ -1098,3 +1164,7 @@ Docker 使用镜像层的概念来构建和存储镜像。在构建过程中，D
   ```
 
   
+
+## daemon.json
+
+这里面的东西必须严格按照json规范,什么逗号多一个都不行

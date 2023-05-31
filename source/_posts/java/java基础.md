@@ -770,7 +770,7 @@ boolean noneMatch(Predicate<? super T> predicate);//是不是全部没有满足�
 
 ### 实战
 
-学完了这么些东西,有没有中蠢蠢欲动的感觉,什么?,迎面走来的你让我蠢蠢欲动(hahahahah)
+学完了这么些东西,有没有种蠢蠢欲动的感觉,什么?,迎面走来的你让我蠢蠢欲动(hahahahah)
 
 #### 数组变list
 
@@ -783,6 +783,22 @@ List<Integer> list = Arrays.stream(ints).boxed().collect(Collectors.toList())
 
 ```java
 int[] ints1 = list.stream().mapToInt(a -> a).toArray();  // 这里的a->a是什么意思呢,无奖竞猜
+```
+
+> 其实这里利用的是java的自动装箱拆箱机制
+
+```
+public int fun(Integer a){
+    return a;
+}
+
+public Integer fun(int a){
+    return a;
+}
+
+ System.out.println(fun(1));
+ System.out.println(fun(Integer.valueOf(2)));
+
 ```
 
 ## Optional
@@ -810,3 +826,35 @@ public T orElseGet(Supplier<? extends T> other); // 值不为null返回值,否�
 
 ```
 
+举个例子吧
+
+```java
+public class OptionalExample {
+    public static void main(String[] args) {
+    
+    
+        Optional<String> optional = Optional.of("Hello world");
+
+        if (optional.isPresent()) {   
+            System.out.println(optional.get());
+        }
+
+        optional.ifPresent(System.out::println);  // 这个就省事了一下
+
+        String nullSafeValue = optional.orElse("Default value");
+        System.out.println(nullSafeValue);
+
+        // Using Optional with a method that might return null
+        String mightBeNull = methodThatMightReturnNull();
+        Optional<String> optional2 = Optional.ofNullable(mightBeNull);
+        optional2.ifPresent(System.out::println);
+    }
+
+    private static String methodThatMightReturnNull() {
+        return (Math.random() < 0.5) ? "Hello world" : null;
+    }
+}
+
+```
+
+虽然省事,但是吧,咱们平常好像用的也不多

@@ -1,0 +1,13 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage  # StorageClass 名称
+provisioner: nfs.csi.k8s.io  # Provisioner 名称
+parameters:
+  server: 192.168.100.3  # NFS 服务器 IP 地址
+  share: /nfs/data/  # NFS 共享路径
+reclaimPolicy: Delete  # 回收策略,貌似不起作用
+volumeBindingMode: WaitForFirstConsumer  # 绑定模式, WaitForFirstConsumer 表示等待第一个消费者的时候再绑定, Immediate 表示立即绑定
+mountOptions:
+  - vers=3
+  - noresvport

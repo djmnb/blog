@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: emptylogs-pod
+spec:
+  containers:
+    - name: emptylogs-pod
+      image: busybox
+      command: ["/bin/sh", "-c", "tail -f /logs/catalina*.log"]
+      volumeMounts:
+        - name: logs
+          mountPath: /logs
+      startupProbe:
+        exec:
+          command:
+            - stat
+            - /logs/catalina.out
+        initialDelaySeconds: 5
+        periodSeconds: 2
+        failureThreshold: 3
+    - name: tomcat
+      image: tomcat
+      volumeMounts:
+        - name: logs
+          mountPath: /usr/local/tomcat/logs
+      ports:
+        - containerPort: 8080
+  volumes:
+    - name: logs
+      emptyDir: {}

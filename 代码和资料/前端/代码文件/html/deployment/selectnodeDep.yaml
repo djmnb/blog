@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selectnode-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: selectnode-pod
+  template:
+    metadata:
+      labels:
+        app: selectnode-pod
+    spec:
+      containers:
+        - name: selectnode-container
+          image: nginx
+          ports:
+            - containerPort: 80
+      nodeSelector:
+        ssd: "666"

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-pod
+spec:
+  containers:
+    - name: lifecycle-demo-container
+      image: busybox
+      command: ["sh", "-c", "sleep 20"]
+      lifecycle:
+        postStart:
+          exec:
+            command:
+              [
+                "/bin/sh",
+                "-c",
+                "echo 'postStart Hook: Everything is up and running!' >> /usr/message",
+              ]
+        preStop:
+          exec:
+            command:
+              [
+                "/bin/sh",
+                "-c",
+                "echo 'preStop Hook: Preparing for shutdown!' >> /usr/message",
+              ]
+      volumeMounts:
+        - name: message-volume
+          mountPath: /usr
+  volumes:
+    - name: message-volume
+      emptyDir: {}

@@ -1,6 +1,9 @@
 ---
 title: Python编程快速上手 总结
 date: 2023-3-4
+tags:
+  - python
+  - 需要复习
 ---
 
 > 编程是一项创造性任务

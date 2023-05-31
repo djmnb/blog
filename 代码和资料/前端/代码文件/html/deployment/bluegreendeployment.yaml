@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluegreen-service
+spec:
+  selector:
+    app: blue-pod
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blue-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: blue-pod
+  template:
+    metadata:
+      labels:
+        app: blue-pod
+    spec:
+      initContainers:
+        - name: init-blue-container
+          image: busybox
+          command:
+            ["sh", "-c", 'echo "blue" > /usr/share/nginx/html/index.html']
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+      containers:
+        - name: blue-container
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: green-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: green-pod
+  template:
+    metadata:
+      labels:
+        app: green-pod
+    spec:
+      initContainers:
+        - name: init-green-container
+          image: busybox
+          command:
+            ["sh", "-c", 'echo "green" > /usr/share/nginx/html/index.html']
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+      containers:
+        - name: green-container
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html
+          emptyDir: {}

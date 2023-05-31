@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tool-pod
+spec:
+  containers:
+    - name: tool-container
+      image: busybox
+      command: ["/bin/sh"]
+      args:
+        ["-c", "while true; do echo $(date) >> /logs/date.log; sleep 10; done"]

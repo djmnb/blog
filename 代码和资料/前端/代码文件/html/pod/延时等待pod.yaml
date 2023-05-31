@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app.kubernetes.io/name: MyApp
+spec:
+  containers:
+    - name: myapp-container
+      image: busybox:1.28
+      command: ["sh", "-c", "echo The app is running! && sleep 3600"]  # 只有当myservice和mydb服务都可用时，才会执行该容器的命令
+  initContainers:
+    - name: init-myservice
+      image: busybox:1.28
+      command:
+        [
+          "sh",
+          "-c",
+          "until nslookup myservice.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done",
+        ]  # 通过nslookup命令检查myservice服务是否可用，如果不可用则休眠2s，然后再次检查，直到myservice服务可用
+    - name: init-mydb
+      image: busybox:1.28
+      command:
+        [
+          "sh",
+          "-c",
+          "until nslookup mydb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done",
+        ] # 通过nslookup命令检查mydb服务是否可用，如果不可用则休眠2s，然后再次检查，直到mydb服务可用

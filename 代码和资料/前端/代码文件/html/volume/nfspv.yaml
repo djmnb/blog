@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: my-nfs-pv0
+spec:
+  capacity:
+    storage: 200Mi # 容量大小
+  volumeMode: Filesystem # 文件系统类型
+  accessModes:
+    - ReadWriteOnce # 访问模式 有 ReadWriteOnce、ReadOnlyMany、ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs # 存储类型名字,在pvc中使用
+  nfs:
+    path: /nfs/data/path1 # NFS 共享路径
+    server: 192.168.100.3 # NFS 服务器 IP 地址
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: my-nfs-pv1
+spec:
+  capacity:
+    storage: 200Mi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs
+  nfs:
+    path: /nfs/data/path2 # NFS 共享路径
+    server: 192.168.100.3 # NFS 服务器 IP 地址

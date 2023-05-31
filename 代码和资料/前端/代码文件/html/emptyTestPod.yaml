@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap # 创建修改脚本的容器卷
+metadata:
+  name: configmap1
+data:
+  script.sh: |
+    #!/bin/sh
+    counter=0
+     while true; do
+       echo "<h1>Count: $counter</h1>" > /usr/share/nginx/html/index.html
+       counter=$((counter+1))
+       sleep 1
+     done
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: empty-pod
+spec:
+  containers: # 容器列表
+    - name: nginx
+      image: nginx
+      volumeMounts:
+        - name: share-data
+          mountPath: /usr/share/nginx/html
+        - name: bash-data
+          mountPath: /data # 脚本所在位置
+
+      ports:
+        - containerPort: 80
+
+    - name: busybox
+      image: busybox
+      volumeMounts:
+        - name: share-data
+          mountPath: /usr/share/nginx/html #
+        - name: bash-data
+          mountPath: /data # 脚本所在位置
+      command: ["/bin/sh", "/data/script.sh"]
+  volumes:
+    - name: share-data # emptyDir类型的卷
+      emptyDir: {}
+    - name: bash-data
+      configMap:
+        name: configmap1
+        items: # 指定挂载的文件,如果不指定,则挂载所有文件
+          - key: script.sh
+            path: script.sh
