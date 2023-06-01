@@ -1,0 +1,173 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-springboot
+data:
+  mysqladdress: mysql-springboot-0.mysql-springboot.default.svc.cluster.local
+  giturl: https://gitee.com/djmnb/springboot-easy-project.git
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-springboot
+data:
+  mysqlpwd: bXlzcWw2NjYu
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-springboot
+  labels:
+    app: mysql-springboot
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+  clusterIP: None
+  selector:
+    app: mysql-springboot
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-springboot
+spec:
+  selector:
+    matchLabels:
+      app: mysql-springboot
+  serviceName: mysql-springboot
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql-springboot
+    spec:
+      initContainers:
+        - name: init-mysql-springboot
+          image: alpine/git
+          command: ["sh", "-c", "git clone ${GIT_URL} /tmp"]
+          volumeMounts:
+            - name: mysql-springboot-empty
+              mountPath: /tmp
+          env:
+            - name: GIT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-springboot
+                  key: giturl
+      containers:
+        - name: mysql-springboot
+          image: mysql:8.0.22
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-springboot
+                  key: mysqlpwd
+
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: mysql-springboot
+              mountPath: /var/lib/mysql
+            - name: mysql-springboot-empty
+              mountPath: /tmp
+      volumes:
+        - name: mysql-springboot-empty
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-springboot
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-storage
+        resources:
+          requests:
+            storage: 200Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-project
+  labels:
+    app: springboot-project
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: springboot-project
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-project
+spec:
+  selector:
+    matchLabels:
+      app: springboot-project
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: springboot-project
+    spec:
+      initContainers:
+        - name: init-springboot-project
+          image: alpine/git
+          command: ["sh", "-c", "git clone ${GIT_URL} /tmp"]
+          volumeMounts:
+            - name: empty-volume
+              mountPath: /tmp
+          env:
+            - name: GIT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-springboot
+                  key: giturl
+      containers:
+        - name: springboot-project
+          image: openjdk:17-jdk
+          command: ["java", "-jar", "/tmp/demo2-0.0.1-SNAPSHOT.jar"]
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 8
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MYSQL_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-springboot
+                  key: mysqladdress
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-springboot
+                  key: mysqlpwd
+          volumeMounts:
+            - name: empty-volume
+              mountPath: /tmp
+
+      volumes:
+        - name: empty-volume
+          emptyDir: {}
+---
+
