@@ -394,27 +394,22 @@ git clone git@ip地址:/home/git/test.git
 
 ### 方法三
 
-使用下面这个命令  这里的target是相对本地git仓库的地址
+安装git-filter-repo
 
 ```
-git filter-branch --force --index-filter \
-  "git rm -r --cached --ignore-unmatch target" \
-  --prune-empty --tag-name-filter cat -- --all
+pip install  git-filter-repo
+```
 
+清理文件 这个文件路径是相对于.git文件夹来说
+
+```
+git filter-repo --path file.txt --invert-paths
 ```
 
 强制推送
 
 ```
 git push origin --force --all
-git push origin --force --tags
-```
-
-清理本地仓库
-
-```
-git push origin --force --all
-git push origin --force --tags
 ```
 
 > 不过这里需要你对仓库有足够的权限,能够强制推送覆盖别人的代码
@@ -478,3 +473,12 @@ git config --global core.gitproxy 'socks5://127.0.0.1:7891'
 ```
 git config --global --unset core.gitproxy
 ```
+
+## 配置常用命令
+
+### 查看全局配置
+
+```
+git config --global --list
+```
+
