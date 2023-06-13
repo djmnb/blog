@@ -1,5 +1,9 @@
 ---
-data: 2022-12-12
+title: k8s网络基础
+date: 2022-12-12
+tags:
+  - linux网络
+
 ---
 
 
@@ -203,11 +207,11 @@ iptables -A POSTROUTING -t nat -s 172.20.1.10 -j MASQUERADE
 iptables -A INPUT -t filter -s 192.168.8.166 -p tcp --dport 80 -j ACCEPT
 ```
 
-![image-20221230154459911](../../img/k8s网络原理自我总结篇assets/image-20221230154459911.png)
+
 
 ![image-20221230154925783](../../img/k8s网络原理自我总结篇assets/image-20221230154925783.png)
 
-感觉链和表就像这种关系,执行到哪个链的时候,就去查看这条链需要的查看的表有没有要指定的规则
+这个就是
 
 ### 主机间的pod进行通信
 
@@ -348,9 +352,19 @@ iptables -I FORWARD -s 192.168.0.0/16 -d 192.168.0.0/16 -j ACCEPT
 ip route add 192.168.11.10 dev veth-pod-b scope link
 ```
 
-测试pod能否ping通主机
+此时pod与各自主机是能够ping 通的, 但是pod与pod之间还是无法ping通的
 
 ```
+ip route add 192.168.11.0/24 via 192.168.100.101 dev ens33 onlink 
+```
 
+```
+ip route add 192.168.10.0/24 via 192.168.100.100 dev ens onlink 
+```
+
+我们可以在主机一种的pod-a中开一个服务
+
+```
+ip netns exec pod-a nohup socat TCP4-LISTEN:80,fork exec:cat 2>&1 &   
 ```
 

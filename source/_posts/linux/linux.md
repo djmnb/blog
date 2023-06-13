@@ -71,7 +71,7 @@ d rwx r-x r-x 3 root root 4096 Nov  6 21:14
 
 ## 文件/目录属性操作
 
-文件/目录权限: rwx  读写执行
+文件/目录权限: rwx  读写执行   
 
 ### 默认权限
 
@@ -141,7 +141,7 @@ chattr 命令（change attributes）用于更改文件或目录的扩展属性�
 
 ### chown 
 
-更改文件所有者命令:    chown [-R] 所有者:所属组
+更改文件所有者命令:    chown [-R] 所有者:所属组  文件/目录               -R代表递归下去,否则的话只变当前目录
 
 ### chmod
 
@@ -154,7 +154,7 @@ chattr 命令（change attributes）用于更改文件或目录的扩展属性�
 
 更改文件权限: 
 
-* chmod [-R] 777 用数字代表修饰的权限 1执行 2 写 4读取
+* chmod [-R] 777 用数字代表修饰的权限 1执行 2 写 4读取  和位置刚好对应上   比如  rwx   4 2 1
 * chmod [-R] a+x-w 用符号去更改权限
 * chmod 7777 还有一种下面这个特殊权限的写法 第一个代表特殊权限   后三个就是跟上面的一样
 
@@ -240,7 +240,7 @@ chmod g-s test
 
 移动文件 mv 源地址 目标地址
 
-### rm
+### r m
 
 统一用 rm -rf 目标地址 (强烈不推荐使用这个命令 要删除文件时候,直接使用mv 移动到回收站 到时候定期删除回收站就行)
 
@@ -248,7 +248,7 @@ chmod g-s test
 
 复制文件  统一用 cp -r  源文件或者目录 目标文件或者目录   
 
-* -p 连同属性一起复制过去(不使用这个参数,使用cp命令的时候,可能改变文件的属性)
+* -p 连同属性一起复制过去(不使用这个参数,使用cp命令的时候,可能改变文件的属性, 比如源文件所有者是djm这个用户,我在root用户使用命令复制的话,目标文件的所有者就会变成root)
 * -d 如果是链接文件,则复制链接文件属性,而不是链接文件指向的那个文件(如果不加这个参数,复制的是链接文件所链接的那个文件)
 * -r 复制目录
 * -u 如果目的地址文件存在且比源地址文件时间旧或者目的地址文件不存在才进行复制
@@ -557,7 +557,7 @@ unzip 压缩包名字 -d 解压路径
 
 * -mindepth 最少从第几层搜索
 
-  > 如果想把搜索出来的结果当成参数传递给后面的命令 直接使用管道是不行的,至于为什么不行,请看十万个为什么章节,下面将介绍几个可以后面接命令的参数
+  > 如果想把搜索出来的结果当成参数传递给后面的命令 直接使用管道是不行的, 管道是将后一个命令的输入流和前一个的输出流结合到一起,而不是将它变成参数给后一个命令
 
 同时执行多个操作
 
@@ -572,7 +572,7 @@ unzip 压缩包名字 -d 解压路径
 > sudo updatedb
 
 * 单纯根据名字查找文件 locate 文件名 (查找数据库中所有路径包含关键字的文件或者目录)
-* 根据路径查找(必须是绝对路径) locate 绝对路径  (查找所有路径中 以这个路径开头的路径对应的文件或者目录)
+* 根据路径查找(必须是绝对路径) locate 绝对路径  (**查找所有路径中** 以这个**路径开头的路径对应的文件或者目录**)
 * -i 忽略大小写
 * -n 显示前几个
 * -r 使用正则表达式
@@ -611,7 +611,7 @@ grep 和 find 的区别 在于 grep是查找文件里面的东西
 * -r 如果要搜索目录下文件内容的东西 必须使用这个参数
 * -i 忽略大小写
 * -n 显示搜索内容所在文件行
-* -v 显示不满足要求的文件内容
+* -v 排除掉满足要求的行
 * -w 整个单词匹配
 * -C 指定匹配行的前后几行
 * -B 指定匹配行的前面几行
@@ -620,6 +620,15 @@ grep 和 find 的区别 在于 grep是查找文件里面的东西
 如果不写搜索文件 而且也没有使用-r 参数 则会根据输入内容进行匹配
 
 如果不写搜索文件 但是使用了-r 参数 则会执行执行这样的命令 grep "搜索内容" -r /  相当于全盘文件内容查找
+
+常见用法
+
+```
+ps -aux | grep -v grep | grep ssh  # 搜索进程的时候排除grep进程
+cat /etc/passwd | grep -n djm  # 显示行号
+```
+
+
 
 ## sed
 
@@ -641,57 +650,29 @@ sed可以利用脚本处理文件或者输入流,可以编辑,删除,新增文�
 * p 打印
 * s 取代(可以使用正则)
 
-有这么一个文件hello.go
+关于s 取代:
 
-```go
-package main
-import (
-    "log"  
-)
-func main() {
-    log.SetPrefix("greetings: ")
-    log.SetFlags(0)
-}
+1. **默认替换**：`sed 's/old/new/' file`。这将会替换每一行中的第一个匹配到的`old`。
+2. **全局替换**：`sed 's/old/new/g' file`。添加`g`选项（代表 global），这将会替换每一行中所有匹配到的`old`。
+3. **替换第n个匹配**：`sed 's/old/new/n' file`。这里的`n`是一个数字，代表替换每一行中的第`n`个`old`。例如，`s/old/new/2`将会替换每一行中的第二个`old`。
+4. **替换在指定行范围内的匹配**：`sed '1,3 s/old/new/g' file`。这将会替换在第一行到第三行中所有匹配到的`old`。
 
 ```
-
-看我操作
-
-```shell
-#删除第一行的内容
-$ sed '1d' hello.go
-import (
-    "log"
-)
-func main() {
-    log.SetPrefix("greetings: ")
-    log.SetFlags(0)
-}
-# 此时文件并没有改变,需要在sed后面加上-i才能改掉文件或者指定输出重定向覆盖掉原先的
-
-# 在main函数第一行里面新增一个 log.Fatal("hello world")
-$ sed '5a  log.Fatal("hello world")' hello.go
-package main
-import (
-    "log"
-)
-func main() {
-log.Fatal("hello world")
-    log.SetPrefix("greetings: ")
-    log.SetFlags(0)
-}
-
-#把所有log替换成logs
-sed '%s/log/logs/g'
-
-
+sed -i "1a hello world" log.txt
+sed -i "1a 你好" log.txt
+sed -i "2c hello world hello world" log.txt
+sed -i "1d" log.txt
+sed -i "1i 你好" log.txt
+sed -i "s/hello world/你好/g;s/你好/nihao/g" log.txt
 ```
 
 
 
 ## awk
 
-将文件或者输入流的一行按照 空格或者制表符(我们也能指定分隔符)拆开分成若干个参数供后面函数使用
+将文件或者输入流的一行按照 **空格或者制表符(我们也能指定分隔符)拆开分成若干个参数供后面函数使用**
+
+基本语法:  awk 'pattern {action}' file   pattern 是模式 相当于一个if   action是执行动作, 里面可以使用
 
 常用参数
 
@@ -703,18 +684,26 @@ sed '%s/log/logs/g'
 
 * FS 指定输入分割符
 
-* OFS 指定输出分割符
+* OFS 指定输出分割符 **只有print里面用逗号分割的变量才会被输出分割符替代**
 
 * NF 字段数量(主要用于取倒数的第一个,减几个就是倒数几个)
+
+* NR 表示当前在多少行
 
   
 
 ```shell
 # 取出用户名字和它的shell
-cat /etc/passwd | awk -v FS=":" '{print $1 " " $(NF-1)}'
+cat /etc/passwd | awk -v FS=":" -v a=" 的登录shell是 " '{print NR  $1 a $(NF)}'
 ```
 
+在 `awk` 中，美元符号 `$` 的使用主要取决于你想要访问的是字段（field）还是变量（variable）。
 
+1. **字段（Field）**：如果你想要访问输入行的特定字段，你需要使用 `$` 符号。例如，`$1` 代表第一个字段，`$2` 代表第二个字段，等等。`$0` 是一个特例，它代表整行内容。
+
+2. **变量（Variable）**：如果你想要访问一个变量，就不应该使用 `$` 符号。例如，`NR` 是一个内置变量，代表当前行号，`NF` 是一个内置变量，代表当前行的字段数量。你也可以使用 `-v` 选项来定义自己的变量，这种情况下同样不应该使用 `$` 符号。
+
+所以总的来说，在 `awk` 的 `action` 部分，如果你想要访问字段，就应该使用 `$` 符号；如果你想要访问变量，就不应该使用 `$` 符号。
 
 # vim的使用
 
@@ -1452,7 +1441,7 @@ ip netns exec nstest bash # 进入某个网络命名空间
 ip netns exec nstest ip a # 在某个网络命明空间里面执行命令
 
 ip link add veth-a type veth peer name veth-b # 建立两张虚拟网卡,这两个网卡是直连的,协议是以太网
-ip linke set veth-b netns nstest # 把网卡交给某个命名空间
+ip link set veth-b netns nstest # 把网卡交给某个命名空间
 ```
 
 
@@ -1461,9 +1450,11 @@ ip linke set veth-b netns nstest # 把网卡交给某个命名空间
 
 ## iptables
 
-它是linux内核中的包过滤防火墙,它包含四个表(filter(包过滤表),nat(地址转化表),mangle(修改数据标记位规则表),raw(跟踪数据规则表)), 5 个规则链。每个规则表中包含多个数据链：INPUT（入站数据过滤）、OUTPUT（出站数据过滤）、FORWARD（转发数据过滤）、PREROUTING（路由前过滤）和POSTROUTING（路由后过滤）
+它是linux内核中的包过滤防火墙,它包含四个表(filter(包过滤表),nat(地址转化表),mangle(修改数据标记位规则表),raw(跟踪数据规则表)), 5 个规则链。每个规则表中可能包含多个数据链：INPUT（入站数据过滤）、OUTPUT（出站数据过滤）、FORWARD（转发数据过滤）、PREROUTING（路由前过滤）和POSTROUTING（路由后过滤）
 
 ![image-20221215110855463](../../img/linuxassets/image-20221215110855463.png)
+
+![61db8ee6e3f5b58f914ae9a26a60a039](../../img/linuxassets/61db8ee6e3f5b58f914ae9a26a60a039.jpeg)
 
 语法格式
 
@@ -1479,7 +1470,7 @@ iptables [-t table] COMMAND [chain] CRETIRIA -j ACTION
 * CRETIRIA 匹配参数
 * ACTION 触发动作
 
-常用选项
+子命令常用选项
 
 * -L 列出表规则
 * -F 清空表规则
@@ -1499,7 +1490,9 @@ iptables [-t table] COMMAND [chain] CRETIRIA -j ACTION
 * MASQUERADE 地址欺骗
 * REDIRECT 重定向
 
+**设置规则的时候就是这样    对一个表里的一个链,如果数据包满足这个要求, 就执行这个表对应的操作**
 
+**在处理数据包的时候就是这样:  查看这个链上所有的表规则, 根据之前的设置的匹配规则,执行相应的操作**
 
 ## 设置代理
 
@@ -1510,6 +1503,13 @@ declare -x no_proxy="localhost,127.0.0.0/8,::1"
 ```
 
 ## 配置网络信息
+
+配置文件位置：
+
+1. **CentOS / RHEL / Fedora**：在这些基于 Red Hat 的系统中，网络接口配置文件通常位于 `/etc/sysconfig/network-scripts/` 目录下，文件名为 `ifcfg-<interface>`，例如 `ifcfg-eth0`。
+2. **Debian / Ubuntu**：在这些基于 Debian 的系统中，网络接口配置文件通常在 `/etc/network/interfaces` 或者 `/etc/netplan/` 目录下。Ubuntu 18.04 及以上版本默认使用 Netplan，配置文件通常以 `.yaml` 结尾。
+3. **Arch Linux / Manjaro**：在这些系统中，网络接口的配置通常在 systemd-networkd 或 NetworkManager 中完成。
+4. **openSUSE / SLES**：在这些系统中，网络接口的配置文件通常位于 `/etc/sysconfig/network/` 目录下。
 
 ```shell
 TYPE="Ethernet"        # 网卡类型
@@ -1533,6 +1533,27 @@ NETMASK="255.255.255.0"  # 子网掩码   PREFIX=24  推荐用这个,写起来�
 GATEWAY="192.168.100.2"  # 网关
 DNS1="192.168.100.2"     # dns服务器,可以指定多个 比如 DNS2="114.114.1"
 ```
+
+## NetworkManager  与 network的区别
+
+`NetworkManager` 和 `network` 都是 Linux 系统中用来管理网络连接的服务，但它们有一些重要的不同：
+
+1. **NetworkManager** 是一个动态的网络控制和配置系统，主要用于桌面环境，也可用于移动设备如笔记本电脑。NetworkManager 试图让网络配置尽可能简单和自动化，它会自动连接到以前的网络，处理 Wi-Fi 连接，管理 VPN 连接等。NetworkManager 还可以管理各种类型的网络接口，包括有线、无线和移动宽带。
+
+2. **network（或 network.service）** 是一种更传统的网络管理服务，通常用于服务器或不经常改变网络配置的系统。它通常用于在系统启动时应用静态的网络配置，例如 IP 地址，网关，DNS 服务器等。一旦网络配置被设置，除非管理员手动改变，否则通常不会改变。
+
+简单来说，NetworkManager 更适合需要动态和自动网络配置的系统，例如桌面系统或笔记本电脑，而 network 服务更适合需要静态和稳定网络配置的系统，例如服务器。
+
+你选择使用哪种服务取决于你的特定需求。如果你需要动态处理多种网络连接，或者你的网络设置经常改变，那么 NetworkManager 可能是更好的选择。如果你的网络设置相对固定，你希望有完全的控制权，那么 network 服务可能是更好的选择。
+
+如果我们希望手动配置网络的话,我们得把NetworkManager 禁用掉
+
+```
+systemctl stop NetworkManager 
+systemctl disable NetworkManager 
+```
+
+
 
 # 玩转linux network namespace
 
@@ -1597,9 +1618,9 @@ ip netns exec ns2 ping 10.0.0.1 -c 4
 # 额外补充
 
 ## <span id="t1">目录权限与文件权限的区别  </span>
-**文件权限**: 给了某个权限就能用某个权限,没给权限就不能用,比如没给x权限,你就不能执行这个程序,哎,有人就刚我了,它说我这里有个shell脚本,我用sh能够执行啊,大哥,你那是把脚本里面的东西读出来一句一句给sh去执行呢,你把读权限关了试试,如果我们不是文件的拥有者(root除外),我们无法更改文件的路径,权限,所有者
+**文件权限**: 给了某个权限就能用某个权限,没给权限就不能用,比如没给x权限,你就不能执行这个程序,哎,有人就刚我了,它说我这里有个shell脚本,**用sh能够执行啊,大哥,你那是把脚本里面的东西读出来一句一句给sh去执行**呢,你把读权限关了试试,如果我们不是文件的拥有者(root除外),我们无法更改文件的路径,权限,所有者
 
-**目录权限**: 如果我们没有 这个目录的 x权限,我们是无法进入这个目录的(也就是把当前工作目录变成这个目录,例如cd命令就无法使用),也无法查看里面的东西(最多看到文件名),也就没有办法对这个目录执行任何命令, 在 x权限的基础上,有了r权限,我们才能这个这个目录下面的文件的属性,这个目录下的东西又有它们的权限, 在有了x权限的基础上,有了w权限,我们可以在这个文件夹里删除任何数据,创建任何数据,不管这个文件或者文件夹属于谁.
+**目录权限**: 如果我们没有 这个目录的 x权限,我们是无法进入这个目录的(也就是把当前工作目录变成这个目录,例如cd命令就无法使用),也无法查看里面的东西(最多看到文件名),也就没有办法对这个目录执行任何命令, 在 x权限的基础上,有了r权限,我们才能这个这个目录下面的文件的属性,这个目录下的东西又有它们的权限, 在有了x权限的基础上,有了w权限,我们可以在这个文件夹里删除任何数据,创建任何数据(没有特殊权限参与),不管这个文件或者文件夹属于谁.
 
 **工作目录**:就是pwd显示的目录,如果我们不能把某个目录当成我们的工作目录(即 没有x权限,那么我们是无法对这个目录执行任何命令的
 
@@ -1640,7 +1661,7 @@ root    ALL=(ALL)       NOPASSWD:ALL
 
 
 
-## 配置环境变量的方法
+## 配置PATH环境变量的方法
 
 ### 方式一
 
@@ -1733,19 +1754,37 @@ echo "TZ='Asia/Shanghai'; export TZ" >> /etc/profile
 
 ## export
 
-终端分 自订变量与环境变量 通过set 或者 直接赋值的变量是 自订变量,通过export的会变成环境变量,每个子程序会继承父程序的环境变量,而不会继承父程序的自订变量
+终端分 自订变量与环境变量 通过set 或者 直接赋值的变量是 自订变量,**通过export的会变成环境变量**,**每个子程序会复制父程序的环境变量,而不会复制父程序的自订变量**,
 
 ## source与sh的区别
 
-source 或者 . 不另开进程执行脚本,而sh 或者 ./ 会另开进程执行脚本,source 能够使用 当前终端的自订变量,sh不能
+source 或者 . **不另开进程执行脚**本,而sh 或者 ./ 会另开进程执行脚本,**source 能够使用 当前终端的自订变量,sh不能**
+
+## nonloginshell和loginshell的区别
+
+在Unix和类Unix系统中，shell通常分为两种类型：登录shell（login shell）和非登录shell（non-login shell）。他们之间的主要区别在于他们启动时执行的配置文件不同。
+
+1. **登录shell（login shell）**：当用户从命令行界面登录到系统（例如通过SSH或在控制台上登录），或者使用`su - username`命令切换用户时，会启动一个登录shell。登录shell在启动时会读取并执行一些配置文件，例如`/etc/profile`，`~/.bash_profile`，`~/.bash_login`，`~/.profile`（取决于具体的shell类型）。
+
+2. **非登录shell（non-login shell）**：当用户在已登录的会话中启动一个新的shell（例如通过运行`bash`或`sh`命令），或者通过图形用户界面（如GNOME或KDE）启动一个终端模拟器时，会启动一个非登录shell。非登录shell不会读取上述的配置文件，但会读取其他的配置文件，例如`~/.bashrc`。
+
+因此，你可以根据需要在不同的配置文件中设置不同的环境变量和别名。例如，你可能希望一些只在登录时需要的环境变量（例如，设置启动程序或会话路径）在`~/.bash_profile`中设置，而一些在每次启动shell时都需要的设置（例如，命令别名或提示符设置）在`~/.bashrc`中设置。
+
+另外，`/sbin/nologin`和`/bin/false`是特殊类型的shell，它们被称为禁止shell（disallowed shell）。这些shell被分配给那些不需要或不应该拥有shell访问权限的用户（例如，系统用户或服务用户）。尝试登录到这样的用户会失败，因为这些shell会立即退出，而不提供交互式命令行界面。
+
+`/sbin/nologin`是**为那些不需要或不应该拥有完全shell访问权限的用户设置的shell类型**。**这些用户通常是系统用户或服务用户，它们主要用于运行系统服务或进程，而不是供人类用户登录和交互**。
+
+举个例子，你可能有一个运行web服务器（例如Apache）的用户，这个用户可能会被设置为`/sbin/nologin`。这意味着没有人可以登录到这个用户账户进行交互，**但是Apache服务可以以这个用户的身份运行，可以访问这个用户拥有的文件和资源**。
+
+这样设置的主要原因是出于安全考虑。如果一个攻击者能够通过某种方式获取到这个用户的密码，他们也无法登录到这个账户，因为它的shell被设置为了`/sbin/nologin`。这增加了系统的安全性。
 
 ## 各个环境配置文件的区别
 
 我们得先区分loginshell 与 nonloginshell 的区别,loginshell是用户登录取得bash的时候需要完整的登录流程,nologinshell 是 当我们登录后,再启动子bash程序,是不需要再登录的,这个就是nologinshell
 
-/etc/profile (loginshell 才会去读) 是 每个用户登录取得bash的时候会读取一遍的文件
+/etc/profile (loginshell 才会去读) 是 **每个用户登录取得bash的时候会读取一遍的文件**
 
-~/.bash_profile(loginshell 才会去读)  bash 读取完全局的/etc/profile 后 会读取用户自己的配置文件, 它其实有个顺序,  .bash_profile .bash_login  .profile  只要前面的文件存在,后面的文件就不会被读取,我们可以看一下.bash_profile 的内容:
+~/.bash_profile(loginshell 才会去读)  bash 读取完全局的/etc/profile 后 会读取用户自己的配置文件, 它其实有个顺序,  .bash_profile .bash_login  .profile  **只要前面的文件存在,后面的文件就不会被读取**,我们可以看一下.bash_profile 的内容:
 
 ```shell
 if [ -f ~/.bashrc ]; then    
@@ -1757,7 +1796,7 @@ PATH=$PATH:$HOME/bin
 
 我们发现它还会去找 家目录下的 bashrc文件
 
-~/.bashrc(nonshell 才会去读),我们每启动一个子终端,就回去读取一次的文件,我们可以看一下文件内容
+~/.bashrc(nonloginshell 才会去读),我们每启动一个子终端,就回去读取一次的文件,我们可以看一下文件内容
 
 ```shell
 alias rm='rm -i'
@@ -1902,7 +1941,7 @@ wget -c https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.75/bin/apache-tomcat-9.0.7
 
 ```shell
 systemctl stop NetworkManager
-systemctl stop NetworkManager
+systemctl disable NetworkManager
 ```
 
 ## 通过公钥远程连接
