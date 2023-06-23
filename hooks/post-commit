@@ -5,10 +5,21 @@
 # git remote add gitee https://gitee.com/djmnb/hexoblog.git
 
 echo "开始推送"
-git push -f gitee master
-echo "推送到gittee成功"
-git push -f github master
-echo "推送到github成功"
+
+git push gitee master
+if [ $? -eq 0 ]; then
+    echo "推送到gitee成功"
+else
+    echo "推送到gitee失败"
+fi
+
+git push github master
+if [ $? -eq 0 ]; then
+    echo "推送到github成功"
+else
+    echo "推送到github失败"
+fi
+
 
 
 
