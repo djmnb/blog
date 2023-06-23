@@ -1,6 +1,17 @@
 #!/bin/sh
 #自动暂存(主要是为了将那些新创建的文件给添加到暂存区,不然commit -a 也没用)
+
+
 hexo g && hexo d
-echo "github page 更新成功"
+if [ $? -eq 0 ]; then
+    echo "github page 更新成功"
+else
+    echo "github page 更新失败"
+fi
+
 git add .
-echo "添加到暂存区完成"
+if [ $? -eq 0 ]; then
+    echo "添加到暂存区完成"
+else
+    echo "添加到暂存区失败"
+fi
