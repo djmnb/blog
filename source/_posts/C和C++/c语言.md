@@ -881,10 +881,11 @@ void function() {
 
    ```c
    typedef int* IntPtr;
+   typedef int(*hello)(int a, int b); // 函数指针
    ```
    
    在这个例子中，我们创建了一个新的名字 `IntPtr`，它是 `int*` 的别名。这样，我们就可以使用 `IntPtr` 来定义指针变量：
-
+   
    ```c
    IntPtr p, q;
    ```
