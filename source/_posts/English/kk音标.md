@@ -83,8 +83,8 @@ a e i o u 是 元音  其他是辅音
 4. 如果元音与r紧挨着  如果不是在单词末尾  就发 哦     work   bird   如果是在末尾 那就是  而尔    her  doctor     worker 包含了这两种
 5. 两个 o一起就是 唔   book  look  good  foot food
 6. ou ow  au aw  奥   hour  house  how 
-7. th 在 和 Z   ch 吃   sh 使  ph 符  
-8. ng 在尾巴  嗯 (重)   嗯个    nk  嗯可
+7. th 有两个 四  Z   ch 吃   sh 使  ph 符  
+8. ng 在尾巴发  嗯 (重)   嗯个    nk  嗯可
 
 
 
