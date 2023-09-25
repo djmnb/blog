@@ -114,6 +114,17 @@ date: 2022-11-20 16:54:25
             <p></p>
 			<p></p>
 			<p></p>  
+			 <div class="card">
+               <div class="card-header">
+                  <div>
+                     <a href="https://www.airdroid.cn/">airdroid</a>
+                  </div>
+                  <div class="info">能够实现远程以及局域网内控制设备,传输文件,以及把旧手机当成监控</div>
+               </div>
+            </div>
+            <p></p>
+			<p></p>
+			<p></p>  
          </div>
       </div>
    </div>
