@@ -69,7 +69,7 @@ date: 2022-11-20 16:54:25
       <div class="links-content">
          <div class="link-navigation">
              <div class="card">
-               <img class="ava" src="https://ts1.cn.mm.bing.net/th/id/R-C.4272f02fbf1b18c3cbff7b86cca9d85c?rik=iCfXw2gL%2fMtl9w&riu=http%3a%2f%2fpica.nipic.com%2f2007-08-21%2f200782120350677_2.jpg&ehk=e%2bHvOqH3%2fRqlNs1zk1SbCCy%2f2b2JZo5YR%2b5Db%2f4Ypkk%3d&risl=&pid=ImgRaw&r=0" />
+              
                <div class="card-header">
                   <div>
                      <a href="https://youyun100.com/">大航海梯子</a>
@@ -81,7 +81,7 @@ date: 2022-11-20 16:54:25
 			<p></p>
 			<p></p>
             <div class="card">
-               <img class="ava" src="https://ts1.cn.mm.bing.net/th/id/R-C.4272f02fbf1b18c3cbff7b86cca9d85c?rik=iCfXw2gL%2fMtl9w&riu=http%3a%2f%2fpica.nipic.com%2f2007-08-21%2f200782120350677_2.jpg&ehk=e%2bHvOqH3%2fRqlNs1zk1SbCCy%2f2b2JZo5YR%2b5Db%2f4Ypkk%3d&risl=&pid=ImgRaw&r=0" />
+              
                <div class="card-header">
                   <div>
                      <a href="https://youyun100.com/">备用梯子地址</a>
