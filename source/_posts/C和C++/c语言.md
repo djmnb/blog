@@ -1109,7 +1109,7 @@ int main(){
 2. **生成静态库**：使用`ar`命令，你可以将`add.o`打包成静态库`libadd.a`。在命令行中，你可以键入如下命令：
 
    ```bash
-   ar rcs libadd.a add.o
+   ar rcs libadd.a add.o # 后面可以跟多个目标文件
    ```
 
    这会生成一个名为`libadd.a`的静态库。
@@ -1224,7 +1224,7 @@ int main(){
 1. **应用程序的目录**：首先，Windows会查找包含应用程序的可执行文件的目录。比如，如果你正在运行位于`C:\Program Files\MyApp\MyApp.exe`的应用程序，Windows就会首先查找`C:\Program Files\MyApp`目录下的DLL文件。
 2. **系统目录**：其次，Windows会查找系统目录，即`C:\Windows\System32`。对于64位系统，32位的DLL会在`C:\Windows\SysWOW64`目录下。
 3. **Windows目录**：然后，Windows会查找Windows目录，即`C:\Windows`。
-4. **当前目录**：此外，Windows也会查找当前工作目录。当前工作目录是指当前活动的文件路径，这个路径可以被应用程序改变。需要注意的是，从Windows XP SP2开始，为了增加系统的安全性，**当前目录在默认情况下不再被包含在DLL搜索路径中**。
+4. **当前目录**：此外，Windows也会查找当前工作目录。当前工作目录是指当前活动的文件路径，这个路径可以被应用程序改变。需要注意的是，从Windows XP SP2开始，为了增加系统的安全性，**当前目录在默认情况下不再被包含在DLL搜索路径中**。(**这个目录是你执行程序的目录**)
 5. **PATH环境变量指定的目录**：最后，Windows会按照它们在PATH环境变量中出现的顺序来查找这些目录。PATH环境变量包含一个或多个目录的列表，这些目录之间用分号（;）分隔。
 
 需要注意的是，这种行为可以通过一些API函数（例如 `SetDllDirectory`）或者Manifest文件进行更改。
@@ -1243,3 +1243,252 @@ Linux系统搜索.so文件通常遵循以下顺序：
 这些只是默认行为，特定的应用程序或库可能会改变这种行为，例如通过使用 `dlopen` 函数的完全限定路径。
 
 **无论是在Windows还是Linux系统中，如果系统在某个目录下找到了所需的动态链接库（DLL 或 .so 文件），系统就会立即停止搜索，并且加载找到的那个库文件。**
+
+
+
+# gcc的用法
+
+## 基本参数
+
+* -E  只做预处理
+* -S 转化成汇编
+* -c 生成目标文件
+* -o 输出文件名字 (使用上面三个参数)
+
+### static
+
+强制使用静态链接,  这意味着会链接所有使用到的库函数,   包括c语言提供的库,  一定要确保使用到的函数所在的静态库存在于  库搜索目录中
+
+```
+ gcc -static main.o -L. -l add -o main
+```
+
+比如在我centos8中执行这个命令就报错了,  因为这个系统里面没有libc.a这个静态库(它会默认链接),  所以
+
+即使你的代码没有直接使用到标准库函数，`gcc` 编译和链接时仍然会引用标准 C 库（`libc`），因为一些基本的运行时支持功能（比如程序启动和退出代码）通常都在 `libc` 里面实现。
+
+### I (i的大写)
+
+指定额外的头文件搜索路径,可以是相对也可以是绝对路径
+
+```
+gcc main.c add.c -I.. -o main
+```
+
+### l(L的小写)
+
+指定额外库, 后面跟库名字,当使用 `-l` 选项时，你只需要提供库的基本名称，不需要文件扩展名和`lib` 前缀。
+
+- 例如，对于 `libadd.a` 或 `libadd.so`，使用 `-ladd`。
+
+```
+gcc  main.o -L. -l add -o main
+```
+
+不过默认情况下，`gcc` 优先链接动态库。如果你想确保链接静态库，你可以使用 `-static` 标志或明确指定库的完整名称和路径。推荐后者
+
+```
+gcc  main.o -L. -l:libadd.a -o main
+gcc  main.o /root/Code/gccTest/day02/libadd.a -o main
+```
+
+
+
+### L
+
+指定额外库路径, 可以是相对路径, 也可以是绝对路径,   这个跟上面的参数搭配使用的  
+
+```
+gcc  main.o -L. -l add -o main
+```
+
+
+
+## 生成动态库
+
+创建动态库（在Linux/Unix系统上通常是`.so` 文件，在Windows上是 `.dll` 文件）与创建静态库略有不同。以下是在Linux上使用 `gcc` 创建动态库的步骤：
+
+### 1. 编写源代码
+
+假设你有两个源文件 `file1.c` 和 `file2.c`：
+
+```c
+// file1.c
+#include <stdio.h>
+
+void function1() {
+    printf("This is function1 from a shared library\n");
+}
+```
+
+```c
+// file2.c
+#include <stdio.h>
+
+void function2() {
+    printf("This is function2 from a shared library\n");
+}
+```
+
+### 2. 编译源代码
+
+使用 `-fPIC` 选项编译源代码文件，该选项表示生成位置无关代码（Position Independent Code）：
+
+```bash
+gcc -c -fPIC file1.c -o file1.o
+gcc -c -fPIC file2.c -o file2.o
+```
+
+### 3. 创建共享库
+
+使用 `-shared` 选项链接目标文件，并使用 `-o` 选项指定输出的共享库文件名：
+
+```bash
+gcc -shared file1.o file2.o -o libmysharedlib.so
+```
+
+这会创建一个名为 `libmysharedlib.so` 的动态库。
+
+### 4. 使用动态库
+
+要使用这个动态库，你可以在编译你的主程序时指定这个库。例如，如果你的主程序是 `main.c`：
+
+```c
+// main.c
+#include <stdio.h>
+
+void function1();
+void function2();
+
+int main() {
+    function1();
+    function2();
+    return 0;
+}
+```
+
+编译主程序：
+
+```bash
+gcc main.c -L. -lmysharedlib -o main
+```
+
+这里，`-L.` 指定库的搜索路径为当前目录，`-lmysharedlib` 指定链接到名为 `mysharedlib` 的库。
+
+### 5. 设置库路径
+
+在运行你的程序前，确保系统知道在哪里找到动态库。你可以通过设置 `LD_LIBRARY_PATH` 环境变量来做这件事：
+
+```bash
+export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
+```
+
+这将当前目录添加到 `LD_LIBRARY_PATH` 环境变量中。
+
+### 6. 运行你的程序
+
+现在你可以运行你的主程序了：
+
+```bash
+./main
+```
+
+在Windows系统上，创建和使用动态库（`.dll` 文件）的过程略有不同，并且使用的是不同的工具和命令。
+
+### 什么是位置无关
+
+`-fPIC` 是一个编译选项，用于生成位置无关代码（Position Independent Code, PIC）。这种代码类型可以从任何内存地址执行，不受固定地址限制，这是创建共享库所必需的。
+
+### 为什么需要位置无关代码？
+
+- **共享库**：
+  当你创建一个共享库（`.so`或`.dll`）时，它可以被多个执行文件（程序）同时使用。系统不可能事先知道这些执行文件将被加载到内存的什么位置，也不可能事先知道它们将使用的共享库将被加载到什么位置。因此，共享库中的代码必须能够从任何内存地址运行，这就是为什么它们必须被编译为位置无关代码的原因。
+
+- **动态加载**：
+  另一个需要PIC的场景是动态加载，例如，当一个程序在运行时动态加载一个插件或模块。由于程序无法事先知道这些插件将被加载到什么位置，所以插件必须使用位置无关代码。
+
+### PIC的工作原理：
+
+- 位置无关代码使用相对地址（而不是绝对地址）来访问数据和调用函数。也就是说，它不直接引用内存地址。相反，它使用基于运行时地址的偏移来访问数据和函数。
+- 在运行时，动态链接器负责处理这些相对地址和偏移，以确保代码正确执行。
+
+### 使用 `-fPIC`：
+
+使用 `-fPIC` 选项编译源文件时，编译器会生成这种类型的代码，使得生成的目标文件可以被链接到一个共享库中。例如：
+
+```bash
+gcc -c -fPIC source.c -o source.o
+```
+
+这将编译 `source.c` 为一个位置无关的目标文件 `source.o`。
+
+# 一些不太好的用法
+
+## 使用函数不声明
+
+> 如果通过gcc是可以这样的,  g++貌似就不行了
+
+在C语言编程中，你可以在一个源文件（比如 `main.c`）中调用一个函数，而不需要在同一个源文件中声明或定义它。然而，为了让程序可以成功编译和链接，你必须在编译时确保链接器可以找到这个函数的定义。
+
+下面是一个简单的例子：
+
+1. 假设你有两个源文件：`main.c` 和 `helper.c`。
+
+- `main.c` 文件：
+
+  ```c
+  int main() {
+      myFunction();
+      return 0;
+  }
+  ```
+
+- `helper.c` 文件：
+
+  ```c
+  #include <stdio.h>
+  
+  void myFunction() {
+      printf("Hello from myFunction!\n");
+  }
+  ```
+
+2. 你可以分别编译这两个源文件：
+
+```bash
+gcc -c main.c      # 这将生成 main.o
+gcc -c helper.c    # 这将生成 helper.o
+```
+
+3. 然后你可以链接这两个对象文件来创建一个可执行文件：
+
+```bash
+gcc main.o helper.o -o myProgram
+```
+
+在这个例子中，即使 `main.c` 文件中没有 `myFunction` 的声明，程序仍然可以成功编译和链接，因为 `myFunction` 的定义在 `helper.o`（从 `helper.c` 编译得到）中可用。
+
+然而，即使这种方法可以工作，但在调用函数之前在源文件中提供函数声明通常是一个好习惯，因为这可以在编译时捕获类型不匹配和其他错误。如果你没有在 `main.c` 中提供 `myFunction` 的声明或定义，你应该在 `main.c` 中包含一个头文件（例如 `helper.h`），该头文件包含 `myFunction` 的声明：
+
+- `helper.h` 文件：
+
+```c
+void myFunction();
+```
+
+然后在 `main.c` 文件中包含这个头文件：
+
+```c
+#include "helper.h"
+
+int main() {
+    myFunction();
+    return 0;
+}
+```
+
+# 一些有趣的尝试
+
+## 大小端
+
+如何判断我们的电脑对于多字节数据是大端
