@@ -2395,7 +2395,7 @@ print(student2.math,student2.chinese) # 100 100
 
 ## getattribute 和 getattr的区别
 
-**getattribute 对任何属性的获取都会走这个方法**,  如果我们没有重写这个方法,  默认会调用object.\_\_getattribute\_\_这个方法,如果找到了访问的属性就会返回,如果没有找到就会调用getattr方法, 如果都没有找到就会
+**getattribute 对任何属性的获取都会走这个方法**,  如果我们没有重写这个方法,  默认会调用object.\_\_getattribute\_\_这个方法,如果找到了访问的属性就会返回,如果没有找到就会调用getattr方法, 如果都没有找到就会报错
 
 ## 线程池的实现
 
