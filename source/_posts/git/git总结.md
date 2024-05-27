@@ -403,7 +403,7 @@ pip install  git-filter-repo
 清理文件 这个文件路径是相对于.git文件夹来说
 
 ```
-git filter-repo --path file.txt --invert-paths
+git filter-repo --path file.txt --invert-paths --force
 ```
 
 强制推送

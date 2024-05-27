@@ -24,3 +24,5 @@ tags:
 
 vscode  是通过 配置launch.json  和  task.json 来  进行调试和 运行程序
 
+## python配置
+
