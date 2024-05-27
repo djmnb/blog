@@ -105,3 +105,95 @@ pip install -e .
 ![image-20240521212543909](../../img/yolo8安装assets/image-20240521212543909.png)
 
 这里显示ultralytics库在我们自己的目录下
+
+# 安装cuda
+
+如果我们想要显卡来跑项目, 就需要安装cude,  去到这个[地址](https://developer.nvidia.com/cuda-toolkit-archive), 根据前面自己的显卡版本选择cuda版本
+
+![image-20240524150734937](../../img/yolo8安装assets/image-20240524150734937.png)
+
+找到里面的本地安装吧, 感觉好一点
+
+![image-20240524150917023](../../img/yolo8安装assets/image-20240524150917023.png)
+
+然后进入界面安装即可, 但是网上说这里有个问题, 可以去看看, [地址](https://blog.csdn.net/weixin_43062964/article/details/127888350), 是跟vs一些相关的,  如果安装过了vs系列桌面开发环境的应该就没什么,  取消勾选这两个
+
+![image-20240524161154988](../../img/yolo8安装assets/image-20240524161154988.png)
+
+安装完成后建议重启电脑, windows这个傻逼控制台有时候不能及时更新环境变量
+
+检测是否安装成功(这个检测并不准确)
+
+```
+nvcc -V
+```
+
+我们只需要去到安装目录查看是否有这些东西
+
+![image-20240524162607381](../../img/yolo8安装assets/image-20240524162607381.png)
+
+进入extra/demo_suite , 然后再控制台运行这个程序
+
+![image-20240524162648845](../../img/yolo8安装assets/image-20240524162648845.png)
+
+![image-20240524162726139](../../img/yolo8安装assets/image-20240524162726139.png)
+
+这样就安装成功了
+
+# 安装CUDNN
+
+
+
+# yolo使用GPU
+
+通过下面代码可以看是否能够检测到GPU
+
+```python
+import torch
+
+# 检查 CUDA 是否可用
+cuda_available = torch.cuda.is_available()
+print(f"CUDA available: {cuda_available}")
+
+# 获取 GPU 的数量
+cuda_device_count = torch.cuda.device_count()
+print(f"CUDA device count: {cuda_device_count}")
+
+# 如果有可用的 GPU，打印每个 GPU 的名称
+if cuda_device_count > 0:
+    for i in range(cuda_device_count):
+        print(f"CUDA device {i}: {torch.cuda.get_device_name(i)}")
+else:
+    print("No CUDA device detected.")
+
+```
+
+如果检测不到,  可能是torch的一些问题, 需要使用对的版本, 我也是更新后才能检测到的
+
+```
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu110
+```
+
+使用GPU来跑
+
+```
+from ultralytics import YOLO
+import torch
+
+# 检查是否有可用的 GPU
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}")
+
+# 加载模型并将其移动到 GPU（如果有的话）
+model = YOLO('yolov8n.pt').to(device)
+
+# 训练模型，指定数据配置文件，并设置使用 GPU
+model.train(data='data.yaml', workers=0, epochs=20, batch=8, device=device)
+
+```
+
+# 参考文档
+
+1. https://blog.csdn.net/weixin_43062964/article/details/127888350  
+2. https://blog.csdn.net/qq_53817374/article/details/135854702
+3. 
