@@ -13,11 +13,19 @@ categories:
 
 [官网地址](https://www.u.tools/)
 
+## quicker
+
+这个也是强烈推荐,  搭配utools使用, 真的好用, 这个偏鼠标操作
+
+[官网地址](https://getquicker.net/)
+
 ## everything
 
 ### 功能介绍
 
 这个软件是用来快速的搜索到某个文件所在的位置,它会将这个文件放进数据库中,然后读取到内存里面,这个可比windows自带的那个搜索功能快多了
+
+[官网地址](https://www.voidtools.com/zh-cn/downloads/)
 
 ## Snipaste
 
@@ -27,3 +35,10 @@ categories:
 
 
 
+## TreeSize
+
+### 功能介绍
+
+可以查看目录下具体子目录和文件的大小
+
+[破解地址](https://www.jb51.net/softs/758884.html#downintro2)
