@@ -21,15 +21,11 @@ categories:
 
 ## everything
 
-### 功能介绍
-
 这个软件是用来快速的搜索到某个文件所在的位置,它会将这个文件放进数据库中,然后读取到内存里面,这个可比windows自带的那个搜索功能快多了
 
 [官网地址](https://www.voidtools.com/zh-cn/downloads/)
 
 ## Snipaste
-
-### 功能介绍
 
 超级好用的截图工具,最厉害的是能够将截图贴在电脑屏幕上,能够让我们一直观看,这个真的非常实用
 
@@ -37,8 +33,12 @@ categories:
 
 ## TreeSize
 
-### 功能介绍
-
 可以查看目录下具体子目录和文件的大小
 
 [破解地址](https://www.jb51.net/softs/758884.html#downintro2)
+
+## Typora
+
+用于编写md文件
+
+[破解地址](https://github.com/markyin0707/typora-activation?tab=readme-ov-file)
