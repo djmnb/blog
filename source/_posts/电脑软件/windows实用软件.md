@@ -25,12 +25,6 @@ categories:
 
 [官网地址](https://www.voidtools.com/zh-cn/downloads/)
 
-## Snipaste
-
-超级好用的截图工具,最厉害的是能够将截图贴在电脑屏幕上,能够让我们一直观看,这个真的非常实用
-
-
-
 ## TreeSize
 
 可以查看目录下具体子目录和文件的大小
