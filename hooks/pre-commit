@@ -1,6 +1,7 @@
 #!/bin/sh
 #自动暂存(主要是为了将那些新创建的文件给添加到暂存区,不然commit -a 也没用)
 
+set -e
 
 hexo g && hexo d
 if [ $? -eq 0 ]; then
