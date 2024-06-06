@@ -13,7 +13,7 @@ date: 2024-6-6
 chrome://version
 ```
 
-![image-20240606162842767](C:\Users\doue\AppData\Roaming\Typora\typora-user-images\image-20240606162842767.png)
+![image-20240606181412391](../../img/chromeassets/image-20240606181412391.png)
 
 上面显示了个人资料路径找到这个路径备份就行, 下次可以直接用这里面的东西覆盖, 这样就能直接使用了
 
