@@ -42,3 +42,7 @@ categories:
 代理软件
 
 [网盘地址](https://pan.baidu.com/s/1AK-BcvCYlvvhXp-t21Mg0Q?pwd=ae45)
+
+# 手心输入法
+
+干净无广告, 比较好用
