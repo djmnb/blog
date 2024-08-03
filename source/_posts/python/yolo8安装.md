@@ -48,7 +48,7 @@ navidia-smi
 
 安装pytorch
 
-去官网搜索找到自己对应的版 我这里是11.0
+去[官网](https://pytorch.org/get-started/previous-versions/)搜索找到自己对应的版 我这里是11.0
 
 ![image-20240521205920583](../../img/yolo8安装assets/image-20240521205920583.png)
 
