@@ -46,3 +46,12 @@ categories:
 # 手心输入法
 
 干净无广告, 比较好用
+
+# 窗口顶置
+
+帮助其他软件窗口顶置
+
+1. windowtop [下载地址](https://windowtop.info/),  [破解地址](https://www.jb51.net/softs/811136.html)
+2. deskpins [下载地址](https://deskpins.en.softonic.com/download)
+
+# 屏幕标记
