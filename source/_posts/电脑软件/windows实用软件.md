@@ -55,3 +55,15 @@ categories:
 2. deskpins [下载地址](https://deskpins.en.softonic.com/download)
 
 # 屏幕标记
+
+
+
+# 论文阅读
+
+1. zotero 
+2. readpaper
+
+# 代码编写
+
+1. vscode 
+
