@@ -16,7 +16,7 @@ date: 2024-5-17
 
 
 ```
-conda create -n yolov8 python=3.8 
+conda create -n yolov8 python=3.9
 ```
 
 激活和退出

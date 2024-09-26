@@ -68,9 +68,9 @@ npm -v
 
 ```shell
 # 全局加速
-npm config set registry https://registry.npm.taobao.org
+npm config set registry https://registry.npmmirror.com
 # 临时加速
-npm install -g cnpm --registry=https://registry.npm.taobao.org
+npm install -g cnpm --registry=https://registry.npmmirror.com
 ```
 
 ## 查看全局安装的包
