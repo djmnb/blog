@@ -26,6 +26,9 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 
+print(train_dataset[0])
+
+
 # 3. 搭建神经网络模型
 class SimpleNet(nn.Module):
     def __init__(self):

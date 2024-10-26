@@ -41,7 +41,7 @@ conda activate yolov8
 找到显卡版本
 
 ```
-navidia-smi
+nvidia-smi
 ```
 
 ![image-20240518114237604](../../img/yolo8安装assets/image-20240518114237604.png)
@@ -53,7 +53,7 @@ navidia-smi
 ![image-20240521205920583](../../img/yolo8安装assets/image-20240521205920583.png)
 
 ```
-pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=10.2 -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/
 ```
 
 # 安装yolov8
@@ -191,6 +191,19 @@ model = YOLO('yolov8n.pt').to(device)
 model.train(data='data.yaml', workers=0, epochs=20, batch=8, device=device)
 
 ```
+
+# 额外安装包
+
+requirements文件
+
+```
+numpy
+tqdm
+pandas
+opencv-python
+```
+
+
 
 # 参考文档
 
