@@ -1,5 +1,6 @@
 ---
 title: thinking in java
+date: 2022-12-3
 catogories:
   - 书籍阅读
 tags:

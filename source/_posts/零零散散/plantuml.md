@@ -1,6 +1,6 @@
 ---
 title: plantuml
-data: 2022-12-28 9:44
+date: 2022-12-28 9:44
 tags: 
  - UML
 categories:
