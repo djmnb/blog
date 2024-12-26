@@ -7,6 +7,19 @@ date: 2024-11-29
 
 
 
+# 数据集构建规则
+
+1. 必须使用中心点加宽高模式, 而且必须都归一化, 所有值必须大于等于0
+
+```python
+assert lb.shape[1] == 5, f"labels require 5 columns, {lb.shape[1]} columns detected"
+points = lb[:, 1:]
+assert points.max() <= 1, f"non-normalized or out of bounds coordinates {points[points > 1]}"
+assert lb.min() >= 0, f"negative label values {lb[lb < 0]}"
+```
+
+
+
 # 数据集yaml编写规则
 
 yolo的数据集加载类是LoadImagesAndLabels, 他搜索数据的方式如下:
@@ -164,3 +177,11 @@ AP 是指 一个类别的平均精度, 是通过在一个Iou阈值下, 不同置
 mAP 就是指所有类别的平均了, mAP50 指 Iou为0.5的情况下, mAP的值,  mAP50-95 是指Iou 从0.5-0.95的mAP的平均值
 
 Iou越大, 说明对于检测越加严格, 同样置信度越大, 也越严格
+
+
+
+yolo中mAP计算步骤:
+
+1. 首先根据不同的iou阈值得到预测框是否正确, 得到一个tp数组维度通常是(N, 10), N代表预测框数量, 10代表不同iou(0.5:0.95)
+2. 然后根据预测框的置信度排序, 置信度大的在前面, 这里是为了快速得到不同置信度下tp和fp的框有多少, 如果在置信度大的时候,tp都为true, 那么置信度小的时候也会为true
+3. 根据置信度的从大到小的变化, 我们能得到不同的精确度和召回率, 然后通过插值函数就能得到AP了
