@@ -65,3 +65,8 @@ linear_layer.bias.data.fill_(0)       # 将偏置设置为 0
 ## 梯度爆炸
 
 在使用MSELoss的时候, 如果reduction改成sum,  那么损失值跟batch就线性相关了, 很容易导致梯度爆炸,  就需要对这个reduction做调整, 要么使用mean, 要么自己去定义
+
+
+
+# GPU内存
+

@@ -545,7 +545,7 @@ model.train(
 
 ## nms输入
 
-对于yolo里面nms的输入, 她要求的格式是 [batch, num_classes+4, num_boxes] 这里的num_classes 代表类别数量, 其里面数值的具体含义是置信度(是我们通常理解的目标框置信度和分类置信度的组合),  而且**预测框的大小必须是没有归一化的数据**(这涉及到后面的map计算)
+对于yolo里面nms的输入, 她要求的格式是 [batch, num_classes+4, num_boxes] 这里的num_classes 代表类别数量, 其里面数值的具体含义是置信度(是我们通常理解的目标框置信度和分类置信度的组合), 4代表预测框的中心点+宽高,  而且**预测框的大小必须是没有归一化的数据**(这涉及到后面的map计算)
 
 # resume训练
 
@@ -678,7 +678,7 @@ from torch import nn
 class Yolov1Model(BaseModel):
     def __init__(self, cfg="yolov1.yaml", nc=80, verbose=True):  # model, input channels, number of classes
         super().__init__()
-        self.yaml = cfg if isinstance(cfg, dict) else yaml_model_load(cfg)  # 这里的yaml必须要实现
+        self.yaml = cfg if isinstance(cfg, dict) else yaml_model_load(cfg)  # 这里的yaml属性必须要实现
 
         self.backboneNames = self.yaml["backbone"]
 
@@ -813,7 +813,7 @@ class YoloV1Trainer(DetectionTrainer):
 这个是验证器, 负责计算指标的地方,  我们也只需要实现下面几个东西
 
 * preprocess函数(可选), 我们可以在验证之前对batch数据做一些处理, 也可以保留一些信息方便后续的postprocess,因为后续他只会给预测数据
-* postprocess 函数, 用于对结果后处理, 一般我们需要将preds结果进行解码, 然后进行nms,  我们需要做的是进行解码将结果变成 [batch, 4+类别, 预测框个数], 这里的4是xywh格式而且必须是真实位置而不是归一化的数据
+* postprocess 函数, 用于对结果后处理, 一般我们需要将preds结果进行解码, 然后进行nms,  我们需要做的是进行解码将结果变成 [batch, 4+类别, 预测框个数], **这里的4是xywh格式而且必须是真实位置而不是归一化的数据**
 
 ```python
 from ultralytics.models.yolo.detect.val import DetectionValidator
@@ -859,5 +859,26 @@ class DJMDetectionpredictor(DetectionPredictor):
         
     
         return super().postprocess(preds, img, orig_imgs)
+```
+
+# 问题记录
+
+## 验证的时候显存一直上升
+
+单独使用val去验证模型的时候, 显存占用一直在上升, 尤其是在batch中的图片shape变化的时候,  我猜测就是rect这个模式的问题,  将rect设置为False就解决了
+
+```python
+ metrics = model.val(
+        data="cfg/datasets/VOC.yaml",
+        batch=32,
+        imgsz=640,
+        device=0,
+        workers=20,
+        name=f"val_yolov1_{backbone}_iou={iou}_conf={conf}_",
+        conf=conf,
+        iou=iou,
+        save_json=True,
+        rect=False
+    )
 ```
 
