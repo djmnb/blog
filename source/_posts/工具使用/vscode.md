@@ -50,3 +50,22 @@ vscode  是通过 配置launch.json  和  task.json 来  进行调试和 运行�
 
 ```
 
+# 问题解决
+
+## python通过本地代码安装的包vscode检测不到
+
+通过下面命令安装的包vscode检测不到, 以至于无法跳转查看源码
+
+```shell
+pip install -e .
+```
+
+解决方案:
+
+我们需要在python的包目录下, 软链接我们的包过去, 这样就没有问题了(以yolo为例子)
+
+```shell
+cd /home/DJM/miniconda3/envs/YOLO/lib/python3.9/site-packages
+ln -s /home/DJM/object-detection/ultralytics/ultralytics
+```
+
