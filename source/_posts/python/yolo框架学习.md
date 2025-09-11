@@ -5,7 +5,51 @@ date: 2024-11-29
 
 > 本文是结合yolov8及其以后的框架做的总结
 
+# 路径寻找
 
+yolo中我们可以指定一下几个参数路径, 但是有时候他能找到有时候他又找不到, 所以我分析了一下原因, **只有在相对路径的时候才会出现这个问题**
+
+有的路径参数有如下几个:(仅讨论相对路径)
+
+* 模型文件pt
+* 数据集文件yaml
+* 数据集yaml文件中的数据集路径
+* 权重相对路径
+
+模型文件 和 数据集yaml文件 就相当于普通文件没有做特殊处理, 因此文件路径是相对于当前执行目录(工作目录),  但是对于数据集yaml文件他还有一个单独搜索路径在于yolo安装包的cfg/datasets文件夹(我们自己的优先级更高)
+
+数据集yaml文件中的数据集路径是相对于yolo定义的一个json配置记录的地址, 他的配置文件如下, 他默认在/home/DJM/.config/Ultralytics/settings.json
+
+```json
+{
+  "settings_version": "0.0.6",
+  "datasets_dir": "/home/DJM/object-detection/underwater/yolo_ruod/datasets",  # 数据集路径, 如果yaml中使用相对路径就是相对他
+  "weights_dir": "weights",   # 权重相对路径, 就是当前工作目录的weights
+  "runs_dir": "runs",
+  "uuid": "41eb705ad138862674a3cde07aea48926f7ed0ae131573598b1652227e5f7916",
+  "sync": true,
+  "api_key": "",
+  "openai_api_key": "",
+  "clearml": true,
+  "comet": true,
+  "dvc": true,
+  "hub": true,
+  "mlflow": true,
+  "neptune": true,
+  "raytune": true,
+  "tensorboard": false,
+  "wandb": false,
+  "vscode_msg": true,
+  "openvino_msg": true
+}
+```
+
+第一次执行的时候会将当前工作目录下的datasets作为数据集路径后续也不会更新了
+
+对于数据集yaml文件中的数据集路径寻找方式如下:
+
+1. 首先就通过相对路径查找, 如果没找到就继续下一步
+2. 通过在settings.json中指定的路径配合找, 如果再没找到就报错
 
 # 参数传递
 
@@ -56,93 +100,196 @@ yolo的数据集加载类是LoadImagesAndLabels, 他搜索数据的方式如下:
 
 # 模型构建
 
-根据模型yaml文件动态搭建,  源码如下:
+根据模型yaml文件动态搭建,  源码如下: [参考链接](https://gemini.google.com/app/a52eb6761b85c3bd)
 
 ```python
-def parse_model(d, ch):
-    """Parses a YOLOv5 model from a dict `d`, configuring layers based on input channels `ch` and model architecture."""
-    LOGGER.info(f"\n{'':>3}{'from':>18}{'n':>3}{'params':>10}  {'module':<40}{'arguments':<30}")
-    anchors, nc, gd, gw, act, ch_mul = (
-        d["anchors"],
-        d["nc"],
-        d["depth_multiple"],
-        d["width_multiple"],
-        d.get("activation"),
-        d.get("channel_multiple"),
-    )
-    if act:
-        Conv.default_act = eval(act)  # redefine default activation, i.e. Conv.default_act = nn.SiLU()
-        LOGGER.info(f"{colorstr('activation:')} {act}")  # print
-    if not ch_mul:
-        ch_mul = 8
-    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
-    no = na * (nc + 5)  # number of outputs = anchors * (classes + 5)
+def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
+    """
+    Parse a YOLO model.yaml dictionary into a PyTorch model.
 
+    Args:
+        d (dict): Model dictionary.
+        ch (int): Input channels.
+        verbose (bool): Whether to print model details.
+
+    Returns:
+        (tuple): Tuple containing the PyTorch model and sorted list of output layers.
+    """
+    import ast # 抽象语法树, 安全解析python字符串
+
+    # Args
+    legacy = True  # backward compatibility for v3/v5/v8/v9 models
+    max_channels = float("inf") # 模型缩放的上限
+    nc, act, scales = (d.get(x) for x in ("nc", "activation", "scales")) # 类别数量 激活函数 缩放因子字典
+    depth, width, kpt_shape = (d.get(x, 1.0) for x in ("depth_multiple", "width_multiple", "kpt_shape")) # 模型宽度深度缩放乘数, 比如某层n=3, depth=0.5 那么真正的模块数就是round(3*5)=2
+    if scales:  # 这里的设置和上面设置是相同的, 两种不同方式指定缩放因子
+        scale = d.get("scale")
+        if not scale:
+            scale = tuple(scales.keys())[0]
+            LOGGER.warning(f"no model scale passed. Assuming scale='{scale}'.")
+        depth, width, max_channels = scales[scale]
+
+    if act: # 指定激活函数
+        Conv.default_act = eval(act)  # redefine default activation, i.e. Conv.default_act = torch.nn.SiLU()
+        if verbose:
+            LOGGER.info(f"{colorstr('activation:')} {act}")  # print
+
+    if verbose:
+        LOGGER.info(f"\n{'':>3}{'from':>20}{'n':>3}{'params':>10}  {'module':<45}{'arguments':<30}")
+        
+    ch = [ch] # 记录每层输出通道数
+    
+    # 模型模块列表 记录哪些层的输出需要保留 最后一层输出通道数
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
-    for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
-        m = eval(m) if isinstance(m, str) else m  # eval strings
-        for j, a in enumerate(args):
-            with contextlib.suppress(NameError):
-                args[j] = eval(a) if isinstance(a, str) else a  # eval strings
-
-        n = n_ = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in {
+    
+    # frozenset是一个不可变的集合，是为了快速查找
+    # base_modules是基础模块，repeat_modules是base_modules的一个子集,是重复模块
+    base_modules = frozenset(
+        {
+            Classify,
             Conv,
+            ConvTranspose,
             GhostConv,
             Bottleneck,
             GhostBottleneck,
             SPP,
             SPPF,
+            C2fPSA,
+            C2PSA,
             DWConv,
-            MixConv2d,
             Focus,
-            CrossConv,
             BottleneckCSP,
+            C1,
+            C2,
+            C2f,
+            C3k2,
+            RepNCSPELAN4,
+            ELAN1,
+            ADown,
+            AConv,
+            SPPELAN,
+            C2fAttn,
             C3,
             C3TR,
-            C3SPP,
             C3Ghost,
-            nn.ConvTranspose2d,
+            torch.nn.ConvTranspose2d,
             DWConvTranspose2d,
             C3x,
-        }:
+            RepC3,
+            PSA,
+            SCDown,
+            C2fCIB,
+            A2C2f,
+        }
+    )
+    repeat_modules = frozenset(  # modules with 'repeat' arguments
+        {
+            BottleneckCSP,
+            C1,
+            C2,
+            C2f,
+            C3k2,
+            C2fAttn,
+            C3,
+            C3TR,
+            C3Ghost,
+            C3x,
+            RepC3,
+            C2fPSA,
+            C2fCIB,
+            C2PSA,
+            A2C2f,
+        }
+    )
+    
+    # i是当前层索引 f是当前层输入来源索引 n是重复次数  m是模块名 args是模块参数, 这个参数一般是模块定义参数的第1个起步, 比如conv(1,2,3,4), args就是(2,3,4), 输入通道不需要指定
+    for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
+        
+        m = (
+            getattr(torch.nn, m[3:])
+            if "nn." in m
+            else getattr(__import__("torchvision").ops, m[16:])
+            if "torchvision.ops." in m
+            else globals()[m]
+        )  # get module
+        
+        for j, a in enumerate(args):
+            if isinstance(a, str):
+                with contextlib.suppress(ValueError):
+                    args[j] = locals()[a] if a in locals() else ast.literal_eval(a)  # 解析参数, 除了常量以外, 还能解析nc这种变量
+                    
+        n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain 
+        if m in base_modules:
             c1, c2 = ch[f], args[0]
-            if c2 != no:  # if not output, 保证输出通道数是ch_mul的倍数
-                c2 = make_divisible(c2 * gw, ch_mul)
+            if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
+                c2 = make_divisible(min(c2, max_channels) * width, 8) # 除了分类头那里, yolo尽量控制输出通道数为8的倍数
+            if m is C2fAttn:  # set 1) embed channels and 2) num heads
+                args[1] = make_divisible(min(args[1], max_channels // 2) * width, 8)
+                args[2] = int(max(round(min(args[2], max_channels // 2 // 32)) * width, 1) if args[2] > 1 else args[2])
 
-            args = [c1, c2, *args[1:]]
-            if m in {BottleneckCSP, C3, C3TR, C3Ghost, C3x}:
+            args = [c1, c2, *args[1:]] # 重新组装最终的参数列表
+            if m in repeat_modules:
                 args.insert(2, n)  # number of repeats
                 n = 1
-        elif m is nn.BatchNorm2d:
+            if m is C3k2:  # for M/L/X sizes
+                legacy = False
+                if scale in "mlx":
+                    args[3] = True
+            if m is A2C2f:
+                legacy = False
+                if scale in "lx":  # for L/X sizes
+                    args.extend((True, 1.2))
+            if m is C2fCIB:
+                legacy = False
+        elif m is AIFI:
+            args = [ch[f], *args]
+        elif m in frozenset({HGStem, HGBlock}):
+            c1, cm, c2 = ch[f], args[0], args[1]
+            args = [c1, cm, c2, *args[2:]]
+            if m is HGBlock:
+                args.insert(4, n)  # number of repeats
+                n = 1
+        elif m is ResNetLayer:
+            c2 = args[1] if args[3] else args[1] * 4
+        elif m is torch.nn.BatchNorm2d:
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
-        # TODO: channel, gw, gd
-        elif m in {Detect, Segment}:
+        elif m in frozenset(
+            {Detect, WorldDetect, YOLOEDetect, Segment, YOLOESegment, Pose, OBB, ImagePoolingAttn, v10Detect}
+        ):
             args.append([ch[x] for x in f])
-            if isinstance(args[1], int):  # number of anchors
-                args[1] = [list(range(args[1] * 2))] * len(f)
-            if m is Segment:
-                args[3] = make_divisible(args[3] * gw, ch_mul)
-        elif m is Contract:
-            c2 = ch[f] * args[0] ** 2
-        elif m is Expand:
-            c2 = ch[f] // args[0] ** 2
+            if m is Segment or m is YOLOESegment:
+                args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+            if m in {Detect, YOLOEDetect, Segment, YOLOESegment, Pose, OBB}:
+                m.legacy = legacy
+        elif m is RTDETRDecoder:  # special case, channels arg must be passed in index 1
+            args.insert(1, [ch[x] for x in f])
+        elif m is CBLinear:
+            c2 = args[0]
+            c1 = ch[f]
+            args = [c1, c2, *args[1:]]
+        elif m is CBFuse:
+            c2 = ch[f[-1]]
+        elif m in frozenset({TorchVision, Index}):
+            c2 = args[0]
+            c1 = ch[f]
+            args = [*args[1:]]
         else:
             c2 = ch[f]
 
-        m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
+        m_ = torch.nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
         t = str(m)[8:-2].replace("__main__.", "")  # module type
-        np = sum(x.numel() for x in m_.parameters())  # number params
-        m_.i, m_.f, m_.type, m_.np = i, f, t, np  # attach index, 'from' index, type, number params
-        LOGGER.info(f"{i:>3}{str(f):>18}{n_:>3}{np:10.0f}  {t:<40}{str(args):<30}")  # print
+        m_.np = sum(x.numel() for x in m_.parameters())  # number params
+        m_.i, m_.f, m_.type = i, f, t  # attach index, 'from' index, type
+        if verbose:
+            LOGGER.info(f"{i:>3}{str(f):>20}{n_:>3}{m_.np:10.0f}  {t:<45}{str(args):<30}")  # print
         save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
         layers.append(m_)
         if i == 0:
             ch = []
         ch.append(c2)
-    return nn.Sequential(*layers), sorted(save)
+    return torch.nn.Sequential(*layers), sorted(save)
 ```
 
 这个东西确实好, 比起我们用代码构建模型方便太多了
@@ -163,6 +310,42 @@ def _forward_once(self, x, profile=False, visualize=False):
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
         return x
+```
+
+
+
+如果我们要自定义模块, 并且不想修改源码, 我们就必须要对上面代码做出改进, 就是加载m模块的时候
+
+```python
+import importlib
+
+try:
+    # 步骤 1: 尝试通过标准路径将字符串 m 转换为类对象，并重新赋值给 m
+    m = (
+        getattr(torch.nn, m[3:])
+        if "nn." in m
+        else getattr(__import__("torchvision").ops, m[16:])
+        if "torchvision.ops." in m
+        else globals()[m]
+    )
+except (KeyError, NameError):
+    # 步骤 2: 如果上述尝试失败（说明 m 不在 globals() 中），则 m 仍然是原始字符串 'my_modules.SimAM'
+    #         现在执行动态导入的备用方案。
+    try:
+        # 使用 m (字符串) 来分割模块路径和类名
+        module_path, class_name = m.rsplit('.', 1)
+
+        # 动态导入模块文件
+        imported_module = importlib.import_module(module_path)
+
+        # 从导入的模块中获取类，并最终将这个类对象重新赋值给 m
+        m = getattr(imported_module, class_name)
+
+    except Exception as e:
+        # 如果动态导入也失败了，就抛出错误
+        raise ImportError(f"Failed to import module '{m}'. Original error: {e}")
+
+
 ```
 
 
@@ -871,6 +1054,8 @@ class DJMDetectionpredictor(DetectionPredictor):
     
         return super().postprocess(preds, img, orig_imgs)
 ```
+
+
 
 # 问题记录
 
