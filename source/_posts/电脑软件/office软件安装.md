@@ -33,7 +33,7 @@ date: 2024-6-16
 
 直接使用office tool plus 安装,  这个其实就是软件帮我们集成了上面的操作, 我们只需要使用这个软件来安装即可,  但是这样有时候会下载不了东西导致超时从而下载失败
 
-[地址](https://otp.landian.vip/zh-cn/)
+[地址](https://otp.landian.vip/zh-cn/) 
 
 # 破解
 
