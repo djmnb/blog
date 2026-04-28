@@ -29,7 +29,6 @@ code_dir: downloads/code
 i18n_dir: :lang
 skip_render:
 
-
 # Writing
 new_post_name: :title.md # File name of new posts
 default_layout: post
@@ -103,7 +102,7 @@ theme: butterfly
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: git
-  repository: git@github.com:djmnb/djmnb.github.io.git
+  repository: https://github.com/djmnb/djmnb.github.io.git
   branch: master
 # search:
 #   path: search.xml
